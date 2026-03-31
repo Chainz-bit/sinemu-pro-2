@@ -1,0 +1,76 @@
+.hero-card,
+.surface-card {
+    border: 1px solid var(--sinemu-border);
+    border-radius: 32px;
+    background: var(--sinemu-card);
+    box-shadow: 0 6px 14px rgba(17, 12, 5, 0.04);
+}
+
+.hero-card {
+    padding: 2.8rem;
+}
+
+.hero-card-main {
+    background:
+        radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.92), transparent 46%),
+        radial-gradient(circle at 75% 20%, rgba(129, 101, 255, 0.14), transparent 40%),
+        var(--sinemu-card);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hero-summary {
+    background: var(--sinemu-surface-soft);
+}
+
+.hero-title {
+    font-size: clamp(2.5rem, 6vw, 4.4rem);
+    line-height: 1;
+    letter-spacing: -0.06em;
+    font-weight: 800;
+    color: var(--sinemu-primary-dark);
+}
+
+.hero-title .accent {
+    color: var(--sinemu-primary);
+}
+
+.hero-subtitle {
+    color: var(--sinemu-muted);
+    max-width: 620px;
+    font-size: 1.02rem;
+}
+
+.hero-info {
+    padding: 1.75rem;
+    height: 100%;
+}
+
+.hero-info-card {
+    border-radius: 22px;
+    border: 1px solid var(--sinemu-border);
+    padding: 1rem;
+    background: linear-gradient(180deg, var(--sinemu-white) 0%, var(--sinemu-surface-soft) 100%);
+}
+
+.btn-sinemu {
+    border-radius: 18px;
+    padding: 1rem 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+}
+
+.btn-sinemu-primary {
+    background: linear-gradient(135deg, var(--sinemu-primary) 0%, var(--sinemu-primary-mid) 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 20px 40px rgba(90, 63, 246, 0.32);
+}
+
+.btn-sinemu-outline {
+    background: transparent;
+    border: 1px solid var(--sinemu-primary-soft);
+    color: var(--sinemu-primary);
+}
+

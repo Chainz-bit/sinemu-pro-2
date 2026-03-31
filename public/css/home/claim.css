@@ -1,0 +1,146 @@
+.claim-card {
+    background: var(--sinemu-surface-soft);
+    padding-top: 2.5rem !important;
+    padding-bottom: 2rem !important;
+}
+
+.claim-card .section-title {
+    font-size: clamp(2rem, 2.8vw, 2.75rem);
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+}
+
+.klaim-title-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    margin-right: 8px;
+    transform: translateY(-1px);
+}
+
+.claim-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 0.25rem;
+    row-gap: 1.6rem;
+    column-gap: 0.8rem;
+}
+
+.claim-grid > [class*="col-"] {
+    width: auto;
+    max-width: none;
+    padding: 0;
+}
+
+.claim-grid .text-muted {
+    font-size: 1.02rem;
+    line-height: 1.56;
+    letter-spacing: -0.01em;
+    max-width: 97%;
+}
+
+.claim-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.claim-item h3 {
+    font-size: 1.25rem;
+    line-height: 1.22;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.45rem !important;
+}
+
+.step-number {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--sinemu-primary-surface);
+    color: var(--sinemu-primary);
+    margin-bottom: 0;
+    flex: 0 0 38px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.claim-help {
+    border: 1px solid var(--sinemu-border-soft);
+    border-radius: 999px;
+    background: var(--sinemu-surface-info);
+    padding: 1.05rem 1.4rem;
+}
+
+.claim-help-link {
+    color: var(--sinemu-primary);
+    font-size: 0.97rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+}
+
+.claim-help-link:hover {
+    text-decoration: underline;
+}
+
+.admin-register-card {
+    border: 1px solid var(--sinemu-border);
+    border-radius: 28px;
+    background: var(--sinemu-surface-soft);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
+}
+
+.register-form {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.register-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    color: var(--sinemu-muted-soft);
+    margin-bottom: 0.45rem;
+}
+
+.register-input,
+.register-textarea {
+    border-radius: 16px;
+    border: 1px solid var(--sinemu-border-soft);
+    background: #ffffff;
+    min-height: 46px;
+}
+
+.register-textarea {
+    min-height: 72px;
+    resize: none;
+}
+
+.btn-register-submit {
+    border: none;
+    border-radius: 999px;
+    background: var(--sinemu-button-dark);
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    min-height: 54px;
+    box-shadow: 0 8px 18px rgba(10, 23, 53, 0.22);
+}
+
+.btn-register-submit:hover {
+    background: var(--sinemu-button-dark-hover);
+}
+
+.register-note {
+    border: 1px solid var(--sinemu-warning-border);
+    border-radius: 16px;
+    background: var(--sinemu-surface-warning);
+    color: var(--sinemu-warning);
+    padding: 0.85rem 1rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}

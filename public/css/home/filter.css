@@ -1,0 +1,111 @@
+.filter-wrap {
+    padding: 1.25rem 1.6rem 1.1rem;
+    background: var(--sinemu-card);
+}
+
+.filter-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.filter-head-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--sinemu-surface-soft), var(--sinemu-card));
+    color: var(--sinemu-primary);
+    border: 1px solid var(--sinemu-border);
+    flex: 0 0 32px;
+}
+
+.filter-icon-img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    display: block;
+}
+
+.filter-title {
+    font-weight: 800;
+    color: var(--sinemu-text);
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.filter-subtitle {
+    color: var(--sinemu-muted);
+    font-size: 0.82rem;
+    margin: 0;
+    line-height: 1.35;
+    max-width: 560px;
+}
+
+.chevron-btn {
+    border: none;
+    background: transparent;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sinemu-muted);
+}
+
+.chevron-btn:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.form-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--sinemu-muted);
+    letter-spacing: 0.08em;
+}
+
+.form-control,
+.form-select {
+    border-radius: 999px;
+    min-height: 46px;
+    border: 1px solid var(--sinemu-border);
+    box-shadow: none;
+    background: #ffffff;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--sinemu-primary-soft);
+    box-shadow: 0 0 0 0.2rem rgba(90, 63, 246, 0.12);
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon .fa-magnifying-glass {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--sinemu-muted-soft);
+}
+
+.input-with-icon input {
+    padding-left: 42px;
+}
+

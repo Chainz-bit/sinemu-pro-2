@@ -1,0 +1,121 @@
+.item-card {
+    padding: 1rem;
+    border: 1px solid var(--sinemu-border);
+    border-radius: 24px;
+    background: var(--sinemu-card);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
+    height: 100%;
+}
+
+.item-card-lost,
+.item-card-found {
+    padding: 1.25rem;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.carousel-track::-webkit-scrollbar {
+    height: 6px;
+}
+
+.carousel-track::-webkit-scrollbar-thumb {
+    background: rgba(108, 99, 90, 0.18);
+    border-radius: 999px;
+}
+
+.carousel-item {
+    flex: 0 0 calc(50% - 0.5rem);
+    min-width: 260px;
+    scroll-snap-align: start;
+}
+
+.carousel-nav-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--sinemu-border);
+    background: var(--sinemu-card);
+    color: var(--sinemu-icon);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    padding: 0;
+}
+
+.carousel-nav-btn:hover {
+    background: var(--sinemu-secondary);
+}
+
+.item-visual {
+    height: 140px;
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.gradient-blue {
+    background: linear-gradient(180deg, #b8c8ff 0%, #dde7ff 100%);
+}
+
+.gradient-gold {
+    background: linear-gradient(180deg, #c7d4ff 0%, #e3ebff 100%);
+}
+
+.item-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.18), transparent 60%);
+}
+
+.item-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.45rem 0.7rem;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--sinemu-primary-dark);
+}
+
+.status-pill {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 0.4rem 0.75rem;
+    color: #fff;
+}
+
+.status-lost {
+    background: linear-gradient(135deg, var(--sinemu-primary-dark), var(--sinemu-primary-deep));
+}
+
+.status-found {
+    background: linear-gradient(135deg, var(--sinemu-primary), var(--sinemu-primary-mid));
+}
+
+.empty-state {
+    display: none;
+    border: 1px dashed var(--sinemu-border);
+    border-radius: 20px;
+    padding: 1rem;
+    text-align: center;
+    color: var(--sinemu-muted);
+    background: var(--sinemu-white);
+}
+

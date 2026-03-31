@@ -1,0 +1,81 @@
+:root {
+    --sinemu-primary: #5a3ff6;
+    --sinemu-primary-dark: #0f0d1c;
+    --sinemu-primary-mid: #7a61ff;
+    --sinemu-primary-deep: #26355c;
+    --sinemu-primary-soft: #c6b7ff;
+    --sinemu-primary-surface: #ede7ff;
+    --sinemu-secondary: #f7f0e7;
+    --sinemu-bg: #f4ede4;
+    --sinemu-card: #ffffff;
+    --sinemu-border: #d9d0c6;
+    --sinemu-border-soft: #d9d0c6;
+    --sinemu-text: #12101b;
+    --sinemu-muted: #6c635a;
+    --sinemu-muted-soft: #8e98a8;
+    --sinemu-icon: #6b6259;
+    --sinemu-surface-soft: #ffffff;
+    --sinemu-surface-info: #ffffff;
+    --sinemu-surface-input: #ffffff;
+    --sinemu-surface-warning: #fffaf0;
+    --sinemu-warning: #91631a;
+    --sinemu-warning-border: #e7ded2;
+    --sinemu-button-dark: #0a1735;
+    --sinemu-button-dark-hover: #11224b;
+    --sinemu-white: #ffffff;
+    --bs-primary: var(--sinemu-primary);
+}
+
+.text-primary {
+    color: var(--sinemu-primary) !important;
+}
+
+.bg-primary {
+    background-color: var(--sinemu-primary) !important;
+}
+
+.text-bg-primary {
+    background-color: var(--sinemu-primary) !important;
+    color: var(--sinemu-white) !important;
+}
+
+body {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    background:
+        radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.8), transparent 35%),
+        linear-gradient(180deg, #f6f2ea 0%, var(--sinemu-bg) 100%);
+    color: var(--sinemu-text);
+    min-height: 100vh;
+}
+
+.page-shell {
+    padding-top: 120px;
+    padding-bottom: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.home-main {
+    flex: 1 0 auto;
+}
+
+.section-space {
+    padding: 72px 0;
+}
+
+.section-title {
+    font-size: clamp(1.65rem, 2.4vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.section-subtitle {
+    color: var(--sinemu-muted);
+    max-width: 640px;
+}
+
+.xsmall {
+    font-size: 0.7rem;
+}
+
