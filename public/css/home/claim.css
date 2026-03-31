@@ -11,10 +11,12 @@
 }
 
 .klaim-title-icon {
-    width: 24px;
-    height: 24px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
     margin-right: 8px;
+    margin-top: 0;
+    margin-bottom: 10px;
     transform: translateY(-1px);
 }
 
@@ -143,4 +145,16 @@
     padding: 0.85rem 1rem;
     font-size: 0.78rem;
     line-height: 1.45;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.register-note-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    margin-top: 0;
+    transform: translateY(2px);
+    flex: 0 0 14px;
 }

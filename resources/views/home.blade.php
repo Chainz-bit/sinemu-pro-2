@@ -319,14 +319,14 @@
                     </div>
                     <div class="col-12">
                         <label class="register-label">ALAMAT KANTOR LENGKAP</label>
-                        <textarea id="adminAddress" class="form-control register-textarea" rows="2">Jl. Pahlawan No. 123, Kelurahan Bahagia...</textarea>
+                        <textarea id="adminAddress" class="form-control register-textarea" rows="2" placeholder="Jl. Pahlawan No. 123, Kelurahan Bahagia..."></textarea>
                     </div>
                     <div class="col-12 mt-2">
                         <button class="btn btn-register-submit w-100" type="button" data-action="registration">AJUKAN PENDAFTARAN &gt;</button>
                     </div>
                     <div class="col-12 mt-3">
                         <div class="register-note">
-                            <i class="fa-regular fa-shield me-2"></i>
+                            <img src="{{ asset('img/Icon-warning.png') }}" alt="Info verifikasi" class="register-note-icon" loading="lazy" decoding="async">
                             Setiap pengajuan akun admin akan melalui proses verifikasi fisik dan administratif langsung ke lokasi kantor kecamatan terkait untuk menjamin keamanan dan keaslian data titik pengambilan barang.
                         </div>
                     </div>
