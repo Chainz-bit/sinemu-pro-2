@@ -31,6 +31,14 @@ function updateCountText(groupName, count) {
     }
 }
 
+function getInitialDbCount(groupName, fallbackCount) {
+    const countEl = document.getElementById(groupName + 'CountText');
+    if (!countEl) return fallbackCount;
+
+    const parsed = Number.parseInt(countEl.dataset.totalCount || '', 10);
+    return Number.isFinite(parsed) ? parsed : fallbackCount;
+}
+
 function initModernDatepicker(dateInput) {
     if (!dateInput || typeof window.flatpickr !== 'function') return;
 
@@ -100,7 +108,8 @@ export function initFilterAndCounts() {
     }
 
     Object.entries(groups).forEach(function ([groupName, items]) {
-        updateCountText(groupName, items.length);
+        const dbCount = getInitialDbCount(groupName, items.length);
+        updateCountText(groupName, dbCount);
     });
 
     if (keywordInput && categorySelect && dateInput && regionSelect) {

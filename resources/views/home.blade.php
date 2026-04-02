@@ -175,7 +175,7 @@
                                 <h2 class="h3 fw-bold mb-0">Daftar Barang Hilang</h2>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span id="lostCountText" class="text-muted small">{{ count($lostItems) }} item</span>
+                                <span id="lostCountText" class="text-muted small" data-total-count="{{ $lostTotalCount ?? count($lostItems) }}">{{ $lostTotalCount ?? count($lostItems) }} item</span>
                                 <button type="button" class="carousel-nav-btn" data-carousel-target="lostItemsList" data-carousel-dir="prev" aria-label="Sebelumnya">
                                     <i class="fa-solid fa-chevron-left"></i>
                                 </button>
@@ -219,7 +219,7 @@
                                 <h2 class="h3 fw-bold mb-0">Daftar Barang Temuan</h2>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span id="foundCountText" class="text-muted small">{{ count($foundItems) }} item</span>
+                                <span id="foundCountText" class="text-muted small" data-total-count="{{ $foundTotalCount ?? count($foundItems) }}">{{ $foundTotalCount ?? count($foundItems) }} item</span>
                                 <button type="button" class="carousel-nav-btn" data-carousel-target="foundItemsList" data-carousel-dir="prev" aria-label="Sebelumnya">
                                     <i class="fa-solid fa-chevron-left"></i>
                                 </button>

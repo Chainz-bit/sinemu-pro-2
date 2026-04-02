@@ -36,10 +36,13 @@ class HomeController extends Controller
         ];
 
         $lostItems = [];
+        $lostTotalCount = 0;
         if (Schema::hasTable('laporan_barang_hilangs')) {
-            $lostItems = LaporanBarangHilang::query()
+            $lostQuery = LaporanBarangHilang::query();
+            $lostTotalCount = (clone $lostQuery)->count();
+
+            $lostItems = $lostQuery
                 ->latest('tanggal_hilang')
-                ->take(20)
                 ->get()
                 ->map(function ($item) {
                     return [
@@ -54,11 +57,13 @@ class HomeController extends Controller
         }
 
         $foundItems = [];
+        $foundTotalCount = 0;
         if (Schema::hasTable('barangs')) {
-            $foundItems = Barang::query()
-                ->with('kategori:id,nama_kategori')
+            $foundQuery = Barang::query()->with('kategori:id,nama_kategori');
+            $foundTotalCount = (clone $foundQuery)->count();
+
+            $foundItems = $foundQuery
                 ->latest('tanggal_ditemukan')
-                ->take(20)
                 ->get()
                 ->map(function ($item) {
                     return [
@@ -118,6 +123,17 @@ class HomeController extends Controller
         $userName = Auth::user()->name ?? 'Pengguna';
         $userLocation = Auth::user()->location ?? 'Lokasi Anda';
 
-        return view('home', compact('stats', 'lostItems', 'foundItems', 'categories', 'regions', 'mapRegions', 'userName', 'userLocation'));
+        return view('home', compact(
+            'stats',
+            'lostItems',
+            'foundItems',
+            'lostTotalCount',
+            'foundTotalCount',
+            'categories',
+            'regions',
+            'mapRegions',
+            'userName',
+            'userLocation'
+        ));
     }
 }
