@@ -36,7 +36,7 @@
                             </span>
                         </div>
                     @else
-                        <a class="btn btn-sinemu btn-sinemu-primary btn-sm px-3" href="{{ url('/login') }}">Masuk</a>
+                        <a class="btn btn-sinemu btn-sinemu-primary btn-sm px-3 py-2" href="{{ url('/login') }}">Masuk</a>
                     @endauth
                 </div>
             </div>
@@ -51,10 +51,10 @@
                 <div class="col-lg-8" data-animate="1">
                     <div class="hero-card hero-card-main h-100">
                         <h1 class="hero-title mb-3">Selamat Datang di <span class="accent">Sinemu</span></h1>
-                        <p class="hero-subtitle mb-4">Platform Pencarian dan Pelaporan Barang Hilang &amp; Temuan terintegrasi. Menghubungkan kejujuran penemu dengan harapan pemilik barang.</p>
+                        <p class="hero-subtitle mb-4 mt-3">Platform Pencarian dan Pelaporan Barang Hilang &amp; Temuan terintegrasi. Menghubungkan kejujuran penemu dengan harapan pemilik barang.</p>
                         <div class="d-flex flex-wrap gap-3">
-                            <button class="btn btn-sinemu btn-sinemu-primary" type="button" data-action="coming-soon">Melapor barang <i class="fa-solid fa-plus-circle ms-2"></i></button>
-                            <button class="btn btn-sinemu btn-sinemu-outline" type="button" data-action="coming-soon">Cari Barang Saya</button>
+                            <button class="btn btn-sinemu btn-sinemu-primary mt-3" type="button" data-action="coming-soon">Melapor barang <i class="fa-solid fa-plus-circle ms-2"></i></button>
+                            <button class="btn btn-sinemu btn-sinemu-outline mt-3" type="button" data-action="coming-soon">Cari Barang Saya</button>
                         </div>
                     </div>
                 </div>
@@ -95,44 +95,67 @@
                             <img src="{{ asset('img/icon filter.png') }}" alt="Filter" class="filter-icon-img" loading="lazy" decoding="async">
                         </span>
                         <div>
-                            <p class="filter-title mb-1">Filter Pencarian Cepat</p>
-                            <p class="filter-subtitle">Saring hasil pencarian berdasarkan kategori, waktu, dan lokasi secara spesifik.</p>
+                            <p class="filter-title mb-2">Filter Pencarian Cepat</p>
+                            <p class="filter-subtitle mb-4">Saring hasil pencarian berdasarkan kategori, waktu, dan lokasi secara spesifik.</p>
                         </div>
                     </div>
                     <button class="chevron-btn" type="button"><i class="fa-solid fa-chevron-up"></i></button>
                 </div>
 
                 <form id="filterForm" class="row g-3" novalidate>
-                    <div class="col-md-6 col-xl-3">
-                        <label for="keywordInput" class="form-label">KATA KUNCI</label>
+                    <div class="col-md-6 col-xl-3 position-relative filter-keyword" >
+                        <label for="keywordInput" class="form-label ps-2 py-2">KATA KUNCI</label>
                         <div class="input-with-icon">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <input id="keywordInput" type="text" class="form-control" placeholder="Dompet, Kunci, HP...">
                         </div>
                     </div>
                     <div class="col-md-6 col-xl-3">
-                        <label for="categorySelect" class="form-label">KATEGORI</label>
-                        <select id="categorySelect" class="form-select">
-                            @foreach ($categories as $category)
-                                <option value="{{ $category }}">{{ $category }}</option>
-                            @endforeach
-                        </select>
+                        <label for="categoryDropdownToggle" class="form-label ps-2 py-2">KATEGORI</label>
+                        <div class="filter-dropdown" id="categoryDropdown">
+                            <button id="categoryDropdownToggle" class="form-select text-start filter-dropdown-toggle" type="button" aria-expanded="false">
+                                {{ data_get($categories, 0, 'Semua Kategori') }}
+                            </button>
+                            <ul id="categoryDropdownMenu" class="filter-dropdown-menu" role="listbox">
+                                @foreach ($categories as $category)
+                                    <li>
+                                        <button type="button" class="filter-option" data-value="{{ $category }}">{{ $category }}</button>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <select id="categorySelect" class="d-none">
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category }}">{{ $category }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="col-md-6 col-xl-3">
-                        <label for="dateInput" class="form-label">WAKTU PENEMUAN</label>
-                        <input id="dateInput" type="date" class="form-control" placeholder="mm/dd/yyyy">
+                        <label for="dateInput" class="form-label ps-2 py-2">WAKTU PENEMUAN</label>
+                        <input id="dateInput" type="text" class="form-control modern-date-input" placeholder="dd/mm/yyyy" inputmode="numeric" autocomplete="off">
                     </div>
                     <div class="col-md-6 col-xl-3">
-                        <label for="regionSelect" class="form-label">WILAYAH</label>
-                        <select id="regionSelect" class="form-select">
-                            @foreach ($regions as $region)
-                                <option value="{{ $region }}">{{ $region }}</option>
-                            @endforeach
-                        </select>
+                        <label for="regionDropdownToggle" class="form-label ps-2 py-2">WILAYAH</label>
+                        <div class="filter-dropdown" id="regionDropdown">
+                            <button id="regionDropdownToggle" class="form-select text-start filter-dropdown-toggle" type="button" aria-expanded="false">
+                                {{ data_get($regions, 0, 'Seluruh Wilayah') }}
+                            </button>
+                            <ul id="regionDropdownMenu" class="filter-dropdown-menu" role="listbox">
+                                @foreach ($regions as $region)
+                                    <li>
+                                        <button type="button" class="filter-option" data-value="{{ $region }}">{{ $region }}</button>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <select id="regionSelect" class="d-none filter-region-select">
+                                @foreach ($regions as $region)
+                                    <option value="{{ $region }}">{{ $region }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="col-12 d-flex flex-wrap gap-3 align-items-center">
-                        <button id="searchButton" class="btn btn-sinemu btn-sinemu-primary" type="submit">CARI</button>
-                        <span class="muted-copy small">Filter tanggal dan wilayah berfungsi untuk data contoh yang ditampilkan di halaman ini.</span>
+                        <button id="searchButton" class="btn btn-sinemu btn-sinemu-primary px-4 py-2" type="submit">CARI</button>
                     </div>
                 </form>
             </div>
@@ -252,7 +275,7 @@
                             <div class="step-number">1</div>
                             <div>
                                 <h3 class="h5 fw-bold mb-2">Temukan &amp; Identifikasi</h3>
-                                <p class="text-muted mb-0">Cari barang Anda di daftar temuan dan catat kode unik barang untuk proses verifikasi lebih cepat oleh sistem kami.</p>
+                                <p class="text-muted fs-6 mb-0">Cari barang Anda di daftar temuan dan catat kode unik barang untuk proses verifikasi lebih cepat oleh sistem kami.</p>
                             </div>
                         </div>
                     </div>
@@ -261,7 +284,7 @@
                             <div class="step-number">2</div>
                             <div>
                                 <h3 class="h5 fw-bold mb-2">Unggah Bukti Sah</h3>
-                                <p class="text-muted mb-0">Siapkan foto barang saat masih dimiliki, kuitansi pembelian, atau jelaskan ciri fisik mendetail yang tidak terlihat di foto.</p>
+                                <p class="text-muted fs-6 mb-0">Siapkan foto barang saat masih dimiliki, kuitansi pembelian, atau jelaskan ciri fisik mendetail yang tidak terlihat di foto.</p>
                             </div>
                         </div>
                     </div>
@@ -270,7 +293,7 @@
                             <div class="step-number">3</div>
                             <div>
                                 <h3 class="h5 fw-bold mb-2">Verifikasi Admin</h3>
-                                <p class="text-muted mb-0">Tim admin kami akan memproses klaim Anda dalam waktu 1x24 jam untuk memastikan keabsahan kepemilikan barang.</p>
+                                <p class="text-muted fs-6 mb-0">Tim admin kami akan memproses klaim Anda dalam waktu 1x24 jam untuk memastikan keabsahan kepemilikan barang.</p>
                             </div>
                         </div>
                     </div>
@@ -279,7 +302,7 @@
                             <div class="step-number">4</div>
                             <div>
                                 <h3 class="h5 fw-bold mb-2">Pengambilan Fisik</h3>
-                                <p class="text-muted mb-0">Datang ke lokasi kantor kecamatan yang telah ditentukan dengan membawa kartu identitas asli (KTP/SIM) sebagai bukti akhir.</p>
+                                <p class="text-muted fs-6 mb-0">Datang ke lokasi kantor kecamatan yang telah ditentukan dengan membawa kartu identitas asli (KTP/SIM) sebagai bukti akhir.</p>
                             </div>
                         </div>
                     </div>
@@ -297,32 +320,24 @@
         <section id="pendaftaran" class="section-space pt-0">
             <div id="admin-kecamatan" class="admin-register-card p-4 p-lg-5 mb-4">
                 <div class="text-center mb-4">
-                    <h2 class="section-title mb-2">Pendaftaran Admin Kecamatan</h2>
-                    <p class="section-subtitle mx-auto mb-0">Khusus untuk perwakilan resmi kantor kecamatan di seluruh wilayah.</p>
+                    <h2 class="section-title mb-2 fs-4">Pendaftaran Admin Kecamatan</h2>
+                    <p class="section-subtitle mx-auto mb-0 fs-6">Khusus untuk perwakilan resmi kantor kecamatan di seluruh wilayah.</p>
                 </div>
-                <div class="row g-3 justify-content-center register-form">
+                <div class="row g-3 justify-content-center register-form mb-4">
                     <div class="col-md-6">
-                        <label class="register-label">NAMA INSTANSI KECAMATAN</label>
+                        <label class="register-label form-label ps-2 py-2">NAMA INSTANSI KECAMATAN</label>
                         <input id="adminOfficeName" type="text" class="form-control register-input" placeholder="Kecamatan Suka Makmur...">
                     </div>
                     <div class="col-md-6">
-                        <label class="register-label">KONTAK WHATSAPP</label>
+                        <label class="register-label form-label ps-2 py-2">KONTAK WHATSAPP</label>
                         <input id="adminPhone" type="text" class="form-control register-input" placeholder="0812-xxxx-xxxx">
                     </div>
-                    <div class="col-md-6">
-                        <label for="adminRegionSelect" class="register-label">WILAYAH KECAMATAN</label>
-                        <select id="adminRegionSelect" class="form-select register-input">
-                            @foreach ($mapRegions as $region)
-                                <option value="{{ $region['slug'] }}">{{ $region['name'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
                     <div class="col-12">
-                        <label class="register-label">ALAMAT KANTOR LENGKAP</label>
+                        <label class="register-label form-label ps-2 py-2">ALAMAT KANTOR LENGKAP</label>
                         <textarea id="adminAddress" class="form-control register-textarea" rows="2" placeholder="Jl. Pahlawan No. 123, Kelurahan Bahagia..."></textarea>
                     </div>
-                    <div class="col-12 mt-2">
-                        <button class="btn btn-register-submit w-100" type="button" data-action="registration">AJUKAN PENDAFTARAN &gt;</button>
+                    <div class="col-12 mt-2 d-flex justify-content-center align-items-center gap-3 mt-4 mb-2">
+                        <button class="btn btn-register-submit w-100 fs-6" type="button" data-action="registration">AJUKAN PENDAFTARAN</button>
                     </div>
                     <div class="col-12 mt-3">
                         <div class="register-note">
@@ -336,38 +351,38 @@
             <div id="lokasi-pengambilan" class="map-card p-4 p-lg-5 map-modern">
                 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
                     <div>
-                        <h2 class="section-title mb-2">Peta Lokasi Pengambilan</h2>
-                        <p class="section-subtitle mb-0">Navigasi titik penyerahan dan pengambilan barang resmi di seluruh wilayah kota.</p>
+                        <h2 class="section-title mb-2 fs-4">Peta Lokasi Pengambilan</h2>
+                        <p class="section-subtitle mb-0 fs-6">Navigasi titik penyerahan dan pengambilan barang resmi di seluruh wilayah kota.</p>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
-                        <button class="btn map-btn-near" type="button" data-action="coming-soon"><i class="fa-solid fa-location-crosshairs me-2"></i>CARI TERDEKAT</button>
+                        <button class="btn map-btn-near" type="button" data-action="coming-soon"><i class="fa-solid fa-location-crosshairs me-2 "></i>CARI TERDEKAT</button>
                     </div>
                 </div>
 
                 <div class="map-layout">
                     <form id="mapFilterForm" class="map-sidebar" novalidate>
                         <div class="map-label">FILTER WILAYAH</div>
-                        <select id="mapRegionSelect" class="map-select-input">
+                        <select id="mapRegionSelect" class="map-select-input mb-3">
                             @foreach ($mapRegions as $region)
                                 <option value="{{ $region['slug'] }}">{{ $region['name'] }}</option>
                             @endforeach
                         </select>
 
-                        <div class="map-label mt-4">TIPE TITIK LAYANAN</div>
-                        <label class="map-radio active">
+                        <div class="map-label mt-2">TIPE TITIK LAYANAN</div>
+                        <label class="map-radio active mb-2">
                             <input class="map-service-input" type="radio" name="serviceType" value="kecamatan" checked>
                             <span class="dot"></span>KANTOR KECAMATAN
                         </label>
-                        <label class="map-radio">
+                        <label class="map-radio mb-2">
                             <input class="map-service-input" type="radio" name="serviceType" value="polisi">
                             <span class="dot"></span>KANTOR POLISI
                         </label>
-                        <label class="map-radio">
+                        <label class="map-radio mb-2">
                             <input class="map-service-input" type="radio" name="serviceType" value="keamanan">
                             <span class="dot"></span>POS KEAMANAN
-                        </label>
-
-                        <div class="map-label mt-4">NAVIGASI CEPAT</div>
+                        </label> 
+  
+                        <div class="map-label mt-2">NAVIGASI CEPAT</div>
                         <div class="map-quick-grid">
                             @foreach ($mapRegions as $index => $region)
                                 <button class="map-chip{{ $index === 0 ? ' active' : '' }}" type="button" data-map-region="{{ $region['slug'] }}">{{ strtoupper(str_replace('Kecamatan ', '', $region['name'])) }}</button>
@@ -402,10 +417,13 @@
 
         @push('styles')
             <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         @endpush
 
         @push('scripts')
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+            <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+            <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
         @endpush
     </div>
     {{-- Main Content Container End --}}

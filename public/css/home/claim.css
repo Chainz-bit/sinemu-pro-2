@@ -5,18 +5,18 @@
 }
 
 .claim-card .section-title {
-    font-size: clamp(2rem, 2.8vw, 2.75rem);
+    font-size: clamp(1.5rem, 2.8vw, 1.75rem);
     letter-spacing: -0.035em;
     line-height: 1.08;
 }
 
 .klaim-title-icon {
-    width: 40px;
-    height: 40px;
+    width: 25px;
+    height: 25px;
     object-fit: contain;
     margin-right: 8px;
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     transform: translateY(-1px);
 }
 

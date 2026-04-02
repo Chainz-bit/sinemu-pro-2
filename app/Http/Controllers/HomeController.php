@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
+use App\Models\Wilayah;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -71,106 +72,52 @@ class HomeController extends Controller
                 ->all();
         }
 
-        $categoryItems = [];
+        $categories = ['Semua Kategori'];
         if (Schema::hasTable('kategoris')) {
-            $categoryItems = Kategori::query()
-                ->orderBy('nama_kategori')
-                ->pluck('nama_kategori')
-                ->map(fn ($name) => ucwords(strtolower($name)))
-                ->values()
-                ->all();
+            $categories = array_merge(
+                ['Semua Kategori'],
+                Kategori::query()
+                    ->orderBy('nama_kategori')
+                    ->pluck('nama_kategori')
+                    ->map(fn ($name) => ucwords(strtolower($name)))
+                    ->values()
+                    ->all()
+            );
         }
-        $categories = array_values(array_unique(array_merge(['Semua Kategori'], $categoryItems)));
 
-        $regionItems = collect(array_merge(
-            array_column($lostItems, 'location'),
-            array_column($foundItems, 'location')
-        ))
-            ->filter()
-            ->values()
-            ->unique()
-            ->all();
-        $defaultRegions = [
-            'Kecamatan Indramayu',
-            'Kecamatan Lohbener',
-            'Kecamatan Pasekan',
-            'Kecamatan Balongan',
-            'Kecamatan Jatibarang',
-            'Kecamatan Haurgeulis',
-            'Kecamatan Bangodua',
-            'Kecamatan Sliyeg',
-            'Kecamatan Kandanghaur',
-            'Kecamatan Krangkeng',
-        ];
-        $regions = collect(array_merge(['Seluruh Wilayah'], $defaultRegions, $regionItems))
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        $regions = ['Seluruh Wilayah'];
+        $mapRegions = [];
+        if (Schema::hasTable('wilayahs')) {
+            $wilayahs = Wilayah::query()
+                ->orderBy('nama_wilayah')
+                ->get(['nama_wilayah', 'lat', 'lng']);
 
-        $knownCoordinates = $this->knownRegionCoordinates();
-        $baseMapRegions = [
-            'Kecamatan Lohbener',
-            'Kecamatan Pasekan',
-            'Kecamatan Indramayu',
-            'Kecamatan Balongan',
-        ];
+            $regions = array_merge(['Seluruh Wilayah'], $wilayahs->pluck('nama_wilayah')->all());
 
-        $mapRegionNames = collect(array_merge($baseMapRegions, $regionItems))
-            ->filter()
-            ->unique()
-            ->values();
+            $allLocations = collect(array_merge(
+                array_column($lostItems, 'location'),
+                array_column($foundItems, 'location')
+            ))->map(fn ($loc) => Str::lower((string) $loc));
 
-        $allLocations = collect(array_merge(
-            array_column($lostItems, 'location'),
-            array_column($foundItems, 'location')
-        ))->map(fn ($loc) => Str::lower((string) $loc));
+            $mapRegions = $wilayahs->map(function ($wilayah) use ($allLocations) {
+                $key = Str::lower(str_replace('kecamatan', '', $wilayah->nama_wilayah));
+                $activePoints = $allLocations->filter(function ($loc) use ($key) {
+                    return str_contains($loc, trim($key));
+                })->count();
 
-        $mapRegions = $mapRegionNames->map(function ($name) use ($knownCoordinates, $allLocations) {
-            $key = $this->normalizeRegionKey($name);
-            $coord = $knownCoordinates[$key] ?? null;
-            $activePoints = $allLocations->filter(function ($loc) use ($key) {
-                return str_contains($loc, $key);
-            })->count();
-
-            return [
-                'name' => $name,
-                'slug' => Str::slug($name),
-                'lat' => $coord['lat'] ?? null,
-                'lng' => $coord['lng'] ?? null,
-                'active_points' => max(1, $activePoints),
-            ];
-        })->values()->all();
+                return [
+                    'name' => $wilayah->nama_wilayah,
+                    'slug' => Str::slug($wilayah->nama_wilayah),
+                    'lat' => $wilayah->lat ? (float) $wilayah->lat : null,
+                    'lng' => $wilayah->lng ? (float) $wilayah->lng : null,
+                    'active_points' => $activePoints,
+                ];
+            })->values()->all();
+        }
 
         $userName = Auth::user()->name ?? 'Pengguna';
         $userLocation = Auth::user()->location ?? 'Lokasi Anda';
 
         return view('home', compact('stats', 'lostItems', 'foundItems', 'categories', 'regions', 'mapRegions', 'userName', 'userLocation'));
-    }
-
-    private function normalizeRegionKey(string $name): string
-    {
-        return trim(Str::lower(str_replace('kecamatan', '', $name)));
-    }
-
-    private function knownRegionCoordinates(): array
-    {
-        return [
-            'lohbener' => ['lat' => -6.3852, 'lng' => 108.2793],
-            'pasekan' => ['lat' => -6.3201, 'lng' => 108.3388],
-            'indramayu' => ['lat' => -6.3275, 'lng' => 108.3207],
-            'balongan' => ['lat' => -6.3502, 'lng' => 108.4108],
-            'jatibarang' => ['lat' => -6.4741, 'lng' => 108.3061],
-            'haurgeulis' => ['lat' => -6.4477, 'lng' => 107.9398],
-            'bangodua' => ['lat' => -6.4941, 'lng' => 108.1455],
-            'sliyeg' => ['lat' => -6.4406, 'lng' => 108.3693],
-            'krangkeng' => ['lat' => -6.4415, 'lng' => 108.4841],
-            'kandanghaur' => ['lat' => -6.3433, 'lng' => 107.9816],
-            'patrol' => ['lat' => -6.3544, 'lng' => 107.8684],
-            'jakarta' => ['lat' => -6.2088, 'lng' => 106.8456],
-            'bandung' => ['lat' => -6.9175, 'lng' => 107.6191],
-            'bekasi' => ['lat' => -6.2383, 'lng' => 106.9756],
-            'depok' => ['lat' => -6.4025, 'lng' => 106.7942],
-        ];
     }
 }

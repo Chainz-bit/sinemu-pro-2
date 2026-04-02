@@ -55,19 +55,26 @@
 
     .map-layout {
         grid-template-columns: 1fr;
+        gap: 0;
     }
 
     .map-sidebar {
         border-bottom: 1px solid var(--sinemu-border);
+        border-right: 0;
         padding: 1rem;
     }
 
     .map-board {
-        padding: 1rem;
+        padding: 0.9rem;
     }
 
     .map-canvas {
         min-height: 320px;
+    }
+
+    .map-quick-grid {
+        max-height: none;
+        overflow: visible;
     }
 
     .map-zoom {
@@ -113,4 +120,3 @@
         letter-spacing: 0.14em;
     }
 }
-

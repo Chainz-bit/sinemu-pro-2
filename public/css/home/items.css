@@ -1,3 +1,8 @@
+#hilang-temuan {
+    position: relative;
+    z-index: 10;
+}
+
 .item-card {
     padding: 1rem;
     border: 1px solid var(--sinemu-border);
@@ -118,4 +123,3 @@
     color: var(--sinemu-muted);
     background: var(--sinemu-white);
 }
-
