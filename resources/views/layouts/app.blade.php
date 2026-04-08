@@ -6,8 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Sinemu') }}</title>
 
-    <!-- Vite (skip on testing to avoid manifest dependency in CI) -->
-    @if (!app()->environment('testing'))
+    <!-- Vite (only load when manifest/hot file exists) -->
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
     <link href="{{ asset('css/page-transition.css') }}?v={{ @filemtime(public_path('css/page-transition.css')) }}" rel="stylesheet">
