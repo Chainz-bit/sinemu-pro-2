@@ -103,9 +103,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ============================================================
-  # JOB 3: DEPLOY KE VPS
-  # ============================================================
+    # ─── JOB 3: DEPLOY KE VPS ────────────────────────────────
   deploy:
     name: Deploy ke VPS
     runs-on: ubuntu-latest
@@ -121,29 +119,29 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
-            
+
             echo "🚀 Mulai deployment..."
-            
+
             # Login ke GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             # Masuk ke folder project
             cd /home/${{ secrets.SERVER_USER }}/RPL2D-kelompok-2
-            
+
             # Pull image terbaru
-            docker pull ghcr.io/chainz-bit/sinemu-pro-2:latest
-            
+            docker pull ghcr.io/Chainz-bit/sinemu-pro-2:latest
+
             # Update container tanpa downtime besar
-            docker-compose up -d --remove-orphans
-            
+            docker compose up -d --remove-orphans
+
             # Tunggu container siap
             echo "⏳ Menunggu container ready..."
-            
-            until docker-compose exec -T db mysqladmin ping -h "localhost" --silent; do
+
+            until docker compose exec -T db mysqladmin ping -h "localhost" --silent; do
               sleep 2
             done
-            
+
             # Jalankan migrasi database
-            docker-compose exec -T app php artisan migrate --force --no-interaction
-            
+            docker compose exec -T app php artisan migrate --force --no-interaction
+
             echo "✅ Deployment selesai!"
