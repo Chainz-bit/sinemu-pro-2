@@ -10,7 +10,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # ─── JOB 1: TESTING ───────────────────────────────────────
+  # ─────────────────────────────────────────────────────────────
+  # JOB 1: TESTING (dengan build asset Vite)
+  # ─────────────────────────────────────────────────────────────
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -19,58 +21,86 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Setup PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: pdo, pdo_mysql, bcmath
+          extensions: pdo, pdo_mysql, bcmath, mbstring, xml, curl, zip
 
+      # Install Composer dependencies
       - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist
+        run: composer install --no-progress --prefer-dist --no-interaction
 
-      - name: Copy .env
+      # ========== PERBAIKAN: Build asset Vite ==========
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build Vite assets (CSS & JS)
+        run: npm run build
+      # =================================================
+
+      # Persiapan environment testing
+      - name: Copy .env example
         run: cp .env.example .env
 
-      - name: Generate app key
+      - name: Generate application key
         run: php artisan key:generate
 
+      # Create database for testing (SQLite memory)
+      - name: Touch database file
+        run: touch database/database.sqlite
+
+      - name: Run migrations
+        run: php artisan migrate --force --no-interaction
+
+      # Jalankan PHPUnit
       - name: Run PHPUnit tests
         run: php artisan test
 
-  # ─── JOB 2: BUILD & PUSH IMAGE ────────────────────────────
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2: BUILD & PUSH DOCKER IMAGE
+  # ─────────────────────────────────────────────────────────────
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
-    needs: test
+    needs: test  # Hanya jalan jika test sukses
 
     permissions:
       contents: read
       packages: write
 
     outputs:
-      image: ${{ steps.meta.outputs.tags }}
+      image_tag: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Login ke GHCR
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata Docker
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=sha-
+            type=sha,prefix=sha-,format=short
             type=raw,value=latest
+            type=ref,event=branch
 
-      - name: Build & Push Docker Image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -80,11 +110,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─── JOB 3: DEPLOY KE VPS ────────────────────────────────
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3: DEPLOY KE VPS (melalui SSH)
+  # ─────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy ke VPS
+    name: Deploy to VPS
     runs-on: ubuntu-latest
     needs: build-and-push
+    if: success()  # Hanya deploy jika semua job sebelumnya sukses
 
     steps:
       - name: Deploy via SSH
@@ -93,29 +126,34 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 8022
+          port: ${{ secrets.SERVER_PORT }}  # default 22, bisa diatur
           script: |
             set -e
 
-            echo "🚀 Mulai deployment..."
+            echo "🚀 Memulai deployment ke VPS..."
 
             # Login ke GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Masuk ke folder project
+            # Masuk ke direktori project (sesuaikan)
             cd /home/${{ secrets.SERVER_USER }}/RPL2X-kelompok-1
 
             # Pull image terbaru
             docker pull ghcr.io/${{ github.repository }}:latest
 
-            # Update container tanpa downtime besar
+            # Update container dengan docker compose
             docker compose up -d --remove-orphans
 
             # Tunggu container siap
-            echo "⏳ Menunggu container ready..."
+            echo "⏳ Menunggu container siap (10 detik)..."
             sleep 10
 
-            # Jalankan migrasi database
+            # Jalankan migrasi database di dalam container
             docker compose exec -T app php artisan migrate --force --no-interaction
+
+            # (Opsional) Clear cache
+            docker compose exec -T app php artisan config:cache
+            docker compose exec -T app php artisan route:cache
+            docker compose exec -T app php artisan view:cache
 
             echo "✅ Deployment selesai!"
