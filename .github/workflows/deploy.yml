@@ -30,7 +30,6 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist --no-interaction
 
-      # Build asset Vite (menghasilkan manifest.json)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -105,7 +104,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ============================================================
-  # JOB 3: DEPLOY KE VPS (menggunakan SSH, port 8022)
+  # JOB 3: DEPLOY KE VPS (menggunakan SSH agent)
   # ============================================================
   deploy:
     name: Deploy to VPS
@@ -114,22 +113,22 @@ jobs:
     if: success()
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 8022   # <-- Hardcode port 8022 (sesuaikan jika perlu)
-          script: |
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Deploy via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
             set -e
 
             echo "🚀 Memulai deployment ke VPS..."
 
-            # Login ke GHCR
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Login ke GHCR menggunakan Personal Access Token (PAT)
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Masuk ke direktori project (sesuaikan path Anda)
+            # Masuk ke direktori project
             cd /home/${{ secrets.SERVER_USER }}/RPL2X-kelompok-1
 
             # Pull image terbaru
@@ -138,16 +137,16 @@ jobs:
             # Update container dengan docker compose
             docker compose up -d --remove-orphans
 
-            # Tunggu container siap
             echo "⏳ Menunggu container siap (10 detik)..."
             sleep 10
 
             # Jalankan migrasi database
             docker compose exec -T app php artisan migrate --force --no-interaction
 
-            # Clear cache (opsional)
+            # Clear cache
             docker compose exec -T app php artisan config:cache
             docker compose exec -T app php artisan route:cache
             docker compose exec -T app php artisan view:cache
 
             echo "✅ Deployment selesai!"
+          '
