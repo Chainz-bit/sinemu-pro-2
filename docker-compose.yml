@@ -1,28 +1,18 @@
 version: '3.8'
+
 services:
   app:
-    build: .
+    image: ghcr.io/chainz-bit/sinemu-pro-2:latest
+    container_name: sinemu-app
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
     environment:
-      - APP_ENV=local
-      - APP_KEY=${APP_KEY}
-      - DB_HOST=db
-      - DB_DATABASE=${DB_DATABASE}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-    depends_on:
-      - db
+      - APP_ENV=production
+      - APP_DEBUG=false
+    networks:
+      - sinemu-net
 
-  db:
-    image: mysql:8.0
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: rootpassword
-    volumes:
-      - db_data:/var/lib/mysql
-
-volumes:
-  db_data:
+networks:
+  sinemu-net:
+    driver: bridge
