@@ -1,18 +1,18 @@
-version: '3.8'
+  version: '3.8'
 
-services:
-  app:
-    image: ghcr.io/chainz-bit/sinemu-pro-2:latest
-    container_name: sinemu-app
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    networks:
-      - sinemu-net
+  services:
+    app:
+      image: ghcr.io/chainz-bit/sinemu-pro-2:latest
+      container_name: sinemu-app
+      restart: unless-stopped
+      ports:
+        - "80:80"
+      environment:
+        - APP_ENV=production
+        - APP_DEBUG=false
+      networks:
+        - sinemu-net
 
-networks:
-  sinemu-net:
-    driver: bridge
+  networks:
+    sinemu-net:
+      driver: bridge
