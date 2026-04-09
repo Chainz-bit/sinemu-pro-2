@@ -129,7 +129,7 @@ jobs:
             cd /home/${{ secrets.SERVER_USER }}/RPL2D-kelompok-2
 
             # Pull image terbaru
-            docker pull ghcr.io/${{ github.repository }}:latest
+            docker pull ghcr.io/chainz-bit/sinemu-pro-2:latest
 
             # Update container tanpa downtime besar
             docker compose up -d --remove-orphans
