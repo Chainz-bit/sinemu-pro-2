@@ -9,10 +9,16 @@ use App\Http\Controllers\Admin\LostItemController;
 use App\Http\Controllers\Admin\ClaimVerificationController;
 use App\Http\Controllers\Admin\FoundItemController;
 use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\InputItemController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\UserItemActionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/media/{folder}/{path}', [MediaController::class, 'show'])
+    ->whereIn('folder', ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'])
+    ->where('path', '.*')
+    ->name('media.image');
 Route::middleware('auth')->get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -36,8 +42,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('barang-hilang', [LostItemController::class, 'index'])->name('lost-items');
+        Route::get('barang-hilang/{laporanBarangHilang}', [LostItemController::class, 'show'])->name('lost-items.show');
+        Route::delete('barang-hilang/{laporanBarangHilang}', [LostItemController::class, 'destroy'])->name('lost-items.destroy');
         Route::get('barang-temuan', [FoundItemController::class, 'index'])->name('found-items');
+        Route::get('barang-temuan/{barang}', [FoundItemController::class, 'show'])->name('found-items.show');
+        Route::get('barang-temuan/{barang}/export', [FoundItemController::class, 'export'])->name('found-items.export');
+        Route::patch('barang-temuan/{barang}/status', [FoundItemController::class, 'updateStatus'])->name('found-items.update-status');
+        Route::delete('barang-temuan/{barang}', [FoundItemController::class, 'destroy'])->name('found-items.destroy');
         Route::get('verifikasi-klaim', [ClaimVerificationController::class, 'index'])->name('claim-verifications');
+        Route::get('verifikasi-klaim/{klaim}', [ClaimVerificationController::class, 'show'])->name('claim-verifications.show');
+        Route::delete('verifikasi-klaim/{klaim}', [ClaimVerificationController::class, 'destroy'])->name('claim-verifications.destroy');
+        Route::get('input-barang', [InputItemController::class, 'index'])->name('input-items');
+        Route::post('input-barang', [InputItemController::class, 'store'])->name('input-items.store');
         Route::post('verifikasi-klaim/{klaim}/approve', [ClaimVerificationController::class, 'approve'])->name('claim-verifications.approve');
         Route::post('verifikasi-klaim/{klaim}/reject', [ClaimVerificationController::class, 'reject'])->name('claim-verifications.reject');
         Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');

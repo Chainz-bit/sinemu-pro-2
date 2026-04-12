@@ -1,4 +1,4 @@
-<header class="topbar">
+<header class="topbar {{ ($hideSearch ?? false) ? 'topbar-no-search' : '' }}">
     {{-- BAGIAN: Tombol Sidebar --}}
     <button type="button" class="sidebar-toggle" aria-label="Buka menu" aria-expanded="false" aria-controls="admin-sidebar">
         <span></span>
@@ -7,10 +7,14 @@
     </button>
 
     {{-- BAGIAN: Pencarian --}}
-    <form class="search-form" method="GET" action="{{ $searchAction ?? request()->url() }}" role="search">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0a6.5 6.5 0 0 1 13 0z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <input type="text" name="search" placeholder="{{ $searchPlaceholder ?? 'Cari laporan atau barang...' }}" value="{{ request('search') }}">
-    </form>
+    @if(!($hideSearch ?? false))
+        <form class="search-form" method="GET" action="{{ $searchAction ?? request()->url() }}" role="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0a6.5 6.5 0 0 1 13 0z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" name="search" placeholder="{{ $searchPlaceholder ?? 'Cari laporan atau barang' }}" value="{{ request('search') }}">
+        </form>
+    @else
+        <div class="topbar-spacer" aria-hidden="true"></div>
+    @endif
 
     {{-- BAGIAN: Aksi Utilitas --}}
     <div class="top-actions">
@@ -65,4 +69,3 @@
         </div>
     </div>
 </header>
-

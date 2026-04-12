@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
+use App\Services\ReportImageCleaner;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -26,6 +29,7 @@ class LostItemController extends Controller
                 'laporan_barang_hilangs.lokasi_hilang',
                 'laporan_barang_hilangs.tanggal_hilang',
                 'laporan_barang_hilangs.keterangan',
+                'laporan_barang_hilangs.foto_barang',
                 'laporan_barang_hilangs.created_at',
             ])
             ->selectSub(
@@ -129,5 +133,37 @@ class LostItemController extends Controller
         $items = $query->paginate(12)->withQueryString();
 
         return view('admin.pages.lost-items', compact('items', 'admin', 'sort'));
+    }
+
+    public function show(LaporanBarangHilang $laporanBarangHilang): View|RedirectResponse
+    {
+        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $laporanBarangHilang->sumber_laporan !== 'lapor_hilang') {
+            return redirect()->route('admin.lost-items');
+        }
+
+        /** @var \App\Models\Admin $admin */
+        $admin = Auth::guard('admin')->user();
+
+        $laporanBarangHilang->loadMissing(['user:id,nama,name,email', 'klaims' => function ($query) {
+            $query->latest('created_at');
+        }]);
+
+        $latestKlaim = $laporanBarangHilang->klaims->first();
+
+        return view('admin.pages.lost-item-detail', compact('laporanBarangHilang', 'latestKlaim', 'admin'));
+    }
+
+    public function destroy(LaporanBarangHilang $laporanBarangHilang): RedirectResponse
+    {
+        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
+            abort_if($laporanBarangHilang->sumber_laporan !== 'lapor_hilang', 404);
+        }
+
+        $photoPath = $laporanBarangHilang->foto_barang;
+
+        $laporanBarangHilang->delete();
+        ReportImageCleaner::purgeIfOrphaned($photoPath);
+
+        return redirect()->back()->with('status', 'Laporan barang hilang berhasil dihapus.');
     }
 }

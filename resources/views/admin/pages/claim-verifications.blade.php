@@ -5,7 +5,7 @@
     $pageTitle = 'Verifikasi Klaim - SiNemu';
     $activeMenu = 'claim-verifications';
     $searchAction = route('admin.claim-verifications');
-    $searchPlaceholder = 'Cari laporan, barang, atau pengguna...';
+    $searchPlaceholder = 'Cari laporan atau barang';
 @endphp
 
 @section('page-content')
@@ -94,18 +94,13 @@
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3z" fill="currentColor"/></svg>
                                 </button>
                                 <div class="row-menu" id="menu-claim-{{ $index }}">
-                                    @if($claim->status_klaim === 'pending' && (int) $claim->admin_id === (int) $admin->id)
-                                        <form method="POST" action="{{ route('admin.claim-verifications.approve', $claim->id) }}">
-                                            @csrf
-                                            <button type="submit" class="menu-submit">Setujui</button>
-                                        </form>
-                                        <form method="POST" action="{{ route('admin.claim-verifications.reject', $claim->id) }}">
-                                            @csrf
-                                            <button type="submit" class="menu-submit danger">Tolak</button>
-                                        </form>
-                                    @else
-                                        <a href="#">Penanggung Jawab: {{ $claim->admin_nama }}</a>
-                                    @endif
+                                    <a href="{{ route('admin.claim-verifications', ['search' => $claim->barang_temuan]) }}">Lihat Detail</a>
+                                    <a href="{{ route('admin.claim-verifications', ['search' => $claim->barang_temuan]) }}">Edit Data</a>
+                                    <form method="POST" action="{{ route('admin.claim-verifications.destroy', $claim->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus data ini?">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="menu-submit danger">Hapus</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -137,4 +132,3 @@
         </footer>
     </section>
 @endsection
-

@@ -10,7 +10,7 @@ class Klaim extends Model
 
     public function laporanHilang()
     {
-        return $this->belongsTo(LaporanBarangHilang::class);
+        return $this->belongsTo(LaporanBarangHilang::class, 'laporan_hilang_id');
     }
 
     public function barang()

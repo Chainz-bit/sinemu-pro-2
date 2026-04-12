@@ -141,6 +141,27 @@ class ClaimVerificationController extends Controller
         return redirect()->back()->with('status', 'Klaim berhasil ditolak.');
     }
 
+    public function show(Klaim $klaim): RedirectResponse
+    {
+        $this->ensureClaimOwnedByAdmin($klaim);
+        $keyword = $klaim->barang?->nama_barang
+            ?? $klaim->laporanHilang?->nama_barang
+            ?? '';
+
+        return redirect()->route('admin.claim-verifications', [
+            'search' => $keyword,
+            'status' => $klaim->status_klaim,
+        ]);
+    }
+
+    public function destroy(Klaim $klaim): RedirectResponse
+    {
+        abort_if(!Auth::guard('admin')->check(), 403);
+        $klaim->delete();
+
+        return redirect()->back()->with('status', 'Data klaim berhasil dihapus.');
+    }
+
     private function ensureClaimOwnedByAdmin(Klaim $klaim): void
     {
         $adminId = Auth::guard('admin')->id();

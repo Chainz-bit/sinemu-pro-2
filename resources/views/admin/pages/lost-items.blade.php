@@ -15,6 +15,12 @@
         <p>Kelola daftar barang yang hilang dan menunggu klaim pemiliknya.</p>
     </section>
 
+    @if(session('status'))
+        <div class="report-card" style="margin-bottom:12px;">
+            <header><h2 style="font-size:14px;">{{ session('status') }}</h2></header>
+        </div>
+    @endif
+
     {{-- BAGIAN: Toolbar + Tabel --}}
     <section class="report-card">
         <header>
@@ -57,7 +63,37 @@
                         <tr>
                             <td>
                                 <div class="item-cell">
-                                    <div class="item-avatar avatar-sand">{{ strtoupper(substr($item->nama_barang, 0, 1)) }}</div>
+                                    <div class="item-avatar avatar-sand">
+                                        <span class="item-avatar-fallback">{{ strtoupper(substr($item->nama_barang, 0, 1)) }}</span>
+                                        @if(!empty($item->foto_barang))
+                                            @php
+                                                $fotoPath = trim((string) $item->foto_barang, '/');
+                                                [$folder, $subPath] = array_pad(explode('/', $fotoPath, 2), 2, '');
+                                                $fotoUrl = in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== ''
+                                                    ? route('media.image', ['folder' => $folder, 'path' => $subPath], false)
+                                                    : asset('storage/' . $fotoPath);
+                                            @endphp
+                                            <img
+                                                src="{{ $fotoUrl }}"
+                                                alt="{{ $item->nama_barang }}"
+                                                loading="lazy"
+                                                decoding="async"
+                                                width="30"
+                                                height="30"
+                                                onerror="this.remove()"
+                                            >
+                                        @elseif(\Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower((string) $item->nama_barang), 'dompet'))
+                                            <img
+                                                src="{{ route('media.image', ['folder' => 'barang-hilang', 'path' => 'dompet.webp'], false) }}"
+                                                alt="{{ $item->nama_barang }}"
+                                                loading="lazy"
+                                                decoding="async"
+                                                width="30"
+                                                height="30"
+                                                onerror="this.remove()"
+                                            >
+                                        @endif
+                                    </div>
                                     <div>
                                         <strong>{{ $item->nama_barang }}</strong>
                                         <small>{{ $item->keterangan ?: 'Tanpa keterangan' }}</small>
@@ -84,9 +120,13 @@
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3z" fill="currentColor"/></svg>
                                 </button>
                                 <div class="row-menu" id="menu-{{ $index }}">
-                                    <a href="#">Lihat Detail</a>
+                                    <a href="{{ route('admin.lost-items.show', $item->id) }}">Lihat Detail</a>
                                     <a href="#">Edit Data</a>
-                                    <a href="#" class="danger">Hapus</a>
+                                    <form method="POST" action="{{ route('admin.lost-items.destroy', $item->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus laporan ini?">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="menu-submit danger">Hapus</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -118,4 +158,3 @@
         </footer>
     </section>
 @endsection
-

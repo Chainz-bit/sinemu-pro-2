@@ -27,7 +27,7 @@
             {{-- BAGIAN: Bilah Atas --}}
             @include('admin.partials.topbar', [
                 'searchAction' => $searchAction ?? request()->url(),
-                'searchPlaceholder' => $searchPlaceholder ?? 'Cari laporan atau barang...',
+                'searchPlaceholder' => $searchPlaceholder ?? 'Cari laporan atau barang',
             ])
 
             {{-- BAGIAN: Konten Halaman --}}
@@ -35,9 +35,20 @@
         </main>
     </div>
 
+    {{-- BAGIAN: Modal Konfirmasi --}}
+    <div class="confirm-modal-backdrop" id="confirm-modal-backdrop" hidden>
+        <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+            <h3 id="confirm-modal-title">Konfirmasi Hapus</h3>
+            <p id="confirm-modal-message">Yakin ingin menghapus data ini?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="confirm-btn-cancel" id="confirm-modal-cancel">Batal</button>
+                <button type="button" class="confirm-btn-danger" id="confirm-modal-submit">Hapus</button>
+            </div>
+        </div>
+    </div>
+
     {{-- BAGIAN: Skrip Global --}}
     <script src="{{ asset('js/page-transition.js') }}?v={{ @filemtime(public_path('js/page-transition.js')) }}" defer></script>
     <script type="module" src="{{ asset('js/admin/app.js') }}?v={{ @filemtime(public_path('js/admin/app.js')) }}"></script>
 </body>
 </html>
-

@@ -10,7 +10,7 @@
         <a href="{{ route('admin.lost-items') }}" class="{{ ($activeMenu ?? '') === 'lost-items' ? 'active' : '' }}">Daftar Barang Hilang</a>
         <a href="{{ route('admin.found-items') }}" class="{{ ($activeMenu ?? '') === 'found-items' ? 'active' : '' }}">Daftar Barang Temuan</a>
         <a href="{{ route('admin.claim-verifications') }}" class="{{ ($activeMenu ?? '') === 'claim-verifications' ? 'active' : '' }}">Verifikasi Klaim</a>
-        <a href="#" class="{{ ($activeMenu ?? '') === 'input-items' ? 'active' : '' }}">Input Barang</a>
+        <a href="{{ route('admin.input-items') }}" class="{{ ($activeMenu ?? '') === 'input-items' ? 'active' : '' }}">Input Barang</a>
     </nav>
 
     {{-- BAGIAN: Menu Profil --}}
@@ -43,4 +43,3 @@
         </div>
     </div>
 </aside>
-
