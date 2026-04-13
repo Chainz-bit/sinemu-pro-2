@@ -20,7 +20,8 @@ class BarangTemuanSeeder extends Seeder
             ['username' => 'superadmin'],
             [
                 'nama' => 'Super Admin',
-                'password' => Hash::make('password'),
+                'email' => 'superadmin@sinemu.com',
+                'password' => Hash::make('super123'),
             ]
         );
 
@@ -32,6 +33,10 @@ class BarangTemuanSeeder extends Seeder
                 'email' => 'admin@sinemu.local',
                 'password' => Hash::make('password'),
                 'instansi' => 'Kecamatan Indramayu',
+                'kecamatan' => 'Indramayu Kota',
+                'alamat_lengkap' => 'Jl. Jenderal Sudirman No. 88, Indramayu',
+                'status_verifikasi' => 'active',
+                'verified_at' => now(),
             ]
         );
 

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -38,14 +40,35 @@ class LoginController extends Controller
         $loginInput = trim((string) $validated['login']);
         $loginField = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-        if (Auth::guard('admin')->attempt([$loginField => $loginInput, 'password' => $validated['password']], (bool) $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->intended(route('admin.dashboard'));
+        $admin = Admin::query()->where($loginField, $loginInput)->first();
+
+        if (!$admin || !Hash::check($validated['password'], $admin->password)) {
+            return back()
+                ->withInput($request->only('login', 'remember'))
+                ->withErrors(['login' => 'Email/username atau kata sandi tidak sesuai.']);
         }
 
-        return back()
-            ->withInput($request->only('login', 'remember'))
-            ->withErrors(['login' => 'Email/username atau kata sandi tidak sesuai.']);
+        if (($admin->status_verifikasi ?? 'pending') === 'pending') {
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors(['login' => 'Akun Anda belum diverifikasi oleh super admin.']);
+        }
+
+        if ($admin->status_verifikasi === 'rejected') {
+            $message = 'Akun Anda ditolak oleh super admin.';
+            if (!empty($admin->alasan_penolakan)) {
+                $message .= ' Alasan: '.$admin->alasan_penolakan;
+            }
+
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors(['login' => $message]);
+        }
+
+        Auth::guard('admin')->login($admin, (bool) $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function logout(Request $request): RedirectResponse

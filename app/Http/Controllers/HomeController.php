@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
@@ -22,10 +23,13 @@ class HomeController extends Controller
         $lostTotalCount = 0;
         if (Schema::hasTable('laporan_barang_hilangs')) {
             $lostQuery = LaporanBarangHilang::query();
+            if (Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home')) {
+                $lostQuery->where('tampil_di_home', true);
+            }
             $lostTotalCount = (clone $lostQuery)->count();
 
             $lostItems = $lostQuery
-                ->latest('tanggal_hilang')
+                ->latest('updated_at')
                 ->get()
                 ->map(function ($item) {
                     return [
@@ -44,10 +48,13 @@ class HomeController extends Controller
         $foundTotalCount = 0;
         if (Schema::hasTable('barangs')) {
             $foundQuery = Barang::query()->with('kategori:id,nama_kategori');
+            if (Schema::hasColumn('barangs', 'tampil_di_home')) {
+                $foundQuery->where('tampil_di_home', true);
+            }
             $foundTotalCount = (clone $foundQuery)->count();
 
             $foundItems = $foundQuery
-                ->latest('tanggal_ditemukan')
+                ->latest('updated_at')
                 ->get()
                 ->map(function ($item) {
                     return [
@@ -109,6 +116,58 @@ class HomeController extends Controller
             })->values()->all();
         }
 
+        $pickupLocations = [];
+        if (Schema::hasTable('admins')) {
+            $hasStatusVerifikasi = Schema::hasColumn('admins', 'status_verifikasi');
+            $hasKecamatan = Schema::hasColumn('admins', 'kecamatan');
+            $hasAlamatLengkap = Schema::hasColumn('admins', 'alamat_lengkap');
+            $hasLat = Schema::hasColumn('admins', 'lat');
+            $hasLng = Schema::hasColumn('admins', 'lng');
+
+            $selectColumns = ['id', 'instansi'];
+            if ($hasKecamatan) {
+                $selectColumns[] = 'kecamatan';
+            }
+            if ($hasAlamatLengkap) {
+                $selectColumns[] = 'alamat_lengkap';
+            }
+            if ($hasLat) {
+                $selectColumns[] = 'lat';
+            }
+            if ($hasLng) {
+                $selectColumns[] = 'lng';
+            }
+
+            $pickupQuery = Admin::query()->orderBy('instansi');
+
+            if ($hasStatusVerifikasi) {
+                $pickupQuery->where('status_verifikasi', 'active');
+            }
+            if ($hasKecamatan) {
+                $pickupQuery->whereNotNull('kecamatan');
+            }
+            if ($hasAlamatLengkap) {
+                $pickupQuery->whereNotNull('alamat_lengkap');
+            }
+
+            $pickupLocations = $pickupQuery
+                ->get($selectColumns)
+                ->map(function (Admin $admin) use ($hasKecamatan, $hasAlamatLengkap, $hasLat, $hasLng) {
+                    return [
+                        'id' => $admin->id,
+                        'name' => $admin->instansi,
+                        'address' => $hasAlamatLengkap ? $admin->alamat_lengkap : $admin->instansi,
+                        'kecamatan' => $hasKecamatan ? $admin->kecamatan : '',
+                        'lat' => $hasLat && $admin->lat !== null ? (float) $admin->lat : null,
+                        'lng' => $hasLng && $admin->lng !== null ? (float) $admin->lng : null,
+                        'phone' => '0812-3456-7890',
+                        'hours' => '08.00-20.00 WIB',
+                    ];
+                })
+                ->values()
+                ->all();
+        }
+
         $userName = Auth::user()?->nama ?? Auth::user()?->name ?? 'Pengguna';
         $userLocation = Auth::user()?->location ?? 'Lokasi Anda';
 
@@ -121,6 +180,7 @@ class HomeController extends Controller
             'kategoriOptions',
             'regions',
             'mapRegions',
+            'pickupLocations',
             'userName',
             'userLocation'
         ));

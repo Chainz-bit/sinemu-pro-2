@@ -50,7 +50,6 @@ class AppServiceProvider extends ServiceProvider
 
             $notifications = $admin->notifications()
                 ->latest('created_at')
-                ->limit(6)
                 ->get();
 
             $unreadCount = $admin->notifications()

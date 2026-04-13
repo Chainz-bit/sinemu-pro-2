@@ -1,0 +1,44 @@
+/* Bagian ini mengatur header halaman admin seperti judul dan deskripsi singkat. */
+.intro {
+    margin: 20px 2px 14px;
+}
+
+.intro h1 {
+    font-size: 30px;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.intro p {
+    color: var(--muted);
+    margin: 6px 0 0;
+    font-size: 14px;
+}
+
+/* Bagian ini untuk kartu statistik ringkas di dashboard. */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    grid-column: span 4;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.stat-card span {
+    display: block;
+    color: #5f6f84;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.stat-card strong {
+    font-size: 42px;
+    line-height: 1;
+}

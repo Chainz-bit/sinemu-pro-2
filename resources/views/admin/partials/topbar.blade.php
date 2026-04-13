@@ -31,41 +31,67 @@
         <div class="notification-modal" id="notification-modal">
             <div class="notification-head">
                 <strong>Your notifications</strong>
-                <form method="POST" action="{{ route('admin.notifications.read-all') }}">
-                    @csrf
-                    <button type="submit" class="notification-link-btn">Tandai semua dibaca</button>
-                </form>
+                <div class="notification-head-actions">
+                    <form method="POST" action="{{ route('admin.notifications.read-all') }}">
+                        @csrf
+                        <button type="submit" class="notification-link-btn">Tandai semua dibaca</button>
+                    </form>
+                    <form method="POST" action="{{ route('admin.notifications.destroy-all') }}" data-confirm-delete data-confirm-message="Hapus semua notifikasi?">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="notification-link-btn danger">Hapus semua</button>
+                    </form>
+                </div>
             </div>
 
-            <div class="notification-tabs">
-                <button type="button" class="active">View all</button>
-                <button type="button">Unread <span>{{ $adminUnreadNotificationsCount ?? 0 }}</span></button>
+            <div class="notification-tabs" aria-label="Ringkasan notifikasi">
+                <span class="notification-tab-info">Belum dibaca <strong>{{ $adminUnreadNotificationsCount ?? 0 }}</strong></span>
             </div>
 
             <div class="notification-list">
                 @forelse(($adminNotifications ?? collect()) as $notification)
-                    <div class="notification-item">
+                    <div class="notification-item {{ is_null($notification->read_at) ? 'is-unread' : 'is-read' }}">
                         <a href="{{ $notification->action_url ?: '#' }}" class="notification-main">
                             <div class="notification-text">
                                 <strong>{{ $notification->title }}: {{ $notification->message }}</strong>
-                                <small>{{ $notification->created_at?->diffForHumans() }}</small>
+                                <small>
+                                    {{ $notification->created_at?->diffForHumans() }}
+                                    @if(is_null($notification->read_at))
+                                        <span class="notification-state unread">Belum dibaca</span>
+                                    @else
+                                        <span class="notification-state read">Sudah dibaca</span>
+                                    @endif
+                                </small>
                             </div>
                         </a>
-                        @if(is_null($notification->read_at))
-                            <form method="POST" action="{{ route('admin.notifications.read', $notification->id) }}">
-                                @csrf
-                                <button type="submit" class="notification-link-btn">Tandai sudah dibaca</button>
-                            </form>
-                        @else
-                            <span class="notification-dot read"></span>
-                        @endif
+                        <details class="notification-menu-wrap">
+                            <summary class="notification-menu-trigger" aria-label="Aksi notifikasi">
+                                <iconify-icon icon="mdi:dots-vertical"></iconify-icon>
+                            </summary>
+
+                            <div class="notification-menu">
+                                @if(is_null($notification->read_at))
+                                    <form method="POST" action="{{ route('admin.notifications.read', $notification->id) }}">
+                                        @csrf
+                                        <button type="submit" class="notification-menu-item">Tandai telah dibaca</button>
+                                    </form>
+                                @else
+                                    <span class="notification-menu-item disabled">Sudah dibaca</span>
+                                @endif
+
+                                <form method="POST" action="{{ route('admin.notifications.destroy', $notification->id) }}" data-confirm-delete data-confirm-message="Hapus notifikasi ini?">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="notification-menu-item danger">Hapus pesan</button>
+                                </form>
+                            </div>
+                        </details>
                     </div>
                 @empty
                     <div class="notification-empty">Belum ada notifikasi.</div>
                 @endforelse
             </div>
 
-            <a href="{{ route('admin.claim-verifications') }}" class="notification-footer">View all notifications</a>
         </div>
     </div>
 </header>

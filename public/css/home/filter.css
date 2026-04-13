@@ -2,6 +2,10 @@
     position: relative;
     z-index: 20;
     overflow: visible;
+    /* Pastikan dropdown filter tidak terpotong oleh containment global section. */
+    content-visibility: visible;
+    contain: none;
+    contain-intrinsic-size: auto;
 }
 
 .filter-wrap {
@@ -13,6 +17,15 @@
     border-radius: 24px;
     border: none !important;
     box-shadow: 0 14px 30px rgba(18, 16, 27, 0.08) !important;
+}
+
+/* Prioritas layer dropdown di atas section setelah hero/filter. */
+#pencarian .filter-dropdown {
+    z-index: 40;
+}
+
+#pencarian .filter-dropdown.open {
+    z-index: 50;
 }
 
 .filter-header {

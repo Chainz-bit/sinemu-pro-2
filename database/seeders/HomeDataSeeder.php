@@ -27,19 +27,36 @@ class HomeDataSeeder extends Seeder
                 ['username' => 'superadmin'],
                 [
                     'nama' => 'Super Admin',
-                    'password' => Hash::make('password'),
+                    'email' => 'superadmin@sinemu.com',
+                    'password' => Hash::make('super123'),
                 ]
             );
+
+            if (empty($superAdmin->email)) {
+                $superAdmin->update(['email' => 'superadmin@sinemu.com']);
+            }
 
             $admin = Admin::firstOrCreate(
                 ['username' => 'admin'],
                 [
                     'super_admin_id' => $superAdmin->id,
                     'nama' => 'Admin Kecamatan',
+                    'email' => 'admin@sinemu.local',
                     'password' => Hash::make('password'),
                     'instansi' => 'Kecamatan Indramayu',
+                    'kecamatan' => 'Indramayu Kota',
+                    'alamat_lengkap' => 'Jl. Jenderal Sudirman No. 88, Indramayu',
+                    'status_verifikasi' => 'active',
+                    'verified_at' => now(),
                 ]
             );
+
+            if (($admin->status_verifikasi ?? null) !== 'active') {
+                $admin->update([
+                    'status_verifikasi' => 'active',
+                    'verified_at' => now(),
+                ]);
+            }
         }
 
         $user = null;

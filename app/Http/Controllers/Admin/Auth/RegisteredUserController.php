@@ -7,7 +7,6 @@ use App\Models\Admin;
 use App\Models\SuperAdmin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
@@ -17,7 +16,38 @@ class RegisteredUserController extends Controller
 {
     public function create(): View
     {
-        return view('admin.auth.register');
+        $kecamatanOptions = [
+            'Balongan',
+            'Bongas',
+            'Cantigi',
+            'Cikedung',
+            'Gabuswetan',
+            'Gantar',
+            'Haurgeulis',
+            'Indramayu Kota',
+            'Jatibarang',
+            'Juntinyuat',
+            'Kandanghaur',
+            'Karangampel',
+            'Kedokanbunder',
+            'Kertasemaya',
+            'Krangkeng',
+            'Kroya',
+            'Lelea',
+            'Lobener',
+            'Losarang',
+            'Pasekan',
+            'Patrol',
+            'Sindang',
+            'Sliyeg',
+            'Sukagumiwang',
+            'Sukra',
+            'Terisi',
+            'Tukdana',
+            'Widasari',
+        ];
+
+        return view('admin.auth.register', compact('kecamatanOptions'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -32,6 +62,8 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:admins,email'],
             'username' => ['required', 'string', 'max:255'],
             'instansi' => ['required', 'string', 'max:255'],
+            'kecamatan' => ['required', 'string', 'max:100'],
+            'alamat_lengkap' => ['required', 'string', 'max:1200'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -41,24 +73,27 @@ class RegisteredUserController extends Controller
         if (!$superAdmin) {
             $superAdmin = SuperAdmin::query()->create([
                 'nama' => 'Super Admin',
+                'email' => 'superadmin@sinemu.com',
                 'username' => 'superadmin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('super123'),
             ]);
         }
 
-        $admin = Admin::query()->create([
+        Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'nama' => $validated['nama'],
             'email' => $validated['email'],
             'username' => $username,
             'instansi' => $validated['instansi'],
+            'kecamatan' => $validated['kecamatan'],
+            'alamat_lengkap' => $validated['alamat_lengkap'],
+            'status_verifikasi' => 'pending',
             'password' => Hash::make($validated['password']),
         ]);
 
-        Auth::guard('admin')->login($admin);
-        $request->session()->regenerate();
-
-        return redirect()->route('admin.dashboard');
+        return redirect()
+            ->route('admin.login')
+            ->with('status', 'Pendaftaran berhasil. Akun Anda akan diverifikasi oleh super admin dalam 1x24 jam.');
     }
 
     private function buildUniqueAdminUsername(string $usernameInput): string

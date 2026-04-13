@@ -32,4 +32,24 @@ class AdminNotificationController extends Controller
 
         return back();
     }
+
+    public function destroy(AdminNotification $notification): RedirectResponse
+    {
+        $adminId = (int) Auth::guard('admin')->id();
+        abort_if((int) $notification->admin_id !== $adminId, 403);
+
+        $notification->delete();
+
+        return back();
+    }
+
+    public function destroyAll(): RedirectResponse
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin, 403);
+
+        $admin->notifications()->delete();
+
+        return back();
+    }
 }

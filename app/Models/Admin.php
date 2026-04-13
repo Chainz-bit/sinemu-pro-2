@@ -9,7 +9,23 @@ class Admin extends Authenticatable
 {
     use HasFactory;
 
-    protected $fillable = ['super_admin_id', 'nama', 'email', 'username', 'password', 'instansi', 'profil'];
+    protected $fillable = [
+        'super_admin_id',
+        'nama',
+        'email',
+        'username',
+        'password',
+        'instansi',
+        'kecamatan',
+        'alamat_lengkap',
+        'status_verifikasi',
+        'alasan_penolakan',
+        'verified_at',
+        'lat',
+        'lng',
+        'profil',
+    ];
+
     protected $hidden = ['password'];
 
     public function superAdmin()

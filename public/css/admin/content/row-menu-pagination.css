@@ -1,0 +1,138 @@
+/* Bagian ini untuk menu aksi pada setiap baris tabel (lihat, hapus, dll). */
+.menu-cell {
+    width: 72px;
+    position: relative;
+    overflow: visible;
+}
+
+.row-menu-trigger {
+    border: 0;
+    background: transparent;
+    color: #8592a3;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+}
+
+.row-menu-trigger svg {
+    width: 16px;
+    height: 16px;
+}
+
+.row-menu-trigger:hover {
+    background: #f3f6fb;
+}
+
+.row-menu {
+    display: none;
+    position: absolute;
+    top: 34px;
+    bottom: auto;
+    right: 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    min-width: 150px;
+    box-shadow: 0 8px 20px rgba(16, 24, 40, 0.08);
+    z-index: 9999;
+}
+
+.row-menu.open-down {
+    top: 34px;
+    bottom: auto;
+}
+
+.row-menu.open-up {
+    top: auto;
+    bottom: 34px;
+}
+
+.row-menu.open {
+    display: block;
+}
+
+.row-menu a {
+    display: block;
+    text-decoration: none;
+    color: #425366;
+    font-size: 12px;
+    padding: 8px 10px;
+}
+
+.row-menu a:hover {
+    background: #f7f9fd;
+}
+
+.row-menu a.danger {
+    color: #cf1e1e;
+}
+
+.row-menu .row-menu-action {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    display: block;
+    text-decoration: none;
+    text-align: left;
+    color: #425366;
+    font-size: 12px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.row-menu .row-menu-action:hover {
+    background: #f7f9fd;
+}
+
+.menu-submit {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    color: #425366;
+    font-size: 12px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.menu-submit:hover {
+    background: #f7f9fd;
+}
+
+.menu-submit.danger {
+    color: #cf1e1e;
+}
+
+.row-menu-note {
+    display: block;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #16a34a;
+}
+
+/* Bagian ini untuk kontrol pagination di bawah tabel. */
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 11px 14px;
+    position: relative;
+    z-index: 0;
+}
+
+.pagination button {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: #5f6f84;
+    border-radius: 6px;
+    font-size: 11px;
+    padding: 5px 8px;
+    cursor: pointer;
+}
+
+.pagination .active {
+    background: #1c8ce6;
+    border-color: #1c8ce6;
+    color: #fff;
+}

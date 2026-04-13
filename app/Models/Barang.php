@@ -15,6 +15,7 @@ class Barang extends Model
         'tanggal_ditemukan',
         'status_barang',
         'foto_barang',
+        'tampil_di_home',
         'lokasi_pengambilan',
         'alamat_pengambilan',
         'penanggung_jawab_pengambilan',

@@ -1,0 +1,397 @@
+/* Bagian ini mengatur layout detail barang hilang agar konsisten dengan detail barang temuan, tetapi tetap terpisah. */
+.lost-detail-page {
+    display: grid;
+    gap: 16px;
+    margin-top: 10px;
+    padding-bottom: 14px;
+    max-width: 1320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.lost-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.lost-detail-breadcrumb {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #7b8797;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lost-detail-breadcrumb a {
+    color: #637894;
+    text-decoration: none;
+}
+
+.lost-detail-header h1 {
+    margin: 0;
+    font-size: 36px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+}
+
+.lost-detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lost-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.lost-action-btn-ghost {
+    border-color: #d8e1ee;
+    background: #fff;
+    color: #526178;
+}
+
+.lost-action-btn-ghost:hover {
+    background: #f8fbff;
+    border-color: #cdd8e9;
+}
+
+.lost-action-btn-primary {
+    border-color: #2f8fe9;
+    background: #2f8fe9;
+    color: #fff;
+}
+
+.lost-action-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.lost-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.lost-detail-main {
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.lost-detail-main-content {
+    display: grid;
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    gap: 16px;
+    padding: 16px;
+}
+
+.lost-detail-image-wrap {
+    border: 1px solid #e7edf6;
+    background: linear-gradient(180deg, #f5f8fc 0%, #eef3f9 100%);
+    min-height: 320px;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    border-radius: 12px;
+}
+
+.lost-detail-image {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 285px;
+    display: block;
+    border-radius: 12px;
+}
+
+.lost-detail-body {
+    padding: 2px 0;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+}
+
+.lost-detail-body h2 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    text-transform: none;
+}
+
+.lost-detail-body p {
+    margin: 0;
+    color: #4c6079;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.lost-detail-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #edf1f6;
+}
+
+.lost-detail-meta span {
+    display: block;
+    color: #8091a8;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.lost-detail-meta strong {
+    font-size: 13px;
+    color: #1f2d3d;
+}
+
+.lost-detail-meta > div {
+    border: 1px solid #edf2f7;
+    background: #fafcff;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.lost-detail-side {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    position: sticky;
+    top: 0;
+}
+
+.lost-detail-panel > header {
+    padding: 12px 12px;
+}
+
+.lost-detail-panel > header h2 {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7a8ba3;
+}
+
+.lost-detail-panel-body {
+    padding: 12px 12px 13px;
+    display: grid;
+    gap: 10px;
+}
+
+.lost-detail-panel-body p {
+    margin: 0;
+    font-size: 13px;
+    color: #4a607a;
+    line-height: 1.45;
+}
+
+.lost-detail-panel-body p strong {
+    color: #223446;
+}
+
+.lost-form-group {
+    display: grid;
+    gap: 8px;
+}
+
+.lost-status-edit-form {
+    margin-top: 6px;
+    display: grid;
+    gap: 8px;
+}
+
+.lost-status-form-label {
+    font-size: 12px;
+    color: #5f7087;
+    font-weight: 600;
+}
+
+.lost-status-form-input {
+    height: 38px;
+    padding: 8px 10px;
+}
+
+.lost-status-form-input:disabled {
+    background: #f3f6fb;
+    color: #66758c;
+    cursor: not-allowed;
+}
+
+.lost-form-group .form-textarea-sm.lost-status-form-input {
+    height: auto;
+    min-height: 76px;
+}
+
+.lost-empty-note {
+    font-size: 12px;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px dashed #d7e1ee;
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+
+.lost-activity-item {
+    position: relative;
+    padding-left: 14px;
+}
+
+.lost-activity-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #3b82f6;
+}
+
+.lost-activity-item small {
+    display: block;
+    margin-top: 2px;
+    color: #7b8ba1;
+    font-size: 11px;
+}
+
+.lost-person-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lost-person-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #e6f0ff;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.lost-person-row small {
+    color: #74869f;
+    font-size: 11px;
+}
+
+.lost-contact-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.lost-contact-actions .filter-btn {
+    text-decoration: none;
+    font-size: 11px;
+    padding: 6px 10px;
+    background: #f7f9fc;
+}
+
+.lost-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+}
+
+.lost-info-icon {
+    width: 18px;
+    height: 18px;
+    color: #8aa0bd;
+    margin-top: 2px;
+}
+
+.lost-info-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.lost-info-item small {
+    color: #7b8ba1;
+    font-size: 11px;
+}
+
+@media (max-width: 1024px) {
+    .lost-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lost-detail-side {
+        position: static;
+    }
+
+    .lost-detail-header h1 {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 640px) {
+    .lost-detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .lost-detail-header h1 {
+        font-size: 26px;
+    }
+
+    .lost-detail-actions {
+        width: 100%;
+    }
+
+    .lost-action-btn {
+        flex: 1 1 0;
+        text-align: center;
+        padding: 8px 10px;
+    }
+
+    .lost-detail-body h2 {
+        font-size: 26px;
+    }
+
+    .lost-detail-image {
+        max-height: 220px;
+    }
+
+    .lost-detail-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .lost-detail-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .lost-detail-body h2 {
+        font-size: 18px;
+    }
+
+    .lost-detail-image {
+        max-height: 190px;
+    }
+
+    .lost-detail-main-content {
+        padding: 10px;
+        gap: 10px;
+        grid-template-columns: 1fr;
+    }
+}

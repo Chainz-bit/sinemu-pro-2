@@ -20,6 +20,11 @@
             <header><h2 style="font-size:14px;">{{ session('status') }}</h2></header>
         </div>
     @endif
+    @if(session('error'))
+        <div class="report-card" style="margin-bottom:12px;">
+            <header><h2 style="font-size:14px;color:#b91c1c;">{{ session('error') }}</h2></header>
+        </div>
+    @endif
 
     {{-- BAGIAN: Toolbar + Tabel --}}
     <section class="report-card">
@@ -122,6 +127,14 @@
                                 <div class="row-menu" id="menu-found-{{ $index }}">
                                     <a href="{{ route('admin.found-items.show', $item->id) }}">Lihat Detail</a>
                                     <a href="#">Edit Data</a>
+                                    @if(!($item->tampil_di_home ?? false))
+                                        <form method="POST" action="{{ route('admin.dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $item->id]) }}">
+                                            @csrf
+                                            <button type="submit" class="menu-submit">Upload</button>
+                                        </form>
+                                    @else
+                                        <span class="row-menu-note">Sudah di-upload</span>
+                                    @endif
                                     <form method="POST" action="{{ route('admin.found-items.destroy', $item->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus laporan ini?">
                                         @csrf
                                         @method('DELETE')

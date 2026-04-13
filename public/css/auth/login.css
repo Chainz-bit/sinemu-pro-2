@@ -165,6 +165,12 @@ body {
     border: 1px solid #fecaca;
 }
 
+.alert-success {
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+}
+
 /* =========================================
    Login - Form
 ========================================= */

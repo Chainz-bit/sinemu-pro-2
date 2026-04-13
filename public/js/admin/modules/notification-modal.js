@@ -35,6 +35,24 @@ export function createNotificationModal(notificationTrigger, notificationModal) 
         notificationModal.addEventListener('click', function (event) {
             event.stopPropagation();
         });
+
+        // Tutup menu titik-tiga notifikasi lain saat membuka menu baru.
+        notificationModal.addEventListener('toggle', function (event) {
+            const target = event.target;
+            if (!target.classList || !target.classList.contains('notification-menu-wrap')) {
+                return;
+            }
+
+            if (!target.open) {
+                return;
+            }
+
+            notificationModal.querySelectorAll('.notification-menu-wrap[open]').forEach(function (menu) {
+                if (menu !== target) {
+                    menu.open = false;
+                }
+            });
+        }, true);
     }
 
     return { close, open, bind };

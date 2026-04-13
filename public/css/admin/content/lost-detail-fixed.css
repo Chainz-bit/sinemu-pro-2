@@ -1,0 +1,38 @@
+/* Bagian ini untuk mode halaman detail hilang dengan scroll internal agar layout tetap stabil. */
+body.lost-detail-page-mode {
+    overflow: hidden;
+}
+
+body.lost-detail-page-mode .admin-shell {
+    height: 100vh;
+    overflow: hidden;
+}
+
+body.lost-detail-page-mode .main-content {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+body.lost-detail-page-mode .lost-detail-page {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+body.lost-detail-page-mode .lost-detail-page::-webkit-scrollbar {
+    width: 9px;
+}
+
+body.lost-detail-page-mode .lost-detail-page::-webkit-scrollbar-track {
+    background: #edf2f8;
+    border-radius: 999px;
+}
+
+body.lost-detail-page-mode .lost-detail-page::-webkit-scrollbar-thumb {
+    background: #bcc9db;
+    border-radius: 999px;
+    border: 2px solid #edf2f8;
+}

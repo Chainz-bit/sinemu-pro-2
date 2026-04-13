@@ -377,35 +377,73 @@
         {{-- ========================================= --}}
         <section id="lokasi-pengambilan" class="section-space pt-0">
             <div class="surface-card lokasi-wrap p-3 p-lg-4">
+                <header class="lokasi-header">
+                    <h2 class="lokasi-main-title mb-1">Lokasi Pengambilan Sinemu - Indramayu</h2>
+                    <p class="lokasi-main-subtitle mb-0">Butuh bantuan klaim? Hubungi Support Center kami.</p>
+                </header>
+
                 <div class="lokasi-layout">
                     <div class="lokasi-map-panel">
-                        <iframe
-                            class="lokasi-map-frame"
-                            title="Lokasi Kantor Sinemu Indramayu"
-                            loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade"
-                            src="https://www.google.com/maps?q=-6.3265,108.3202&z=15&output=embed">
-                        </iframe>
+                        <div id="pickupMap" class="lokasi-map-frame" aria-label="Peta lokasi pengambilan Sinemu Indramayu"></div>
+                        <div class="lokasi-map-footer">
+                            <span>Shortcut: Geser untuk pindah peta, pinch/scroll untuk zoom.</span>
+                            <span>&copy; Sinemu Indramayu</span>
+                        </div>
                     </div>
-                    <aside class="lokasi-info-panel">
-                        <h3 class="lokasi-title mb-2">Lokasi Kami</h3>
-                        <p class="lokasi-subtitle mb-3">Dapatkan petunjuk terdekat tentang kantor kami, dengan mudah.</p>
 
-                        <div class="lokasi-contact-chip mb-2">
+                    <aside class="lokasi-info-panel">
+                        <h3 class="lokasi-title mb-2">Support & Lokasi Aktif</h3>
+                        <p class="lokasi-subtitle mb-3">Pilih lokasi pengambilan terdekat, lalu buka peta atau dapatkan rute langsung.</p>
+
+                        <div class="lokasi-contact-chip mb-3">
                             <span class="lokasi-chip-icon"><i class="fa-solid fa-location-dot"></i></span>
                             <div>
-                                <p class="mb-0 fw-bold">Alamat Kami</p>
-                                <small>Jl. Jenderal Sudirman No. 88, Indramayu</small>
+                                <p class="mb-0 fw-bold" id="selectedLocationName">Sinemu Center Indramayu</p>
+                                <small id="selectedLocationAddress">Jl. Jenderal Sudirman No. 88, Indramayu</small>
                             </div>
                         </div>
 
-                        <a class="lokasi-action-btn lokasi-action-primary" href="https://maps.google.com/?q=-6.3265,108.3202" target="_blank" rel="noopener">
-                            <i class="fa-regular fa-map me-2"></i>Buka di Maps
-                        </a>
-                        <a class="lokasi-action-btn lokasi-action-secondary mt-2" href="https://www.google.com/maps/dir/?api=1&destination=-6.3265,108.3202" target="_blank" rel="noopener">
-                            <i class="fa-solid fa-route me-2"></i>Dapatkan Rute
+                        <div class="lokasi-meta mb-3">
+                            <span id="selectedLocationHours">Jam Operasional: 08.00-20.00 WIB</span>
+                            <span id="selectedLocationDistance">Jarak: aktifkan Lokasi Saya untuk estimasi.</span>
+                        </div>
+
+                        <div class="lokasi-actions mb-3">
+                            <a id="selectedOpenMaps" class="lokasi-action-btn lokasi-action-primary" href="#" target="_blank" rel="noopener">
+                                <i class="fa-regular fa-map me-2"></i>Buka di Maps
+                            </a>
+                            <button id="selectedGetRoute" type="button" class="lokasi-action-btn lokasi-action-secondary mt-2">
+                                <i class="fa-solid fa-route me-2"></i>Dapatkan Route
+                            </button>
+                            <button id="locateMeButton" type="button" class="lokasi-action-btn lokasi-action-light mt-2">
+                                <i class="fa-solid fa-location-crosshairs me-2"></i>Lokasi Saya
+                            </button>
+                        </div>
+
+                        <a
+                            class="lokasi-support-link"
+                            href="https://wa.me/6281234567890?text=Halo%20Sinemu%20Support%20Indramayu%2C%20saya%20butuh%20bantuan%20proses%20klaim."
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <i class="fa-brands fa-whatsapp me-2"></i>Hubungi Support Center (0812-3456-7890)
                         </a>
                     </aside>
+                </div>
+
+                <div class="lokasi-list-wrap mt-3">
+                    <div class="lokasi-list-head">
+                        <h3 class="lokasi-list-title mb-0">Daftar Titik Pengambilan (Multiadmin)</h3>
+                        <div class="lokasi-carousel-controls" aria-label="Navigasi carousel lokasi">
+                            <button id="pickupCarouselPrev" type="button" class="lokasi-carousel-btn" aria-label="Geser ke kiri">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button id="pickupCarouselNext" type="button" class="lokasi-carousel-btn" aria-label="Geser ke kanan">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="pickupLocationList" class="lokasi-list lokasi-carousel" aria-live="polite"></div>
                 </div>
             </div>
         </section>
@@ -484,6 +522,12 @@
         {{-- Contact Us End --}}
 
         @push('styles')
+            <link
+                rel="stylesheet"
+                href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+                integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+                crossorigin=""
+            >
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         @endpush
 
@@ -609,7 +653,16 @@
             </div>
         @endauth
 
+        <script id="pickupLocationsData" type="application/json">
+            @json($pickupLocations ?? [])
+        </script>
+
         @push('scripts')
+            <script
+                src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+                crossorigin=""
+            ></script>
             <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
             <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
         @endpush

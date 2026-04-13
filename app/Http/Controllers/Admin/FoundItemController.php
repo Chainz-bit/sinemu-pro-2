@@ -23,7 +23,7 @@ class FoundItemController extends Controller
 
         $query = Barang::query()
             ->with(['kategori', 'admin:id,nama'])
-            ->orderByDesc('created_at');
+            ->orderByDesc('updated_at');
 
         if ($request->filled('search')) {
             $search = trim((string) $request->query('search'));
@@ -45,7 +45,7 @@ class FoundItemController extends Controller
         $sort = (string) $request->query('sort', 'terbaru');
         switch ($sort) {
             case 'terlama':
-                $query->orderBy('tanggal_ditemukan');
+                $query->orderBy('updated_at');
                 break;
             case 'nama_asc':
                 $query->orderBy('nama_barang');
@@ -54,7 +54,7 @@ class FoundItemController extends Controller
                 $query->orderByDesc('nama_barang');
                 break;
             default:
-                $query->orderByDesc('tanggal_ditemukan');
+                $query->orderByDesc('updated_at');
                 break;
         }
 

@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             event.preventDefault();
+            notification.close();
             openConfirmModal(form);
         });
     });

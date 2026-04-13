@@ -17,8 +17,9 @@ public function run(): void
 {
     $super = SuperAdmin::create([
         'nama' => 'Super Admin',
+        'email' => 'superadmin@sinemu.com',
         'username' => 'superadmin',
-        'password' => Hash::make('password'),
+        'password' => Hash::make('super123'),
     ]);
 
     Admin::create([
@@ -28,6 +29,10 @@ public function run(): void
         'username' => 'admin',
         'password' => Hash::make('password'),
         'instansi' => 'Politeknik Negeri Indramayu',
+        'kecamatan' => 'Indramayu Kota',
+        'alamat_lengkap' => 'Jl. Jenderal Sudirman No. 88, Indramayu',
+        'status_verifikasi' => 'active',
+        'verified_at' => now(),
     ]);
 }
 }

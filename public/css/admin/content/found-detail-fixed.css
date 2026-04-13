@@ -1,0 +1,38 @@
+/* Bagian ini untuk mode halaman detail temuan dengan scroll internal agar layout tetap stabil. */
+body.found-detail-page-mode {
+    overflow: hidden;
+}
+
+body.found-detail-page-mode .admin-shell {
+    height: 100vh;
+    overflow: hidden;
+}
+
+body.found-detail-page-mode .main-content {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+body.found-detail-page-mode .found-detail-page {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+body.found-detail-page-mode .found-detail-page::-webkit-scrollbar {
+    width: 9px;
+}
+
+body.found-detail-page-mode .found-detail-page::-webkit-scrollbar-track {
+    background: #edf2f8;
+    border-radius: 999px;
+}
+
+body.found-detail-page-mode .found-detail-page::-webkit-scrollbar-thumb {
+    background: #bcc9db;
+    border-radius: 999px;
+    border: 2px solid #edf2f8;
+}

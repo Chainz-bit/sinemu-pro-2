@@ -21,6 +21,11 @@
             <header><h2 style="font-size:14px;">{{ session('status') }}</h2></header>
         </div>
     @endif
+    @if(session('error'))
+        <div class="report-card" style="margin-bottom:12px;">
+            <header><h2 style="font-size:14px;color:#b91c1c;">{{ session('error') }}</h2></header>
+        </div>
+    @endif
 
     {{-- BAGIAN: Toolbar + Tabel --}}
     <section class="report-card">
@@ -96,6 +101,19 @@
                                 <div class="row-menu" id="menu-claim-{{ $index }}">
                                     <a href="{{ route('admin.claim-verifications', ['search' => $claim->barang_temuan]) }}">Lihat Detail</a>
                                     <a href="{{ route('admin.claim-verifications', ['search' => $claim->barang_temuan]) }}">Edit Data</a>
+                                    @php
+                                        $isPublished = (bool) ($claim->barang_tampil_di_home ?? false) || (bool) ($claim->laporan_hilang_tampil_di_home ?? false);
+                                        $uploadType = !empty($claim->barang_id) ? 'temuan' : (!empty($claim->laporan_hilang_id) ? 'hilang' : null);
+                                        $uploadId = !empty($claim->barang_id) ? $claim->barang_id : (!empty($claim->laporan_hilang_id) ? $claim->laporan_hilang_id : null);
+                                    @endphp
+                                    @if(!$isPublished && !is_null($uploadType) && !is_null($uploadId))
+                                        <form method="POST" action="{{ route('admin.dashboard.reports.publish-home', ['type' => $uploadType, 'id' => $uploadId]) }}">
+                                            @csrf
+                                            <button type="submit" class="menu-submit">Upload</button>
+                                        </form>
+                                    @elseif($isPublished)
+                                        <span class="row-menu-note">Sudah di-upload</span>
+                                    @endif
                                     <form method="POST" action="{{ route('admin.claim-verifications.destroy', $claim->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus data ini?">
                                         @csrf
                                         @method('DELETE')

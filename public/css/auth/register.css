@@ -213,9 +213,10 @@ body {
     position: relative;
 }
 
-.input-wrap input {
+.input-wrap input,
+.input-wrap select,
+.input-wrap textarea {
     width: 100%;
-    height: 46px;
     border: 1px solid var(--auth-border);
     border-radius: 10px;
     background: var(--auth-input);
@@ -225,12 +226,25 @@ body {
     outline: 0;
 }
 
-.input-wrap input:focus {
+.input-wrap input,
+.input-wrap select {
+    height: 46px;
+}
+
+.input-wrap textarea {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.input-wrap input:focus,
+.input-wrap select:focus,
+.input-wrap textarea:focus {
     border-color: var(--auth-primary);
     box-shadow: 0 0 0 3px rgba(111, 151, 207, 0.16);
 }
 
-.input-wrap input::placeholder {
+.input-wrap input::placeholder,
+.input-wrap textarea::placeholder {
     color: #9aa2af;
 }
 
@@ -243,6 +257,11 @@ body {
     height: 1rem;
     color: #7f8794;
     display: inline-flex;
+}
+
+.input-wrap.input-wrap-textarea .input-icon {
+    top: 14px;
+    transform: none;
 }
 
 .input-icon svg {

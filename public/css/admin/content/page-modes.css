@@ -1,0 +1,66 @@
+/* Bagian ini mengunci layout dashboard agar area tabel bisa scroll internal. */
+body.dashboard-fixed-mode {
+    overflow: hidden;
+}
+
+body.dashboard-fixed-mode .admin-shell {
+    height: 100vh;
+    overflow: hidden;
+}
+
+body.dashboard-fixed-mode .main-content {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-page-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-report-card {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-report-card .report-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.dashboard-report-card .pagination {
+    flex: 0 0 auto;
+}
+
+/* Bagian ini mengunci layout halaman input agar form scroll di dalam card. */
+body.input-page-mode {
+    overflow: hidden;
+}
+
+body.input-page-mode .admin-shell {
+    height: 100vh;
+    overflow: hidden;
+}
+
+body.input-page-mode .main-content {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-page-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+}

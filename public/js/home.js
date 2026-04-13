@@ -28,10 +28,17 @@ async function bootContactForm() {
     mod.initContactForm();
 }
 
+async function bootMap() {
+    if (!document.getElementById('pickupMap')) return;
+    const mod = await import('./home/map.js');
+    mod.initMap();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     void bootNavbar();
     void bootFilterAndCounts();
     void bootActions();
     void bootCarousel();
     void bootContactForm();
+    void bootMap();
 });

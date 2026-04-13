@@ -86,6 +86,31 @@
                     </div>
 
                     <div class="field-group">
+                        <label for="kecamatan">Kecamatan (Indramayu)</label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
+                            </span>
+                            <select id="kecamatan" name="kecamatan" required>
+                                <option value="" disabled @selected(old('kecamatan') === null)>Pilih kecamatan</option>
+                                @foreach(($kecamatanOptions ?? []) as $kecamatan)
+                                    <option value="{{ $kecamatan }}" @selected(old('kecamatan') === $kecamatan)>{{ $kecamatan }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="alamat_lengkap">Alamat Lengkap</label>
+                        <div class="input-wrap input-wrap-textarea">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </span>
+                            <textarea id="alamat_lengkap" name="alamat_lengkap" placeholder="Jl..., RT/RW..., No..., Desa/Kelurahan..." rows="3" required>{{ old('alamat_lengkap') }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
                         <label for="password">Kata Sandi</label>
                         <div class="input-wrap">
                             <span class="input-icon" aria-hidden="true">
