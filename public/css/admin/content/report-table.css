@@ -19,6 +19,17 @@
     font-size: 17px;
 }
 
+.report-heading {
+    display: grid;
+    gap: 3px;
+}
+
+.report-heading p {
+    margin: 0;
+    color: #7a889b;
+    font-size: 12px;
+}
+
 .report-actions {
     display: flex;
     align-items: center;
@@ -38,6 +49,72 @@
     padding: 6px 10px;
     font-size: 12px;
     color: #5f6f84;
+}
+
+a.filter-btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.dashboard-filter-form {
+    margin: 0;
+}
+
+.dashboard-filter-select {
+    min-width: 150px;
+    height: 32px;
+}
+
+.dashboard-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid #edf1f6;
+    background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+}
+
+.dashboard-quick-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dashboard-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid #d9e2ef;
+    background: #ffffff;
+    color: #617288;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.dashboard-filter-chip:hover {
+    background: #f7fbff;
+    border-color: #c8d7eb;
+    color: #35506f;
+}
+
+.dashboard-filter-chip.is-active {
+    background: #eaf2ff;
+    border-color: #bfd3f7;
+    color: #275fa1;
+}
+
+.dashboard-toolbar-note {
+    color: #728197;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 .lost-toolbar {

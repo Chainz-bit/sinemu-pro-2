@@ -1,10 +1,18 @@
 <header class="topbar {{ ($hideSearch ?? false) ? 'topbar-no-search' : '' }}">
+    @if(!empty($topbarBackUrl))
+        <a href="{{ $topbarBackUrl }}" class="topbar-back-link" aria-label="{{ $topbarBackLabel ?? 'Kembali' }}">
+            <iconify-icon icon="mdi:arrow-left"></iconify-icon>
+        </a>
+    @endif
+
     {{-- BAGIAN: Tombol Sidebar --}}
-    <button type="button" class="sidebar-toggle" aria-label="Buka menu" aria-expanded="false" aria-controls="admin-sidebar">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
+    @if(!($hideSidebar ?? false))
+        <button type="button" class="sidebar-toggle" aria-label="Buka menu" aria-expanded="false" aria-controls="admin-sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    @endif
 
     {{-- BAGIAN: Pencarian --}}
     @if(!($hideSearch ?? false))

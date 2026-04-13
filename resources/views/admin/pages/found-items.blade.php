@@ -37,14 +37,21 @@
                         <option value="nama_asc" @selected($sort === 'nama_asc')>Nama A-Z</option>
                         <option value="nama_desc" @selected($sort === 'nama_desc')>Nama Z-A</option>
                     </select>
+                    <select name="status" class="filter-btn">
+                        <option value="">Semua Status</option>
+                        <option value="tersedia" @selected(request('status') === 'tersedia')>Tersedia</option>
+                        <option value="dalam_proses_klaim" @selected(request('status') === 'dalam_proses_klaim')>Dalam Proses Klaim</option>
+                        <option value="sudah_diklaim" @selected(request('status') === 'sudah_diklaim')>Sudah Diklaim</option>
+                        <option value="sudah_dikembalikan" @selected(request('status') === 'sudah_dikembalikan')>Selesai</option>
+                    </select>
                 </div>
                 <div class="lost-toolbar-right">
                     <input type="date" class="filter-btn" name="date" value="{{ request('date') }}">
                     @if(request()->filled('search'))
                         <input type="hidden" name="search" value="{{ request('search') }}">
                     @endif
-                    @if(request()->filled('status'))
-                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @if(request()->filled('date') || request()->filled('status') || request('sort', 'terbaru') !== 'terbaru' || request()->filled('search'))
+                        <a href="{{ route('admin.found-items') }}" class="filter-btn">Hapus Filter</a>
                     @endif
                     <button type="submit" name="export" value="1" class="filter-btn export-btn">Export Data</button>
                 </div>
@@ -170,4 +177,18 @@
             @endif
         </footer>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterForm = document.querySelector('.lost-toolbar');
+            if (!filterForm) return;
+
+            const autoSubmitFields = filterForm.querySelectorAll('select[name="sort"], select[name="status"], input[name="date"]');
+            autoSubmitFields.forEach(function (field) {
+                field.addEventListener('change', function () {
+                    filterForm.requestSubmit();
+                });
+            });
+        });
+    </script>
 @endsection

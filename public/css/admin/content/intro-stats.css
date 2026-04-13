@@ -27,18 +27,86 @@
     grid-column: span 4;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 14px 16px;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 4px;
+    opacity: 0.9;
+}
+
+.stat-card-lost::after {
+    background: linear-gradient(90deg, #f97316, #fb923c);
+}
+
+.stat-card-found::after {
+    background: linear-gradient(90deg, #0f9f6e, #34d399);
+}
+
+.stat-card-claim::after {
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+}
+
+.stat-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.stat-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.stat-card-lost .stat-card-icon {
+    background: #fff3ea;
+    color: #ea580c;
+}
+
+.stat-card-found .stat-card-icon {
+    background: #eafbf4;
+    color: #0f9f6e;
+}
+
+.stat-card-claim .stat-card-icon {
+    background: #edf4ff;
+    color: #2563eb;
+}
+
+.stat-card-icon iconify-icon {
+    width: 18px;
+    height: 18px;
 }
 
 .stat-card span {
     display: block;
     color: #5f6f84;
     font-size: 13px;
-    margin-bottom: 10px;
+    margin-bottom: 0;
 }
 
 .stat-card strong {
     font-size: 42px;
     line-height: 1;
+}
+
+.stat-card small {
+    display: block;
+    margin-top: 10px;
+    color: #7a889b;
+    font-size: 11px;
+    line-height: 1.45;
 }

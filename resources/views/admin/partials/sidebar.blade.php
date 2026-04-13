@@ -1,3 +1,16 @@
+@php
+    $sidebarProfilePath = trim((string) ($admin?->profil ?? ''));
+    if ($sidebarProfilePath === '') {
+        $sidebarProfileAvatar = asset('img/profil.jpg');
+    } elseif (str_starts_with($sidebarProfilePath, 'http://') || str_starts_with($sidebarProfilePath, 'https://')) {
+        $sidebarProfileAvatar = $sidebarProfilePath;
+    } elseif (str_starts_with($sidebarProfilePath, '/')) {
+        $sidebarProfileAvatar = asset(ltrim($sidebarProfilePath, '/'));
+    } else {
+        $sidebarProfileAvatar = asset('storage/' . ltrim($sidebarProfilePath, '/'));
+    }
+@endphp
+
 <aside class="sidebar" id="admin-sidebar">
     {{-- BAGIAN: Merek --}}
     <div class="sidebar-brand">
@@ -17,7 +30,7 @@
     <div class="sidebar-bottom">
         <div class="profile-menu-wrap">
             <button type="button" class="admin-card profile-menu-trigger" aria-expanded="false" aria-controls="profile-menu">
-                <img src="{{ asset('img/profil.jpg') }}" alt="Admin">
+                <img src="{{ $sidebarProfileAvatar }}" alt="Admin">
                 <div class="profile-meta">
                     <strong>{{ $admin?->nama ?? 'Admin' }}</strong>
                     <small>Pengelola Sistem</small>
@@ -28,7 +41,7 @@
             </button>
 
             <div class="profile-menu" id="profile-menu">
-                <a href="#">
+                <a href="{{ route('admin.profile') }}" class="{{ ($activeMenu ?? '') === 'profile' ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Profil Saya
                 </a>

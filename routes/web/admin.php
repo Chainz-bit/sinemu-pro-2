@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FoundItemController;
 use App\Http\Controllers\Admin\InputItemController;
 use App\Http\Controllers\Admin\LostItemController;
+use App\Http\Controllers\Admin\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -43,6 +44,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('input-barang', [InputItemController::class, 'index'])->name('input-items');
         Route::post('input-barang', [InputItemController::class, 'store'])->name('input-items.store');
+        Route::get('profil', [ProfileController::class, 'index'])->name('profile');
+        Route::get('profil/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('profil', [ProfileController::class, 'update'])->name('profile.update');
 
         Route::get('notifications', function () {
             return redirect()->route('admin.dashboard');

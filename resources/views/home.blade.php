@@ -233,7 +233,7 @@
                 </div>
 
                 <div class="carousel-track carousel-draggable" id="lostItemsList">
-                    @foreach ($lostItems as $item)
+                    @forelse ($lostItems as $item)
                         <article class="carousel-item item-card-v2 filter-item"
                             data-list="lost"
                             data-category="{{ strtoupper($item['category']) }}"
@@ -241,17 +241,18 @@
                             data-region="{{ strtolower($item['location']) }}"
                             data-date="{{ $item['date'] }}">
                             <div class="item-media">
-                                <img src="{{ asset('img/login-image.png') }}" alt="{{ $item['name'] }}" loading="lazy" decoding="async" width="600" height="360">
+                                <img src="{{ $item['image_url'] ?? asset('img/login-image.png') }}" alt="{{ $item['name'] }}" loading="lazy" decoding="async" width="600" height="360">
                                 <span class="item-status item-status-danger">Belum Ditemukan</span>
                             </div>
                             <div class="item-body">
                                 <h3 class="item-name">{{ $item['name'] }}</h3>
                                 <p class="item-meta"><i class="fa-solid fa-location-dot"></i> {{ $item['location'] }}</p>
-                                <p class="item-meta"><i class="fa-regular fa-clock"></i> {{ $item['date'] }}</p>
-                                <button class="btn item-action-btn detail-button" type="button" data-item="{{ $item['name'] }}" data-category="{{ $item['category'] }}" data-list="Barang Hilang">Lihat Detail Laporan</button>
+                                <p class="item-meta"><i class="fa-regular fa-clock"></i> {{ $item['date_label'] ?? $item['date'] }}</p>
+                                <a href="{{ $item['detail_url'] }}" class="btn item-action-btn">Lihat Detail Laporan</a>
                             </div>
                         </article>
-                    @endforeach
+                    @empty
+                    @endforelse
                 </div>
                 <div id="lostEmptyState" class="empty-state mt-3">Tidak ada barang hilang yang cocok dengan filter saat ini.</div>
             </div>
@@ -280,7 +281,7 @@
                 </div>
 
                 <div class="carousel-track carousel-draggable" id="foundItemsList">
-                    @foreach ($foundItems as $item)
+                    @forelse ($foundItems as $item)
                         <article class="carousel-item item-card-v2 filter-item"
                             data-list="found"
                             data-category="{{ strtoupper($item['category']) }}"
@@ -288,13 +289,14 @@
                             data-region="{{ strtolower($item['location']) }}"
                             data-date="{{ $item['date'] }}">
                             <div class="item-media">
-                                <img src="{{ asset('img/login-image.png') }}" alt="{{ $item['name'] }}" loading="lazy" decoding="async" width="600" height="360">
+                                <img src="{{ $item['image_url'] ?? asset('img/login-image.png') }}" alt="{{ $item['name'] }}" loading="lazy" decoding="async" width="600" height="360">
                                 <span class="item-status item-status-success">Sudah Ditemukan</span>
                             </div>
                             <div class="item-body">
                                 <h3 class="item-name">{{ $item['name'] }}</h3>
                                 <p class="item-meta"><i class="fa-solid fa-location-dot"></i> {{ $item['location'] }}</p>
-                                <p class="item-meta"><i class="fa-regular fa-clock"></i> {{ $item['date'] }}</p>
+                                <p class="item-meta"><i class="fa-regular fa-clock"></i> {{ $item['date_label'] ?? $item['date'] }}</p>
+                                <a href="{{ $item['detail_url'] }}" class="item-detail-link">Lihat Detail Laporan</a>
                                 @auth
                                     <button
                                         class="btn item-action-btn claim-button"
@@ -309,7 +311,8 @@
                                 @endauth
                             </div>
                         </article>
-                    @endforeach
+                    @empty
+                    @endforelse
                 </div>
                 <div id="foundEmptyState" class="empty-state mt-3">Tidak ada barang temuan yang cocok dengan filter saat ini.</div>
             </div>
@@ -433,7 +436,7 @@
 
                 <div class="lokasi-list-wrap mt-3">
                     <div class="lokasi-list-head">
-                        <h3 class="lokasi-list-title mb-0">Daftar Titik Pengambilan (Multiadmin)</h3>
+                        <h3 class="lokasi-list-title mb-0">Daftar Titik Pengambilan</h3>
                         <div class="lokasi-carousel-controls" aria-label="Navigasi carousel lokasi">
                             <button id="pickupCarouselPrev" type="button" class="lokasi-carousel-btn" aria-label="Geser ke kiri">
                                 <i class="fa-solid fa-chevron-left"></i>

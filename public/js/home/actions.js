@@ -1,5 +1,4 @@
 export function initActions() {
-    const detailButtons = document.querySelectorAll('.detail-button');
     const actionButtons = document.querySelectorAll('[data-action]');
     const claimButtons = document.querySelectorAll('.claim-button');
     const claimBarangId = document.getElementById('claimBarangId');
@@ -36,11 +35,4 @@ export function initActions() {
         });
     });
 
-    detailButtons.forEach(function (button) {
-        button.addEventListener('click', function () {
-            const item = this.dataset.item || 'Barang';
-            const list = this.dataset.list || 'Laporan';
-            alert(list + ': ' + item);
-        });
-    });
 }

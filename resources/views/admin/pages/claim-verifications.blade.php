@@ -36,14 +36,20 @@
                         <option value="terbaru" @selected($sort === 'terbaru')>Urutkan Berdasarkan...</option>
                         <option value="terlama" @selected($sort === 'terlama')>Urutkan: Terlama</option>
                     </select>
+                    <select name="status" class="filter-btn">
+                        <option value="">Semua Status</option>
+                        <option value="pending" @selected(request('status') === 'pending')>Sedang Ditinjau</option>
+                        <option value="disetujui" @selected(request('status') === 'disetujui')>Disetujui</option>
+                        <option value="ditolak" @selected(request('status') === 'ditolak')>Ditolak</option>
+                    </select>
                 </div>
                 <div class="lost-toolbar-right">
                     <input type="date" class="filter-btn" name="date" value="{{ request('date') }}">
                     @if(request()->filled('search'))
                         <input type="hidden" name="search" value="{{ request('search') }}">
                     @endif
-                    @if(request()->filled('status'))
-                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @if(request()->filled('date') || request()->filled('status') || request('sort', 'terbaru') !== 'terbaru' || request()->filled('search'))
+                        <a href="{{ route('admin.claim-verifications') }}" class="filter-btn">Hapus Filter</a>
                     @endif
                     <button type="submit" name="export" value="1" class="filter-btn export-btn">
                         <iconify-icon icon="mdi:download-outline"></iconify-icon>
@@ -99,8 +105,8 @@
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3z" fill="currentColor"/></svg>
                                 </button>
                                 <div class="row-menu" id="menu-claim-{{ $index }}">
-                                    <a href="{{ route('admin.claim-verifications', ['search' => $claim->barang_temuan]) }}">Lihat Detail</a>
-                                    <a href="{{ route('admin.claim-verifications', ['search' => $claim->barang_temuan]) }}">Edit Data</a>
+                                    <a href="{{ route('admin.claim-verifications.show', $claim->id) }}">Lihat Detail</a>
+                                    <a href="{{ route('admin.claim-verifications.show', $claim->id) }}">Tinjau Klaim</a>
                                     @php
                                         $isPublished = (bool) ($claim->barang_tampil_di_home ?? false) || (bool) ($claim->laporan_hilang_tampil_di_home ?? false);
                                         $uploadType = !empty($claim->barang_id) ? 'temuan' : (!empty($claim->laporan_hilang_id) ? 'hilang' : null);
@@ -149,4 +155,18 @@
             @endif
         </footer>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterForm = document.querySelector('.lost-toolbar');
+            if (!filterForm) return;
+
+            const autoSubmitFields = filterForm.querySelectorAll('select[name="sort"], select[name="status"], input[name="date"]');
+            autoSubmitFields.forEach(function (field) {
+                field.addEventListener('change', function () {
+                    filterForm.requestSubmit();
+                });
+            });
+        });
+    </script>
 @endsection

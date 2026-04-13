@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const confirmCancel = document.getElementById('confirm-modal-cancel');
     const confirmSubmit = document.getElementById('confirm-modal-submit');
     const deleteForms = document.querySelectorAll('form[data-confirm-delete]');
+    const autoCloseAlerts = document.querySelectorAll('.feedback-alert[data-autoclose]');
+    const alertCloseButtons = document.querySelectorAll('[data-alert-close]');
     let pendingDeleteForm = null;
 
     // Inisialisasi modul dengan dependency elemen yang relevan.
@@ -93,6 +95,30 @@ document.addEventListener('DOMContentLoaded', function () {
         if (event.target === confirmBackdrop) {
             closeConfirmModal();
         }
+    });
+
+    autoCloseAlerts.forEach(function (alertEl) {
+        const delayRaw = Number(alertEl.getAttribute('data-autoclose'));
+        const delay = Number.isFinite(delayRaw) && delayRaw > 0 ? delayRaw : 3000;
+
+        window.setTimeout(function () {
+            alertEl.classList.add('is-fading');
+            window.setTimeout(function () {
+                alertEl.remove();
+            }, 280);
+        }, delay);
+    });
+
+    alertCloseButtons.forEach(function (buttonEl) {
+        buttonEl.addEventListener('click', function () {
+            const alertEl = buttonEl.closest('.feedback-alert');
+            if (!alertEl) return;
+
+            alertEl.classList.add('is-fading');
+            window.setTimeout(function () {
+                alertEl.remove();
+            }, 280);
+        });
     });
 
     // Klik area luar menutup semua popover/dropdown.

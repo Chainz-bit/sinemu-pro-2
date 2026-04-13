@@ -5,10 +5,14 @@
     min-height: 100vh;
 }
 
+.admin-shell.admin-shell-no-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 /* section: sidebar */
 .sidebar {
     background: var(--surface);
-    border-right: 1px solid var(--line);
+    border-right: 0;
     display: flex;
     flex-direction: column;
     padding: 18px 12px 14px;
@@ -146,6 +150,12 @@
 .profile-menu a:hover,
 .profile-menu button:hover {
     background: #f4f7fc;
+}
+
+.profile-menu a.active {
+    color: var(--brand);
+    background: var(--brand-soft);
+    font-weight: 600;
 }
 
 .profile-menu button.danger {

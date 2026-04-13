@@ -111,14 +111,24 @@
     }
 
     .report-card > header {
-        flex-direction: row;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
         gap: 8px;
     }
 
     .report-actions {
-        margin-left: auto;
-        justify-content: flex-end;
+        width: 100%;
+        margin-left: 0;
+        justify-content: space-between;
+    }
+
+    .dashboard-table-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dashboard-toolbar-note {
+        white-space: normal;
     }
 
     .lost-toolbar {

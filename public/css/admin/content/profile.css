@@ -1,0 +1,516 @@
+/* Bagian ini mengatur tata letak konten halaman profil admin. */
+.profile-page-content {
+    padding-top: 8px;
+    display: grid;
+    gap: 12px;
+}
+
+.profile-page-content.profile-page-content-edit {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.profile-account-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+}
+
+.profile-account-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.profile-account-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.profile-account-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 1px solid #dbe3ef;
+    background: #f7fafc;
+}
+
+.profile-avatar-trigger {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    position: relative;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.profile-account-avatar.profile-account-avatar-edit {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.profile-avatar-hint {
+    position: absolute;
+    left: 50%;
+    bottom: -6px;
+    transform: translate(-50%, 100%);
+    font-size: 10px;
+    font-weight: 700;
+    color: #2d5b96;
+    background: #eef4ff;
+    border: 1px solid #d4e1f4;
+    border-radius: 999px;
+    padding: 2px 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+}
+
+.profile-avatar-trigger:hover .profile-account-avatar.profile-account-avatar-edit,
+.profile-avatar-trigger:focus-visible .profile-account-avatar.profile-account-avatar-edit {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+    filter: saturate(1.08);
+}
+
+.profile-avatar-trigger:hover .profile-avatar-hint,
+.profile-avatar-trigger:focus-visible .profile-avatar-hint {
+    opacity: 1;
+    transform: translate(-50%, 84%);
+}
+
+.profile-account-meta {
+    min-width: 0;
+}
+
+.profile-account-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.profile-account-meta h2 {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.profile-role {
+    margin: 3px 0 6px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.profile-account-contact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #334155;
+    word-break: break-word;
+}
+
+.profile-verify-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+.profile-verify-chip.is-active {
+    background: #e9f8ee;
+    color: #0f9f4c;
+    border-color: #b7edc8;
+}
+
+.profile-verify-chip.is-pending {
+    background: #fff7e6;
+    color: #b9790e;
+    border-color: #f8dfaf;
+}
+
+.profile-verify-chip.is-rejected {
+    background: #ffebeb;
+    color: #cc3d3d;
+    border-color: #f6c7c7;
+}
+
+.profile-verify-chip.is-unknown {
+    background: #edf2f7;
+    color: #556274;
+    border-color: #d7e0ea;
+}
+
+.profile-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-action-secondary,
+.profile-edit-button {
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px 11px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.profile-action-secondary {
+    border: 1px solid #d7e3f3;
+    background: #f8fbff;
+    color: #305e95;
+}
+
+.profile-action-secondary:hover {
+    background: #f1f7ff;
+}
+
+.profile-edit-button {
+    border: 1px solid #cbd7ea;
+    background: #eef4fd;
+    color: #5b6f8e;
+    cursor: not-allowed;
+}
+
+.profile-admin-info-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.profile-info-card {
+    grid-column: span 3;
+    border: 1px solid #e8eef7;
+    border-radius: 10px;
+    background: #fbfdff;
+    padding: 10px 11px;
+    min-height: 70px;
+}
+
+.profile-info-label {
+    display: block;
+    color: #71819b;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+}
+
+.profile-info-value {
+    color: #0f172a;
+    font-size: 13px;
+    line-height: 1.4;
+    display: block;
+    word-break: break-word;
+}
+
+/* Bagian ini untuk kartu ringkasan statistik pada halaman profil. */
+.profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.profile-stat-card {
+    grid-column: span 4;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 12px 14px;
+}
+
+.profile-stat-card span {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.profile-stat-card strong {
+    font-size: 32px;
+    line-height: 1;
+    color: #0f172a;
+}
+
+.profile-stat-card small {
+    display: block;
+    margin-top: 7px;
+    color: #7c8ca3;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+/* Bagian ini untuk daftar aktivitas terbaru pada profil admin. */
+.profile-activity-card > header a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.profile-activity-list {
+    display: grid;
+}
+
+.profile-activity-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid #edf1f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.profile-activity-item:hover {
+    background: #f9fbff;
+}
+
+.profile-activity-item:last-child {
+    border-bottom: 0;
+}
+
+.profile-activity-main {
+    min-width: 0;
+}
+
+.profile-activity-main h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #0f172a;
+    line-height: 1.4;
+}
+
+.profile-activity-main p {
+    margin: 5px 0 0;
+    color: #8291a5;
+    font-size: 10.5px;
+}
+
+.profile-activity-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.profile-activity-right a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.profile-activity-empty {
+    padding: 18px 14px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.profile-edit-form {
+    display: grid;
+    gap: 12px;
+}
+
+.profile-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.profile-edit-grid .form-group {
+    grid-column: span 6;
+    display: grid;
+    gap: 6px;
+}
+
+.profile-edit-grid .form-group-full {
+    grid-column: span 12;
+}
+
+.profile-photo-upload {
+    display: none;
+}
+
+.profile-photo-input {
+    display: none;
+}
+
+.profile-edit-grid .form-label {
+    color: #5f6f87;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.profile-edit-grid .form-input {
+    width: 100%;
+    border: 1px solid #dce4f1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 10px 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-edit-grid .form-input[readonly] {
+    background: #f5f8fd;
+    color: #4b5f79;
+    border-color: #d6e0ee;
+    cursor: not-allowed;
+}
+
+.profile-edit-grid .form-input:focus {
+    outline: none;
+    border-color: #b8cbed;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.profile-edit-grid .form-textarea {
+    min-height: 126px;
+    max-height: 180px;
+    resize: vertical;
+}
+
+.profile-edit-grid .form-note {
+    font-size: 11px;
+    color: #73829a;
+}
+
+.profile-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e7edf6;
+}
+
+.profile-edit-actions .btn-secondary,
+.profile-edit-actions .btn-primary {
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.profile-edit-actions .btn-secondary {
+    background: #ffffff;
+    color: #335a90;
+    border-color: #cddbf0;
+}
+
+.profile-edit-actions .btn-primary {
+    background: #2b6cb0;
+    color: #fff;
+    border-color: #2b6cb0;
+}
+
+.profile-edit-actions .btn-primary:hover {
+    background: #255f9d;
+    border-color: #255f9d;
+}
+
+@media (max-width: 1024px) {
+    .profile-info-card {
+        grid-column: span 6;
+    }
+}
+
+@media (max-width: 820px) {
+    .profile-account-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-actions {
+        width: 100%;
+    }
+
+    .profile-stat-card {
+        grid-column: span 6;
+    }
+
+    .profile-edit-grid .form-group {
+        grid-column: span 12;
+    }
+
+    .profile-page-content.profile-page-content-edit {
+        max-width: none;
+    }
+
+    .profile-activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-activity-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 520px) {
+    .profile-account-main {
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .profile-account-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .profile-account-meta h2 {
+        font-size: 26px;
+    }
+
+    .profile-info-card {
+        grid-column: span 12;
+    }
+
+    .profile-stat-card {
+        grid-column: span 12;
+    }
+
+    .profile-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .profile-action-secondary,
+    .profile-edit-button {
+        text-align: center;
+    }
+
+    .profile-edit-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .profile-edit-actions .btn-secondary,
+    .profile-edit-actions .btn-primary {
+        text-align: center;
+    }
+
+}

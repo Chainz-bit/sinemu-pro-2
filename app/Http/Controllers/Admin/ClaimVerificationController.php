@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Str;
 
 class ClaimVerificationController extends Controller
 {
@@ -123,9 +124,13 @@ class ClaimVerificationController extends Controller
     public function approve(Request $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
+        $adminId = (int) Auth::guard('admin')->id();
 
         if ($klaim->status_klaim === 'pending') {
-            $klaim->update(['status_klaim' => 'disetujui']);
+            $klaim->update([
+                'status_klaim' => 'disetujui',
+                'admin_id' => $adminId,
+            ]);
             if ($klaim->barang) {
                 $klaim->barang->update(['status_barang' => 'sudah_diklaim']);
             }
@@ -137,9 +142,13 @@ class ClaimVerificationController extends Controller
     public function reject(Request $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
+        $adminId = (int) Auth::guard('admin')->id();
 
         if ($klaim->status_klaim === 'pending') {
-            $klaim->update(['status_klaim' => 'ditolak']);
+            $klaim->update([
+                'status_klaim' => 'ditolak',
+                'admin_id' => $adminId,
+            ]);
             if ($klaim->barang && $klaim->barang->status_barang === 'dalam_proses_klaim') {
                 $klaim->barang->update(['status_barang' => 'tersedia']);
             }
@@ -148,17 +157,53 @@ class ClaimVerificationController extends Controller
         return redirect()->back()->with('status', 'Klaim berhasil ditolak.');
     }
 
-    public function show(Klaim $klaim): RedirectResponse
+    public function show(Klaim $klaim): View
     {
         $this->ensureClaimOwnedByAdmin($klaim);
-        $keyword = $klaim->barang?->nama_barang
-            ?? $klaim->laporanHilang?->nama_barang
-            ?? '';
+        /** @var \App\Models\Admin|null $admin */
+        $admin = Auth::guard('admin')->user();
 
-        return redirect()->route('admin.claim-verifications', [
-            'search' => $keyword,
-            'status' => $klaim->status_klaim,
+        $klaim->load([
+            'barang.kategori:id,nama_kategori',
+            'laporanHilang:id,nama_barang,lokasi_hilang,tanggal_hilang,keterangan,foto_barang',
+            'user:id,name,nama,email',
+            'admin:id,nama,email',
         ]);
+
+        $statusMap = [
+            'pending' => ['Menunggu Verifikasi', 'status-dalam_peninjauan'],
+            'disetujui' => ['Disetujui', 'status-selesai'],
+            'ditolak' => ['Ditolak', 'status-ditolak'],
+        ];
+        [$statusLabel, $statusClass] = $statusMap[$klaim->status_klaim] ?? ['Status Tidak Diketahui', 'status-diproses'];
+
+        $barang = $klaim->barang;
+        $laporanHilang = $klaim->laporanHilang;
+        $namaBarang = $barang?->nama_barang ?? $laporanHilang?->nama_barang ?? 'Barang tidak ditemukan';
+        $kategoriNama = $barang?->kategori?->nama_kategori ?? 'Tidak tersedia';
+        $lokasi = $barang?->lokasi_ditemukan ?? $laporanHilang?->lokasi_hilang ?? '-';
+        $tanggalLaporan = $barang?->tanggal_ditemukan ?? $laporanHilang?->tanggal_hilang ?? $klaim->created_at;
+        $deskripsi = $barang?->deskripsi ?? $laporanHilang?->keterangan ?? 'Belum ada deskripsi.';
+        $fotoUrl = $this->resolveItemImageUrl((string) ($barang?->foto_barang ?? $laporanHilang?->foto_barang ?? ''));
+
+        $pelapor = $klaim->user;
+        $pelaporNama = $pelapor?->nama ?? $pelapor?->name ?? 'Pengguna';
+        $pelaporEmail = $pelapor?->email ?? '-';
+
+        return view('admin.pages.claim-verification-detail', compact(
+            'admin',
+            'klaim',
+            'statusLabel',
+            'statusClass',
+            'namaBarang',
+            'kategoriNama',
+            'lokasi',
+            'tanggalLaporan',
+            'deskripsi',
+            'fotoUrl',
+            'pelaporNama',
+            'pelaporEmail'
+        ));
     }
 
     public function destroy(Klaim $klaim): RedirectResponse
@@ -172,6 +217,29 @@ class ClaimVerificationController extends Controller
     private function ensureClaimOwnedByAdmin(Klaim $klaim): void
     {
         $adminId = Auth::guard('admin')->id();
+        if (is_null($klaim->admin_id)) {
+            return;
+        }
+
         abort_if((int) $klaim->admin_id !== (int) $adminId, 403);
+    }
+
+    private function resolveItemImageUrl(string $fotoPath): string
+    {
+        $cleanPath = trim($fotoPath, '/');
+        if ($cleanPath === '') {
+            return route('media.image', ['folder' => 'barang-temuan', 'path' => 'hp.webp'], false);
+        }
+
+        if (Str::startsWith($cleanPath, ['http://', 'https://'])) {
+            return $cleanPath;
+        }
+
+        [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
+        if (in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
+            return route('media.image', ['folder' => $folder, 'path' => $subPath], false);
+        }
+
+        return asset('storage/' . $cleanPath);
     }
 }

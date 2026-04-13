@@ -24,6 +24,32 @@
     flex: 1 1 auto;
 }
 
+.topbar-back-link {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    color: #5e7088;
+    display: inline-grid;
+    place-items: center;
+    text-decoration: none;
+    flex: 0 0 auto;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.topbar-back-link:hover {
+    border-color: #d8e2ef;
+    background: #f8fbff;
+    color: #3f5572;
+}
+
+.topbar-back-link iconify-icon {
+    width: 18px;
+    height: 18px;
+    color: currentColor;
+}
+
 .sidebar-toggle,
 .sidebar-backdrop {
     display: none;

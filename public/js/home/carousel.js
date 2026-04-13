@@ -23,6 +23,8 @@ export function initCarousel() {
         let scrollLeft = 0;
 
         track.addEventListener('pointerdown', function (event) {
+            const interactiveTarget = event.target.closest('a, button, input, textarea, select, label');
+            if (interactiveTarget) return;
             if (event.button !== 0 && event.pointerType === 'mouse') return;
             isDown = true;
             track.classList.add('dragging');

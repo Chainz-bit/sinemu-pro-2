@@ -46,6 +46,9 @@ class InputItemService
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
             $payload['sumber_laporan'] = 'lapor_hilang';
         }
+        if (Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home')) {
+            $payload['tampil_di_home'] = true;
+        }
 
         LaporanBarangHilang::create($payload);
 
@@ -75,7 +78,7 @@ class InputItemService
 
         $fotoPath = $photo ? $this->imageUploader->upload($photo, 'barang-temuan/'.now()->format('Y/m')) : null;
 
-        Barang::create([
+        $payload = [
             'admin_id' => $adminId,
             'kategori_id' => (int) $kategoriId,
             'nama_barang' => $validated['nama_barang'],
@@ -90,7 +93,13 @@ class InputItemService
             'kontak_pengambilan' => trim((string) ($validated['kontak_pengambilan'] ?? '')) ?: null,
             'jam_layanan_pengambilan' => trim((string) ($validated['jam_layanan_pengambilan'] ?? '')) ?: null,
             'catatan_pengambilan' => trim((string) ($validated['catatan_pengambilan'] ?? '')) ?: null,
-        ]);
+        ];
+
+        if (Schema::hasColumn('barangs', 'tampil_di_home')) {
+            $payload['tampil_di_home'] = true;
+        }
+
+        Barang::create($payload);
     }
 
     private function resolveReporter(string $reporterName): ?User

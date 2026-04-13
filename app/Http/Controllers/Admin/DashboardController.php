@@ -26,6 +26,9 @@ class DashboardController extends Controller
     {
         /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
+        $search = trim((string) $request->query('search', ''));
+        $statusFilter = trim((string) $request->query('status', 'semua'));
+
         $totalHilangQuery = LaporanBarangHilang::query();
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
             $totalHilangQuery->where('sumber_laporan', 'lapor_hilang');
@@ -36,8 +39,14 @@ class DashboardController extends Controller
 
         $menungguVerifikasi = Klaim::where('status_klaim', 'pending')->count();
 
-        $latestReports = $this->paginateReports(
+        $latestReportsCollection = $this->filterLatestReports(
             $this->buildLatestReports(),
+            $search,
+            $statusFilter
+        );
+
+        $latestReports = $this->paginateReports(
+            $latestReportsCollection,
             (int) $request->query('page', 1),
             8
         );
@@ -51,7 +60,9 @@ class DashboardController extends Controller
             'menungguVerifikasi',
             'latestReports',
             'kategoriOptions',
-            'admin'
+            'admin',
+            'search',
+            'statusFilter'
         ));
     }
 
@@ -521,5 +532,34 @@ class DashboardController extends Controller
                 'query' => request()->query(),
             ]
         );
+    }
+
+    private function filterLatestReports(Collection $items, string $search, string $statusFilter): Collection
+    {
+        if ($search !== '') {
+            $keyword = mb_strtolower($search);
+            $items = $items->filter(function ($item) use ($keyword) {
+                $haystack = mb_strtolower(
+                    trim(
+                        implode(' ', [
+                            (string) ($item->item_name ?? ''),
+                            (string) ($item->item_detail ?? ''),
+                            (string) ($item->status ?? ''),
+                            (string) ($item->status_label ?? ''),
+                        ])
+                    )
+                );
+
+                return str_contains($haystack, $keyword);
+            });
+        }
+
+        if ($statusFilter !== '' && $statusFilter !== 'semua') {
+            $items = $items->filter(function ($item) use ($statusFilter) {
+                return (string) ($item->status ?? '') === $statusFilter;
+            });
+        }
+
+        return $items->values();
     }
 }

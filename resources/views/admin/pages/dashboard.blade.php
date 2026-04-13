@@ -29,29 +29,77 @@
 
         {{-- BAGIAN: Kartu Statistik --}}
         <section class="stats-grid">
-            <article class="stat-card">
-                <span>Total Laporan Hilang</span>
+            <article class="stat-card stat-card-lost">
+                <div class="stat-card-head">
+                    <span>Total Laporan Hilang</span>
+                    <div class="stat-card-icon">
+                        <iconify-icon icon="mdi:map-marker-alert-outline"></iconify-icon>
+                    </div>
+                </div>
                 <strong>{{ $totalHilang }}</strong>
+                <small>Laporan kehilangan yang sudah masuk ke sistem.</small>
             </article>
-            <article class="stat-card">
-                <span>Total Laporan Temuan</span>
+            <article class="stat-card stat-card-found">
+                <div class="stat-card-head">
+                    <span>Total Laporan Temuan</span>
+                    <div class="stat-card-icon">
+                        <iconify-icon icon="mdi:package-variant-closed-check"></iconify-icon>
+                    </div>
+                </div>
                 <strong>{{ $totalTemuan }}</strong>
+                <small>Barang temuan yang dikelola oleh admin.</small>
             </article>
-            <article class="stat-card">
-                <span>Menunggu Verifikasi</span>
+            <article class="stat-card stat-card-claim">
+                <div class="stat-card-head">
+                    <span>Menunggu Verifikasi</span>
+                    <div class="stat-card-icon">
+                        <iconify-icon icon="mdi:clock-alert-outline"></iconify-icon>
+                    </div>
+                </div>
                 <strong>{{ $menungguVerifikasi }}</strong>
+                <small>Klaim aktif yang perlu diproses segera.</small>
             </article>
         </section>
 
         {{-- BAGIAN: Tabel Laporan Terbaru --}}
         <section class="report-card dashboard-report-card">
             <header>
-                <h2>Laporan Terbaru</h2>
+                <div class="report-heading">
+                    <h2>Laporan Terbaru</h2>
+                    <p>Pantau update terbaru dan fokus ke laporan yang membutuhkan tindakan.</p>
+                </div>
                 <div class="report-actions">
-                    <button type="button" class="filter-btn">Filter</button>
-                    <a href="#">Lihat Semua</a>
+                    <form method="GET" action="{{ route('admin.dashboard') }}" class="dashboard-filter-form">
+                        @if($search !== '')
+                            <input type="hidden" name="search" value="{{ $search }}">
+                        @endif
+                        <select name="status" class="filter-btn dashboard-filter-select" onchange="this.form.submit()">
+                            <option value="semua" @selected($statusFilter === 'semua')>Semua Status</option>
+                            <option value="diproses" @selected($statusFilter === 'diproses')>Diproses</option>
+                            <option value="dalam_peninjauan" @selected($statusFilter === 'dalam_peninjauan')>Dalam Peninjauan</option>
+                            <option value="selesai" @selected($statusFilter === 'selesai')>Selesai</option>
+                            <option value="ditolak" @selected($statusFilter === 'ditolak')>Ditolak</option>
+                        </select>
+                    </form>
                 </div>
             </header>
+
+            <div class="dashboard-table-toolbar">
+                <div class="dashboard-quick-filters">
+                    <a href="{{ route('admin.dashboard', array_filter(['search' => $search, 'status' => 'semua'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'semua' ? 'is-active' : '' }}">Semua</a>
+                    <a href="{{ route('admin.dashboard', array_filter(['search' => $search, 'status' => 'dalam_peninjauan'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'dalam_peninjauan' ? 'is-active' : '' }}">Menunggu</a>
+                    <a href="{{ route('admin.dashboard', array_filter(['search' => $search, 'status' => 'diproses'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'diproses' ? 'is-active' : '' }}">Diproses</a>
+                    <a href="{{ route('admin.dashboard', array_filter(['search' => $search, 'status' => 'selesai'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'selesai' ? 'is-active' : '' }}">Selesai</a>
+                    <a href="{{ route('admin.dashboard', array_filter(['search' => $search, 'status' => 'ditolak'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'ditolak' ? 'is-active' : '' }}">Ditolak</a>
+                </div>
+                <div class="dashboard-toolbar-note">
+                    @if($search !== '')
+                        Hasil pencarian untuk "<strong>{{ $search }}</strong>"
+                    @else
+                        Menampilkan {{ $latestReports->total() }} laporan terbaru
+                    @endif
+                </div>
+            </div>
 
             <div class="report-table-wrap">
                 <table class="report-table">

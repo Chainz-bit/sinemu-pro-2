@@ -14,15 +14,17 @@
 </head>
 <body>
     {{-- BAGIAN: Kerangka Admin --}}
-    <div class="admin-shell">
-        {{-- BAGIAN: Sidebar --}}
-        @include('admin.partials.sidebar', [
-            'activeMenu' => $activeMenu ?? null,
-            'admin' => $admin ?? null
-        ])
+    <div class="admin-shell {{ ($hideSidebar ?? false) ? 'admin-shell-no-sidebar' : '' }}">
+        @if(!($hideSidebar ?? false))
+            {{-- BAGIAN: Sidebar --}}
+            @include('admin.partials.sidebar', [
+                'activeMenu' => $activeMenu ?? null,
+                'admin' => $admin ?? null
+            ])
 
-        {{-- BAGIAN: Latar Belakang Mobile --}}
-        <button type="button" class="sidebar-backdrop" aria-label="Tutup menu"></button>
+            {{-- BAGIAN: Latar Belakang Mobile --}}
+            <button type="button" class="sidebar-backdrop" aria-label="Tutup menu"></button>
+        @endif
 
         {{-- BAGIAN: Konten Utama --}}
         <main class="main-content">
@@ -30,6 +32,9 @@
             @include('admin.partials.topbar', [
                 'searchAction' => $searchAction ?? request()->url(),
                 'searchPlaceholder' => $searchPlaceholder ?? 'Cari laporan atau barang',
+                'hideSidebar' => $hideSidebar ?? false,
+                'topbarBackUrl' => $topbarBackUrl ?? null,
+                'topbarBackLabel' => $topbarBackLabel ?? 'Kembali',
             ])
 
             {{-- BAGIAN: Konten Halaman --}}
