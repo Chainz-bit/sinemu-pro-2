@@ -1,63 +1,36 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Providers;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 
-class AuthenticatedSessionController extends Controller
+class RouteServiceProvider extends ServiceProvider
 {
     /**
-     * Display the login view.
+     * The path to the "home" route for your application.
      */
-    public function create(Request $request): View|RedirectResponse
-    {
-        if ($request->query('portal') === 'admin') {
-            return redirect()->route('admin.login');
-        }
-
-        if (Auth::guard('admin')->check()) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        if ($request->hasSession()) {
-            $request->session()->regenerateToken();
-        }
-
-        return view('auth.login');
-    }
+    public const HOME = '/dashboard';
 
     /**
-     * Handle an incoming authentication request.
+     * Define your route model bindings, pattern filters, and other route configuration.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function boot(): void
     {
-        if ($request->input('portal') === 'admin') {
-            return redirect()->route('admin.login');
-        }
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
 
-        $request->authenticate();
+        $this->routes(function () {
+            Route::middleware('api')
+                ->prefix('api')
+                ->group(base_path('routes/api.php'));
 
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('home'));
-    }
-
-    /**
-     * Destroy an authenticated session.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-
-        $request->session()->regenerateToken();
-
-        return redirect('/');
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
+        });
     }
 }
