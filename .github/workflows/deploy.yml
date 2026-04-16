@@ -132,16 +132,16 @@ jobs:
             docker pull ghcr.io/chainz-bit/sinemu-pro-2:latest
 
             # Update container tanpa downtime besar
-            docker compose up -d --remove-orphans
+            docker-compose up -d --remove-orphans
 
             # Tunggu container siap
             echo "⏳ Menunggu container ready..."
 
-            until docker compose exec -T db mysqladmin ping -h "localhost" --silent; do
+            until docker-compose exec -T db mysqladmin ping -h "localhost" --silent; do
               sleep 2
             done
 
             # Jalankan migrasi database
-            docker compose exec -T app php artisan migrate --force --no-interaction
+            docker-compose exec -T app php artisan migrate --force --no-interaction
 
             echo "✅ Deployment selesai!"
