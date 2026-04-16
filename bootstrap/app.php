@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
     // Izinkan submit form login tanpa validasi CSRF untuk menghindari 419 pada browser tertentu.
     $middleware->validateCsrfTokens(except: [
         'login',
+        'logout',
+        'register',
+        'confirm-password',
+        'forgot-password',
+        'reset-password',
+        'profile',
     ]);
 
     $middleware->alias([
