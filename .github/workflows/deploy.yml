@@ -10,9 +10,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # ============================================================
-  # JOB 1: TESTING (dengan build asset Vite)
-  # ============================================================
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -34,7 +31,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
+          cache: npm
 
       - name: Install NPM dependencies
         run: npm ci
@@ -57,9 +54,6 @@ jobs:
       - name: Run PHPUnit tests
         run: php artisan test
 
-  # ============================================================
-  # JOB 2: BUILD & PUSH DOCKER IMAGE ke GHCR
-  # ============================================================
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
@@ -103,7 +97,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    # ─── JOB 3: DEPLOY KE VPS ────────────────────────────────
   deploy:
     name: Deploy ke VPS
     runs-on: ubuntu-latest
@@ -122,26 +115,22 @@ jobs:
 
             echo "🚀 Mulai deployment..."
 
-            # Login ke GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Masuk ke folder project
             cd /home/${{ secrets.SERVER_USER }}/RPL2D-kelompok-2
 
-            # Pull image terbaru
             docker pull ghcr.io/chainz-bit/sinemu-pro-2:latest
 
-            # Update container tanpa downtime besar
-            docker-compose up -d --remove-orphans
+            docker compose down --remove-orphans || true
+            docker rm -f laravel_db || true
 
-            # Tunggu container siap
+            docker compose up -d --remove-orphans
+
             echo "⏳ Menunggu container ready..."
-
-            until docker-compose exec -T db mysqladmin ping -h "localhost" --silent; do
+            until docker compose exec -T db mysqladmin ping -h "localhost" --silent; do
               sleep 2
             done
 
-            # Jalankan migrasi database
-            docker-compose exec -T app php artisan migrate --force --no-interaction
+            docker compose exec -T app php artisan migrate --force --no-interaction
 
             echo "✅ Deployment selesai!"
