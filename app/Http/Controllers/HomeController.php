@@ -464,7 +464,7 @@ class HomeController extends Controller
         };
 
         $claimActionUrl = route('home') . '#hilang-temuan';
-        $claimActionLabel = Auth::check() ? 'Buka Beranda untuk Ajukan Klaim' : 'Masuk untuk Ajukan Klaim';
+        $claimActionLabel = Auth::check() ? 'Ajukan Klaim' : 'Ajukan Klaim';
         if ($statusBarang === 'dalam_proses_klaim') {
             $claimActionUrl = route('user.claim-history');
             $claimActionLabel = 'Lihat Status Klaim';

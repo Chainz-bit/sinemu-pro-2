@@ -1,284 +1,342 @@
+/* ============================================================
+   Report Detail Page
+   Blade: .report-detail-page > .report-detail-stage > section.report-detail-hero
+          > .report-detail-media (img) | .report-detail-main (flex col)
+   ============================================================ */
+
+/* ---------- Page wrapper ---------- */
 .report-detail-page {
     width: 100%;
     margin: 0;
     padding: 0;
     min-height: 100vh;
     background:
-        radial-gradient(circle at 0% 0%, rgba(122, 97, 255, 0.08), transparent 32%),
-        radial-gradient(circle at 100% 100%, rgba(90, 63, 246, 0.07), transparent 36%),
+        radial-gradient(circle at 0% 0%, rgba(122, 97, 255, 0.07), transparent 32%),
+        radial-gradient(circle at 100% 100%, rgba(90, 63, 246, 0.06), transparent 36%),
         #f7f9ff;
 }
 
+/* ---------- Stage ---------- */
 .report-detail-stage {
     width: min(1260px, 100%);
     margin: 0 auto;
     min-height: 100vh;
-    padding: 22px 24px;
+    padding: 28px 32px;
     box-sizing: border-box;
-    display: block;
-}
-
-.report-detail-hero {
-    display: grid;
-    grid-template-columns: minmax(320px, 1.05fr) minmax(360px, 1fr);
-    column-gap: 130px;
-    row-gap: 16px;
-    background: transparent;
-    border: 0;
-    border-radius: 0;   
-    padding: 0;
-    box-shadow: none;
-    align-content: center;
-    align-items: center;
-    width: 100%;
-    min-height: min(760px, calc(100vh - 44px));
-}
-
-.report-detail-media {
-    border-radius: 14px;
-    overflow: hidden;
-    background: #f0f4ff;
-    aspect-ratio: 16 / 11;
-    min-height: 0;
-    max-height: 620px;
-    border: 1px solid rgba(211, 222, 243, 0.65);
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0;
-    align-self: stretch;
+}
+
+/* ---------- Hero: 2-column grid ---------- */
+.report-detail-hero {
+    display: grid;
+    grid-template-columns: 1fr 520px;
+    column-gap: 52px;
+    width: 100%;
+    align-items: stretch;
+}
+
+/* ---------- Media / image panel ----------
+   The grid row height = right col content height.
+   Left col stretches to match (align-items: stretch on parent).
+   img is absolutely positioned inside so it fills the container
+   without pushing it taller.
+   ------------------------------------------------------------ */
+.report-detail-media {
+    min-height: 0;
+    min-width: 0;
     position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #eef2fb;
+    border: 1px solid rgba(211, 222, 243, 0.7);
     z-index: 1;
 }
 
 .report-detail-media img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center center;
     display: block;
+    transition: transform 0.35s ease;
 }
 
+.report-detail-media:hover img {
+    transform: scale(1.03);
+}
+
+/* ---------- Right column ---------- */
 .report-detail-main {
     display: flex;
     flex-direction: column;
-    min-height: 100%;
-    padding-top: 6px;
+    gap: 12px;
+    padding: 6px 0;
     position: relative;
     z-index: 2;
+    min-width: 0;
 }
 
+.report-detail-main > * {
+    margin: 0;
+}
+
+/* ---------- Heading ---------- */
 .report-detail-main h1 {
-    margin: 0 0 10px;
-    font-size: clamp(1.75rem, 2.9vw, 2.65rem);
-    line-height: 1.2;
+    font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+    line-height: 1.15;
     font-weight: 800;
-    max-width: 20ch;
+    color: #0f172a;
     word-break: break-word;
+    letter-spacing: -0.02em;
 }
 
+/* ---------- Subtitle ---------- */
 .report-detail-subtitle {
-    margin: 0 0 14px;
-    color: #55627a;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    max-width: 64ch;
+    color: #64748b;
+    font-size: 0.92rem;
+    line-height: 1.65;
 }
 
+/* ---------- Status chip ---------- */
 .report-detail-chip {
     display: inline-flex;
     align-items: center;
+    gap: 5px;
     border-radius: 999px;
-    padding: 6px 11px;
+    padding: 5px 13px;
     font-size: 0.68rem;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     font-weight: 800;
-    margin: 0 0 12px;
     width: fit-content;
+    border: 1px solid transparent;
 }
 
 .report-detail-chip.is-lost {
-    color: #b6504b;
-    background: #fff0ef;
+    color: #b6504b; background: #fff0ef; border-color: rgba(182,80,75,0.2);
 }
-
 .report-detail-chip.is-found {
-    color: #1f8d5e;
-    background: #e8f8ef;
+    color: #1f8d5e; background: #e8f8ef; border-color: rgba(31,141,94,0.2);
 }
-
 .report-detail-chip.is-in-progress {
-    color: #a16207;
-    background: #fef3c7;
+    color: #a16207; background: #fef3c7; border-color: rgba(161,98,7,0.2);
 }
-
 .report-detail-chip.is-claimed {
-    color: #1d4ed8;
-    background: #dbeafe;
+    color: #1d4ed8; background: #dbeafe; border-color: rgba(29,78,216,0.2);
 }
-
 .report-detail-chip.is-returned {
-    color: #475569;
-    background: #e2e8f0;
+    color: #475569; background: #e2e8f0; border-color: rgba(71,85,105,0.18);
 }
 
+/* ---------- Meta grid ---------- */
 .report-detail-meta-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 10px;
+    gap: 10px;
 }
 
 .report-detail-meta-grid article {
-    border: 1px solid rgba(226, 233, 246, 0.65);
+    border: 1px solid rgba(220, 230, 246, 0.8);
     border-radius: 12px;
     background: #ffffff;
-    padding: 11px 12px;
-    min-height: 66px;
+    padding: 12px 14px;
+    min-height: 64px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    cursor: default;
 }
 
 .report-detail-meta-grid article:hover {
-    transform: translateY(-1px);
-    border-color: rgba(185, 200, 233, 0.8);
-    background: #fff;
+    transform: translateY(-2px);
+    border-color: rgba(160, 180, 230, 0.9);
+    box-shadow: 0 4px 16px rgba(100, 120, 200, 0.08);
 }
 
 .report-detail-meta-label {
-    align-items: center;
-    gap: 6px;
     display: flex;
-    font-size: 0.74rem;
-    color: #66758f;
-    margin-bottom: 6px;
-    line-height: 1.25;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.71rem;
+    color: #7a8ba8;
+    margin-bottom: 5px;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
 }
 
 .report-detail-meta-label iconify-icon {
-    font-size: 14px;
-    color: #6c7ea8;
+    font-size: 13px;
+    color: #8898bb;
+    flex-shrink: 0;
 }
 
 .report-detail-meta-grid strong {
     display: block;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #0f172a;
-    line-height: 1.3;
+    font-weight: 700;
+    line-height: 1.35;
 }
 
+/* ---------- Description ---------- */
 .report-detail-description {
-    border: 1px solid rgba(226, 233, 246, 0.65);
+    border: 1px solid rgba(220, 230, 246, 0.8);
     border-radius: 12px;
-    padding: 13px 14px;
+    padding: 14px 16px;
     background: #ffffff;
 }
 
 .report-detail-description h2 {
-    margin: 0 0 8px;
-    font-size: 1.05rem;
-    font-weight: 800;
+    font-size: 0.71rem;
+    font-weight: 700;
+    color: #7a8ba8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 6px;
 }
 
 .report-detail-description p {
     margin: 0;
-    color: #334155;
-    font-size: 0.95rem;
-    line-height: 1.7;
+    color: #1e293b;
+    font-size: 0.93rem;
+    line-height: 1.75;
     white-space: pre-line;
 }
 
+/* ---------- Pre-claim note ---------- */
 .report-detail-preclaim-note {
-    margin-top: 10px;
-    border: 1px dashed #f2c879;
+    border: 1.5px dashed #f5c842;
     border-radius: 12px;
-    background: #fff8e6;
-    padding: 11px 12px;
+    background: #fffbeb;
+    padding: 13px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .report-detail-preclaim-note strong {
-    display: block;
-    font-size: 0.86rem;
+    font-size: 0.75rem;
     font-weight: 800;
-    color: #8a5d00;
-    margin-bottom: 4px;
+    color: #92400e;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
+    line-height: 1.3;
 }
 
 .report-detail-preclaim-note p {
     margin: 0;
-    color: #7a5612;
-    font-size: 0.86rem;
-    line-height: 1.55;
+    color: #78350f;
+    font-size: 0.85rem;
+    line-height: 1.6;
 }
 
+/* ---------- Action buttons ----------
+   Blade renders 1-3 <a> buttons depending on auth/type.
+   flex equal-grow keeps them side-by-side in all cases.
+   ---------------------------------------------------------- */
 .report-detail-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 14px;
-    padding-top: 0;
-    flex-wrap: wrap;
+    gap: 8px;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    margin-top: 4px;
 }
 
 .report-detail-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
     border-radius: 12px;
     font-weight: 700;
-    padding: 0.62rem 1rem;
+    font-size: 0.84rem;
+    padding: 0.65rem 0.75rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    text-decoration: none;
+}
+
+.report-detail-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(80, 60, 200, 0.16);
+}
+
+.report-detail-actions .btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 1200px) {
+    .report-detail-hero {
+        grid-template-columns: 1fr 460px;
+        column-gap: 36px;
+    }
 }
 
 @media (max-width: 900px) {
     .report-detail-stage {
-        padding: 12px 14px 16px;
+        padding: 16px 16px 24px;
         min-height: auto;
+        align-items: flex-start;
     }
 
     .report-detail-hero {
         grid-template-columns: 1fr;
-        padding: 0;
-        min-height: auto;
-        gap: 16px;
+        grid-template-rows: auto auto;
+        gap: 20px;
     }
 
+    /* On mobile: image no longer has a stretch partner, give it aspect-ratio */
     .report-detail-media {
         aspect-ratio: 16 / 10;
-        max-height: 440px;
-        align-self: auto;
+        max-height: 400px;
+    }
+
+    /* img can go back to normal flow since container has defined height */
+    .report-detail-media img {
+        position: static;
+        width: 100%;
+        height: 100%;
     }
 
     .report-detail-main h1 {
-        font-size: clamp(1.45rem, 6vw, 2rem);
-    }
-
-    .report-detail-main {
-        min-height: auto;
-        padding-top: 0;
+        font-size: clamp(1.5rem, 6vw, 2rem);
     }
 }
 
-@media (max-width: 1200px) {
-    .report-detail-hero {
-        column-gap: 44px;
-    }
-}
-
-@media (max-width: 560px) {
+@media (max-width: 640px) {
     .report-detail-stage {
-        padding: 10px 10px 14px;
+        padding: 12px 12px 20px;
     }
 
     .report-detail-meta-grid {
         grid-template-columns: 1fr;
     }
 
+    .report-detail-actions {
+        flex-wrap: wrap;
+    }
+
     .report-detail-actions .btn {
-        width: 100%;
+        flex: 1 1 100%;
+        white-space: normal;
     }
 
     .report-detail-subtitle {
-        font-size: 0.85rem;
+        font-size: 0.86rem;
     }
 }

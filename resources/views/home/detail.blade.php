@@ -70,7 +70,7 @@
                             @if(($detail->is_claimable ?? false) === true)
                                 @auth
                                     <a href="{{ $detail->claim_action_url ?? route('home') }}" class="btn btn-outline-primary">
-                                        {{ $detail->claim_action_label ?? 'Buka Beranda untuk Ajukan Klaim' }}
+                                        {{ $detail->claim_action_label ?? 'Ajukan Klaim' }}
                                     </a>
                                     <a href="{{ route('user.claim-history') }}" class="btn btn-outline-secondary">
                                         Pantau Status Klaim
