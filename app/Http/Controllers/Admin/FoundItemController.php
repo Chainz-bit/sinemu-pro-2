@@ -4,27 +4,24 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Barang;
-use App\Models\BarangStatusHistory;
 use App\Models\Kategori;
+use App\Services\Admin\FoundItems\FoundItemCommandService;
+use App\Services\Admin\FoundItems\FoundItemQueryService;
 use App\Services\Admin\Matching\MatchingService;
-use App\Services\ReportImageCleaner;
-use App\Services\UserNotificationService;
 use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FoundItemController extends Controller
 {
     public function __construct(
         private readonly OptimizedImageUploader $imageUploader,
+        private readonly FoundItemQueryService $queryService,
+        private readonly FoundItemCommandService $commandService,
         private readonly MatchingService $matchingService,
     )
     {
@@ -34,66 +31,12 @@ class FoundItemController extends Controller
     {
         /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-
-        $query = Barang::query()
-            ->with(['kategori', 'admin:id,nama'])
-            ->orderByDesc('updated_at');
-
-        if ($request->filled('search')) {
-            $search = trim((string) $request->query('search'));
-            $query->where('nama_barang', 'like', '%'.$search.'%');
-        }
-
-        if ($request->filled('status')) {
-            $allowedStatus = ['tersedia', 'dalam_proses_klaim', 'sudah_diklaim', 'sudah_dikembalikan'];
-            $status = (string) $request->query('status');
-            if (in_array($status, $allowedStatus, true)) {
-                $query->where('status_barang', $status);
-            }
-        }
-
-        if ($request->filled('date')) {
-            $query->whereDate('tanggal_ditemukan', $request->query('date'));
-        }
-
-        $sort = (string) $request->query('sort', 'terbaru');
-        switch ($sort) {
-            case 'terlama':
-                $query->orderBy('updated_at');
-                break;
-            case 'nama_asc':
-                $query->orderBy('nama_barang');
-                break;
-            case 'nama_desc':
-                $query->orderByDesc('nama_barang');
-                break;
-            default:
-                $query->orderByDesc('updated_at');
-                break;
-        }
+        $state = $this->queryService->buildIndexQuery($request);
+        $query = $state['query'];
+        $sort = $state['sort'];
 
         if ($request->boolean('export')) {
-            $exportItems = $query->get();
-
-            return new StreamedResponse(function () use ($exportItems) {
-                $handle = fopen('php://output', 'w');
-                fputcsv($handle, ['Nama Barang', 'Kategori', 'Tanggal Ditemukan', 'Lokasi', 'Status']);
-
-                foreach ($exportItems as $item) {
-                    fputcsv($handle, [
-                        $item->nama_barang,
-                        $item->kategori?->nama_kategori ?? 'Tanpa Kategori',
-                        $item->tanggal_ditemukan,
-                        $item->lokasi_ditemukan,
-                        $item->status_barang,
-                    ]);
-                }
-
-                fclose($handle);
-            }, 200, [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="barang-temuan.csv"',
-            ]);
+            return $this->queryService->exportCsv($query->get());
         }
 
         $items = $query->paginate(12)->withQueryString();
@@ -133,85 +76,7 @@ class FoundItemController extends Controller
 
     public function update(Request $request, Barang $barang): RedirectResponse
     {
-        $validated = $request->validate([
-            'nama_barang' => ['required', 'string', 'max:255'],
-            'kategori_id' => ['nullable', 'integer', 'exists:kategoris,id'],
-            'warna_barang' => ['nullable', 'string', 'max:100'],
-            'merek_barang' => ['nullable', 'string', 'max:120'],
-            'nomor_seri' => ['nullable', 'string', 'max:150'],
-            'deskripsi' => ['nullable', 'string', 'max:2000'],
-            'ciri_khusus' => ['nullable', 'string', 'max:2000'],
-            'nama_penemu' => ['nullable', 'string', 'max:150'],
-            'kontak_penemu' => ['nullable', 'string', 'max:50'],
-            'lokasi_ditemukan' => ['required', 'string', 'max:255'],
-            'detail_lokasi_ditemukan' => ['nullable', 'string', 'max:2000'],
-            'tanggal_ditemukan' => ['required', 'date'],
-            'waktu_ditemukan' => ['nullable', 'date_format:H:i'],
-            'lokasi_pengambilan' => ['nullable', 'string', 'max:255'],
-            'alamat_pengambilan' => ['nullable', 'string', 'max:255'],
-            'penanggung_jawab_pengambilan' => ['nullable', 'string', 'max:255'],
-            'kontak_pengambilan' => ['nullable', 'string', 'max:255'],
-            'jam_layanan_pengambilan' => ['nullable', 'string', 'max:255'],
-            'catatan_pengambilan' => ['nullable', 'string', 'max:2000'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
-        ]);
-
-        $payload = [
-            'nama_barang' => $validated['nama_barang'],
-            'kategori_id' => $validated['kategori_id'] ?? $barang->kategori_id,
-            'warna_barang' => $validated['warna_barang'] ?? null,
-            'merek_barang' => $validated['merek_barang'] ?? null,
-            'nomor_seri' => $validated['nomor_seri'] ?? null,
-            'deskripsi' => isset($validated['deskripsi']) && trim((string) $validated['deskripsi']) !== ''
-                ? trim((string) $validated['deskripsi'])
-                : ((string) ($barang->deskripsi ?? '')),
-            'ciri_khusus' => isset($validated['ciri_khusus']) && trim((string) $validated['ciri_khusus']) !== ''
-                ? trim((string) $validated['ciri_khusus'])
-                : null,
-            'nama_penemu' => isset($validated['nama_penemu']) && trim((string) $validated['nama_penemu']) !== ''
-                ? trim((string) $validated['nama_penemu'])
-                : null,
-            'kontak_penemu' => isset($validated['kontak_penemu']) && trim((string) $validated['kontak_penemu']) !== ''
-                ? trim((string) $validated['kontak_penemu'])
-                : null,
-            'lokasi_ditemukan' => $validated['lokasi_ditemukan'],
-            'detail_lokasi_ditemukan' => isset($validated['detail_lokasi_ditemukan']) && trim((string) $validated['detail_lokasi_ditemukan']) !== ''
-                ? trim((string) $validated['detail_lokasi_ditemukan'])
-                : null,
-            'tanggal_ditemukan' => $validated['tanggal_ditemukan'],
-            'waktu_ditemukan' => $validated['waktu_ditemukan'] ?? null,
-            'lokasi_pengambilan' => isset($validated['lokasi_pengambilan']) && trim((string) $validated['lokasi_pengambilan']) !== ''
-                ? trim((string) $validated['lokasi_pengambilan'])
-                : null,
-            'alamat_pengambilan' => isset($validated['alamat_pengambilan']) && trim((string) $validated['alamat_pengambilan']) !== ''
-                ? trim((string) $validated['alamat_pengambilan'])
-                : null,
-            'penanggung_jawab_pengambilan' => isset($validated['penanggung_jawab_pengambilan']) && trim((string) $validated['penanggung_jawab_pengambilan']) !== ''
-                ? trim((string) $validated['penanggung_jawab_pengambilan'])
-                : null,
-            'kontak_pengambilan' => isset($validated['kontak_pengambilan']) && trim((string) $validated['kontak_pengambilan']) !== ''
-                ? trim((string) $validated['kontak_pengambilan'])
-                : null,
-            'jam_layanan_pengambilan' => isset($validated['jam_layanan_pengambilan']) && trim((string) $validated['jam_layanan_pengambilan']) !== ''
-                ? trim((string) $validated['jam_layanan_pengambilan'])
-                : null,
-            'catatan_pengambilan' => isset($validated['catatan_pengambilan']) && trim((string) $validated['catatan_pengambilan']) !== ''
-                ? trim((string) $validated['catatan_pengambilan'])
-                : null,
-        ];
-
-        $oldPhotoPath = null;
-        $photo = $request->file('foto_barang');
-        if ($photo) {
-            $oldPhotoPath = $barang->foto_barang;
-            $payload['foto_barang'] = $this->imageUploader->upload($photo, 'barang-temuan/' . now()->format('Y/m'));
-        }
-
-        $barang->update($payload);
-
-        if (!empty($oldPhotoPath)) {
-            ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
-        }
+        $this->commandService->update($request, $barang, $this->imageUploader);
 
         return redirect()
             ->route('admin.found-items.show', $barang->id)
@@ -220,157 +85,29 @@ class FoundItemController extends Controller
 
     public function updateStatus(Request $request, Barang $barang): RedirectResponse
     {
-        /** @var \App\Models\Admin|null $admin */
-        $admin = Auth::guard('admin')->user();
-
-        $validated = $request->validate([
-            'status_barang' => ['required', 'in:tersedia,dalam_proses_klaim,sudah_diklaim,sudah_dikembalikan'],
-            'catatan_status' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $oldStatus = (string) $barang->status_barang;
-        $newStatus = (string) $validated['status_barang'];
-        $latestClaim = $barang->klaims()->latest('updated_at')->first();
-        $latestClaimVerificationStatus = Schema::hasColumn('klaims', 'status_verifikasi')
-            ? (string) ($latestClaim?->status_verifikasi ?? '')
-            : '';
-        $latestClaimLegacyStatus = (string) ($latestClaim?->status_klaim ?? '');
-
-        if ($newStatus === 'sudah_diklaim') {
-            $canMarkClaimed = Schema::hasColumn('klaims', 'status_verifikasi')
-                ? in_array($latestClaimVerificationStatus, [WorkflowStatus::CLAIM_APPROVED, WorkflowStatus::CLAIM_COMPLETED], true)
-                : $latestClaimLegacyStatus === 'disetujui';
-
-            if (!$canMarkClaimed) {
-                return redirect()
-                    ->route('admin.found-items.show', $barang->id)
-                    ->with('error', 'Status "Sudah Diklaim" hanya bisa dipilih setelah klaim disetujui.');
-            }
-        }
-
-        if ($newStatus === 'sudah_dikembalikan') {
-            $canMarkCompleted = Schema::hasColumn('klaims', 'status_verifikasi')
-                ? $latestClaimVerificationStatus === WorkflowStatus::CLAIM_COMPLETED
-                : ($latestClaimLegacyStatus === 'disetujui' && $oldStatus === 'sudah_diklaim');
-
-            if (!$canMarkCompleted) {
-                return redirect()
-                    ->route('admin.found-items.show', $barang->id)
-                    ->with('error', 'Status "Selesai" hanya bisa dipilih setelah klaim ditandai selesai pada Verifikasi Klaim.');
-            }
-        }
-
-        if ($oldStatus !== $newStatus) {
-            $barang->update(['status_barang' => $newStatus]);
-
-            BarangStatusHistory::create([
-                'barang_id' => $barang->id,
-                'admin_id' => $admin?->id,
-                'status_lama' => $oldStatus,
-                'status_baru' => $newStatus,
-                'catatan' => $validated['catatan_status'] ?? null,
-            ]);
-
-            $statusLabel = match ($newStatus) {
-                'tersedia' => 'Tersedia',
-                'dalam_proses_klaim' => 'Dalam Proses Klaim',
-                'sudah_diklaim' => 'Sudah Diklaim',
-                'sudah_dikembalikan' => 'Sudah Dikembalikan',
-                default => $newStatus,
-            };
-
-            $barang->klaims()
-                ->select('user_id')
-                ->whereNotNull('user_id')
-                ->distinct()
-                ->pluck('user_id')
-                ->each(function ($userId) use ($barang, $statusLabel) {
-                    UserNotificationService::notifyUser(
-                        userId: (int) $userId,
-                        type: 'status_barang_temuan',
-                        title: 'Status Barang Temuan Diperbarui',
-                        message: 'Admin memperbarui status '.$barang->nama_barang.' menjadi '.$statusLabel.'.',
-                        actionUrl: route('user.dashboard'),
-                        meta: ['barang_id' => $barang->id]
-                    );
-                });
-
-            return redirect()
-                ->route('admin.found-items.show', $barang->id)
-                ->with('status', 'Perubahan status berhasil disimpan.');
-        }
+        $result = $this->commandService->updateStatus($request, $barang);
+        $flashType = $result['ok'] ? 'status' : 'error';
 
         return redirect()
             ->route('admin.found-items.show', $barang->id)
-            ->with('status', 'Tidak ada perubahan status yang disimpan.');
+            ->with($flashType, $result['message']);
     }
 
     public function verify(Request $request, Barang $barang): RedirectResponse
     {
-        $validated = $request->validate([
-            'status_laporan' => ['required', 'in:approved,rejected'],
-        ]);
-
-        $newStatus = $validated['status_laporan'] === 'approved'
-            ? WorkflowStatus::REPORT_APPROVED
-            : WorkflowStatus::REPORT_REJECTED;
-
-        $barang->update([
-            'status_laporan' => $newStatus,
-            'verified_by_admin_id' => (int) Auth::guard('admin')->id(),
-            'verified_at' => now(),
-            'tampil_di_home' => $newStatus === WorkflowStatus::REPORT_APPROVED,
-        ]);
-
-        if (!is_null($barang->user_id)) {
-            $label = $newStatus === WorkflowStatus::REPORT_APPROVED ? 'disetujui' : 'ditolak';
-            UserNotificationService::notifyUser(
-                userId: (int) $barang->user_id,
-                type: 'verifikasi_laporan_temuan',
-                title: 'Verifikasi Laporan Temuan',
-                message: 'Laporan barang temuan "'.$barang->nama_barang.'" '.$label.' admin.',
-                actionUrl: route('user.dashboard'),
-                meta: ['barang_id' => $barang->id]
-            );
-        }
+        $this->commandService->verify($request, $barang);
 
         return back()->with('status', 'Verifikasi laporan barang temuan berhasil diperbarui.');
     }
 
     public function export(Barang $barang): Response
     {
-        $barang->loadMissing(['kategori:id,nama_kategori', 'admin:id,nama,email']);
-
-        $statusLabel = match ($barang->status_barang) {
-            'tersedia' => 'Tersedia',
-            'dalam_proses_klaim' => 'Dalam Proses Klaim',
-            'sudah_diklaim' => 'Sudah Diklaim',
-            'sudah_dikembalikan' => 'Sudah Dikembalikan',
-            default => 'Tidak Diketahui',
-        };
-
-        $photoDataUri = null;
-        if (!empty($barang->foto_barang) && Storage::disk('public')->exists($barang->foto_barang)) {
-            $absolutePath = Storage::disk('public')->path($barang->foto_barang);
-            $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
-            $photoDataUri = 'data:' . $mimeType . ';base64,' . base64_encode((string) file_get_contents($absolutePath));
-        }
-
-        $pdf = Pdf::loadView('admin.pdf.found-item-report', [
-            'barang' => $barang,
-            'statusLabel' => $statusLabel,
-            'photoDataUri' => $photoDataUri,
-        ])->setPaper('a4');
-
-        return $pdf->download('laporan-barang-temuan-' . $barang->id . '.pdf');
+        return $this->commandService->export($barang);
     }
 
     public function destroy(Barang $barang): RedirectResponse
     {
-        $photoPath = $barang->foto_barang;
-
-        $barang->delete();
-        ReportImageCleaner::purgeIfOrphaned($photoPath);
+        $this->commandService->destroy($barang);
 
         return redirect()->back()->with('status', 'Laporan barang temuan berhasil dihapus.');
     }
