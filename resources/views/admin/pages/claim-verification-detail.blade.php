@@ -287,7 +287,7 @@
 
         @if(($statusKey ?? 'menunggu') === 'menunggu')
             <div class="claim-detail-bottom-actions claim-detail-bottom-actions-stack">
-                <form method="POST" action="{{ route('admin.claim-verifications.approve', $klaim->id) }}" class="claim-verification-form">
+                <form method="POST" action="{{ route('admin.claim-verifications.approve', $klaim->id) }}" class="claim-verification-form" data-confirm-delete>
                     @csrf
                     <div class="claim-verification-head">
                         <h3>Form Verifikasi Klaim</h3>
@@ -323,11 +323,19 @@
                     <div class="claim-verification-actions">
                         <button type="submit"
                             formaction="{{ route('admin.claim-verifications.reject', $klaim->id) }}"
+                            data-confirm-title="Konfirmasi Tolak Klaim"
+                            data-confirm-message="Tolak klaim ini? Pastikan alasan penolakan sudah diisi dengan jelas."
+                            data-confirm-submit-label="Ya, Tolak"
+                            data-confirm-submit-variant="danger"
                             class="claim-action-btn danger">
                             Tolak Klaim
                         </button>
                         <button type="submit"
                             formaction="{{ route('admin.claim-verifications.approve', $klaim->id) }}"
+                            data-confirm-title="Konfirmasi Setujui Klaim"
+                            data-confirm-message="Setujui klaim ini? Status klaim akan berubah menjadi disetujui."
+                            data-confirm-submit-label="Ya, Setujui"
+                            data-confirm-submit-variant="primary"
                             class="claim-action-btn success">
                             Setujui Klaim
                         </button>

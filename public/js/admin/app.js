@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const confirmSubmit = document.getElementById('confirm-modal-submit');
     const deleteForms = document.querySelectorAll('form[data-confirm-delete]');
     let pendingDeleteForm = null;
+    let pendingSubmitter = null;
 
     // Inisialisasi modul dengan dependency elemen yang relevan.
     const rowMenu = createRowMenu(rowMenuTriggers);
@@ -52,16 +53,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     sidebar.bind();
 
-    function openConfirmModal(form) {
+    function openConfirmModal(form, submitter) {
         if (!confirmBackdrop || !confirmMessage) return;
         pendingDeleteForm = form;
-        const title = form.getAttribute('data-confirm-title') || 'Konfirmasi Hapus';
-        const submitLabel = form.getAttribute('data-confirm-submit-label') || 'Hapus';
-        const submitVariant = form.getAttribute('data-confirm-submit-variant') || 'danger';
+        pendingSubmitter = submitter || null;
+        const title = submitter?.getAttribute('data-confirm-title')
+            || form.getAttribute('data-confirm-title')
+            || 'Konfirmasi Hapus';
+        const submitLabel = submitter?.getAttribute('data-confirm-submit-label')
+            || form.getAttribute('data-confirm-submit-label')
+            || 'Hapus';
+        const submitVariant = submitter?.getAttribute('data-confirm-submit-variant')
+            || form.getAttribute('data-confirm-submit-variant')
+            || 'danger';
         if (confirmTitle) {
             confirmTitle.textContent = title;
         }
-        confirmMessage.textContent = form.getAttribute('data-confirm-message') || 'Yakin ingin menghapus data ini?';
+        confirmMessage.textContent = submitter?.getAttribute('data-confirm-message')
+            || form.getAttribute('data-confirm-message')
+            || 'Yakin ingin menghapus data ini?';
         if (confirmSubmit) {
             confirmSubmit.textContent = submitLabel;
             confirmSubmit.classList.toggle('confirm-btn-danger', submitVariant === 'danger');
@@ -74,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!confirmBackdrop) return;
         confirmBackdrop.hidden = true;
         pendingDeleteForm = null;
+        pendingSubmitter = null;
     }
 
     deleteForms.forEach(function (form) {
@@ -85,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             event.preventDefault();
             notification.close();
-            openConfirmModal(form);
+            openConfirmModal(form, event.submitter);
         });
     });
 
@@ -94,6 +105,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const form = pendingDeleteForm;
         form.dataset.confirmed = '1';
         closeConfirmModal();
+        if (pendingSubmitter) {
+            form.requestSubmit(pendingSubmitter);
+            return;
+        }
+
         form.requestSubmit();
     });
 
