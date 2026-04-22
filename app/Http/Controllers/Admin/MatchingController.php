@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ConfirmMatchRequest;
+use App\Http\Requests\Admin\DismissMatchRequest;
 use App\Services\Admin\Matching\MatchingCommandService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MatchingController extends Controller
@@ -14,27 +15,17 @@ class MatchingController extends Controller
     {
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ConfirmMatchRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'laporan_hilang_id' => ['required', 'integer', 'exists:laporan_barang_hilangs,id'],
-            'barang_id' => ['required', 'integer', 'exists:barangs,id'],
-            'catatan' => ['nullable', 'string', 'max:2000'],
-        ]);
-        $result = $this->commandService->confirm((int) Auth::guard('admin')->id(), $validated);
+        $result = $this->commandService->confirm((int) Auth::guard('admin')->id(), $request->validated());
         $flashType = $result['ok'] ? 'status' : 'error';
 
         return back()->with($flashType, $result['message']);
     }
 
-    public function dismiss(Request $request): RedirectResponse
+    public function dismiss(DismissMatchRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'laporan_hilang_id' => ['required', 'integer', 'exists:laporan_barang_hilangs,id'],
-            'barang_id' => ['required', 'integer', 'exists:barangs,id'],
-            'catatan' => ['nullable', 'string', 'max:2000'],
-        ]);
-        $result = $this->commandService->dismiss((int) Auth::guard('admin')->id(), $validated);
+        $result = $this->commandService->dismiss((int) Auth::guard('admin')->id(), $request->validated());
         $flashType = $result['ok'] ? 'status' : 'error';
 
         return back()->with($flashType, $result['message']);

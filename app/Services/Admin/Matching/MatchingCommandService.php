@@ -6,12 +6,18 @@ use App\Models\Barang;
 use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Services\UserNotificationService;
+use App\States\Matching\MatchStateResolver;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class MatchingCommandService
 {
+    public function __construct(
+        private readonly MatchStateResolver $matchStateResolver
+    ) {
+    }
+
     /**
      * @param array<string,mixed> $validated
      * @return array{ok:bool,message:string}
@@ -52,6 +58,15 @@ class MatchingCommandService
                 ->exists();
             if ($isBlockedByOtherLostReport) {
                 return ['ok' => false, 'message' => 'Barang temuan ini masih terikat pada pencocokan aktif lain.'];
+            }
+
+            $existingPair = Pencocokan::query()
+                ->where('laporan_hilang_id', $laporanId)
+                ->where('barang_id', $barangId)
+                ->lockForUpdate()
+                ->first();
+            if (!$this->matchStateResolver->resolve($existingPair)->canConfirm()) {
+                return ['ok' => false, 'message' => 'Pasangan ini tidak berada pada state yang dapat dikonfirmasi.'];
             }
 
             $pencocokan = Pencocokan::query()->updateOrCreate(
@@ -155,6 +170,15 @@ class MatchingCommandService
 
             if ($blockingPairExists) {
                 return ['ok' => false, 'message' => 'Pasangan ini sudah berada pada pencocokan aktif.'];
+            }
+
+            $existingPair = Pencocokan::query()
+                ->where('laporan_hilang_id', $laporanId)
+                ->where('barang_id', $barangId)
+                ->lockForUpdate()
+                ->first();
+            if (!$this->matchStateResolver->resolve($existingPair)->canDismiss()) {
+                return ['ok' => false, 'message' => 'Pasangan ini tidak berada pada state yang dapat ditandai tidak cocok.'];
             }
 
             Pencocokan::query()->updateOrCreate(

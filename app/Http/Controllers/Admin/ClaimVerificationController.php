@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ApproveClaimRequest;
+use App\Http\Requests\Admin\RejectClaimRequest;
 use App\Models\Klaim;
 use App\Services\Admin\Claims\ClaimVerificationListingService;
 use App\Services\Admin\Claims\ClaimVerificationWorkflowService;
@@ -41,33 +43,35 @@ class ClaimVerificationController extends Controller
         return view('admin.pages.claim-verifications', compact('claims', 'admin', 'sort'));
     }
 
-    public function approve(Request $request, Klaim $klaim): RedirectResponse
+    public function approve(ApproveClaimRequest $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
         $adminId = (int) Auth::guard('admin')->id();
 
-        if ($klaim->status_klaim === 'pending') {
-            $validated = $request->validate($this->workflowService->verificationRules());
-            if (!$this->workflowService->approve($klaim, $validated, $adminId)) {
-                return redirect()
-                    ->back()
-                    ->withInput()
-                    ->with('error', 'Klaim tidak dapat disetujui. Skor verifikasi minimal 75 dan semua poin kritikal harus lolos.');
-            }
+        if (!$this->workflowService->canApprove($klaim)) {
+            return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat disetujui.');
+        }
+
+        if (!$this->workflowService->approve($klaim, $request->validated(), $adminId)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Klaim tidak dapat disetujui. Skor verifikasi minimal 75 dan semua poin kritikal harus lolos.');
         }
 
         return redirect()->back()->with('status', 'Klaim berhasil disetujui.');
     }
 
-    public function reject(Request $request, Klaim $klaim): RedirectResponse
+    public function reject(RejectClaimRequest $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
         $adminId = (int) Auth::guard('admin')->id();
 
-        if ($klaim->status_klaim === 'pending') {
-            $validated = $request->validate($this->workflowService->verificationRules(true));
-            $this->workflowService->reject($klaim, $validated, $adminId);
+        if (!$this->workflowService->canReject($klaim)) {
+            return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat ditolak.');
         }
+
+        $this->workflowService->reject($klaim, $request->validated(), $adminId);
 
         return redirect()->back()->with('status', 'Klaim berhasil ditolak.');
     }
@@ -75,7 +79,7 @@ class ClaimVerificationController extends Controller
     public function complete(Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
-        abort_if($klaim->status_klaim !== 'disetujui', 422, 'Klaim harus disetujui sebelum ditandai selesai.');
+        abort_if(!$this->workflowService->canComplete($klaim), 422, 'Klaim harus disetujui sebelum ditandai selesai.');
         $this->workflowService->complete($klaim, (int) Auth::guard('admin')->id());
 
         return redirect()->back()->with('status', 'Klaim ditandai selesai.');

@@ -7,7 +7,6 @@ use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 class ClaimFormPageService
 {
@@ -44,6 +43,12 @@ class ClaimFormPageService
 
         $query = LaporanBarangHilang::query()
             ->where('user_id', $userId)
+            ->where('sumber_laporan', 'lapor_hilang')
+            ->whereIn('status_laporan', [
+                WorkflowStatus::REPORT_APPROVED,
+                WorkflowStatus::REPORT_MATCHED,
+                WorkflowStatus::REPORT_CLAIMED,
+            ])
             ->select([
                 'id',
                 'nama_barang',
@@ -57,17 +62,6 @@ class ClaimFormPageService
             ])
             ->orderByDesc('tanggal_hilang')
             ->orderByDesc('updated_at');
-
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
-            $query->where('sumber_laporan', 'lapor_hilang');
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-            $query->whereIn('status_laporan', [
-                WorkflowStatus::REPORT_APPROVED,
-                WorkflowStatus::REPORT_MATCHED,
-                WorkflowStatus::REPORT_CLAIMED,
-            ]);
-        }
 
         return $query->get();
     }
@@ -104,6 +98,11 @@ class ClaimFormPageService
             ->with('kategori:id,nama_kategori')
             ->whereIn('id', $matchedBarangIds)
             ->where('status_barang', 'tersedia')
+            ->whereIn('status_laporan', [
+                WorkflowStatus::REPORT_APPROVED,
+                WorkflowStatus::REPORT_MATCHED,
+                WorkflowStatus::REPORT_CLAIMED,
+            ])
             ->select([
                 'id',
                 'kategori_id',
@@ -113,14 +112,6 @@ class ClaimFormPageService
                 'status_barang',
             ])
             ->orderByDesc('updated_at');
-
-        if (Schema::hasColumn('barangs', 'status_laporan')) {
-            $query->whereIn('status_laporan', [
-                WorkflowStatus::REPORT_APPROVED,
-                WorkflowStatus::REPORT_MATCHED,
-                WorkflowStatus::REPORT_CLAIMED,
-            ]);
-        }
 
         return $query->get();
     }

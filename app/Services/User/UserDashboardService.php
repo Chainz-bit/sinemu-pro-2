@@ -18,6 +18,11 @@ class UserDashboardService
 {
     private const DASHBOARD_CACHE_TTL_SECONDS = 30;
 
+    public function __construct(
+        private readonly UserDashboardStatsService $statsService
+    ) {
+    }
+
     /**
      * @return array{totalLaporHilang:int,totalPengajuanKlaim:int,menungguVerifikasi:int,latestActivities:LengthAwarePaginator}
      */
@@ -29,27 +34,10 @@ class UserDashboardService
         $hasFoundReportStatusColumn = Schema::hasColumn('barangs', 'status_laporan');
         $hasClaimVerificationColumn = Schema::hasColumn('klaims', 'status_verifikasi');
 
-        [$totalLaporHilang, $totalPengajuanKlaim, $menungguVerifikasi] = Cache::remember(
+        $stats = Cache::remember(
             $this->statsCacheKey($userId),
             now()->addSeconds(self::DASHBOARD_CACHE_TTL_SECONDS),
-            function () use ($userId, $hasSourceColumn, $hasClaimVerificationColumn) {
-                $lostReportsQuery = LaporanBarangHilang::query()->where('user_id', $userId);
-                if ($hasSourceColumn) {
-                    $lostReportsQuery->where('sumber_laporan', 'lapor_hilang');
-                }
-
-                $totalLaporHilang = (clone $lostReportsQuery)->count();
-                $totalPengajuanKlaim = Klaim::query()->where('user_id', $userId)->count();
-                $menungguQuery = Klaim::query()->where('user_id', $userId);
-                if ($hasClaimVerificationColumn) {
-                    $menungguQuery->whereIn('status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]);
-                } else {
-                    $menungguQuery->where('status_klaim', 'pending');
-                }
-                $menungguVerifikasi = $menungguQuery->count();
-
-                return [$totalLaporHilang, $totalPengajuanKlaim, $menungguVerifikasi];
-            }
+            fn () => $this->statsService->build($userId, $hasSourceColumn, $hasClaimVerificationColumn)
         );
 
         $columnFlags = (object) [
@@ -72,9 +60,9 @@ class UserDashboardService
         );
 
         return [
-            'totalLaporHilang' => $totalLaporHilang,
-            'totalPengajuanKlaim' => $totalPengajuanKlaim,
-            'menungguVerifikasi' => $menungguVerifikasi,
+            'totalLaporHilang' => $stats['totalLaporHilang'],
+            'totalPengajuanKlaim' => $stats['totalPengajuanKlaim'],
+            'menungguVerifikasi' => $stats['menungguVerifikasi'],
             'latestActivities' => $latestActivities,
         ];
     }

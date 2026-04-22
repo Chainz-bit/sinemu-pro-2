@@ -2,13 +2,22 @@
 
 namespace App\Services\Admin\Claims;
 
+use App\Actions\Claims\ApproveClaimAction;
+use App\Actions\Claims\CompleteClaimAction;
+use App\Actions\Claims\RejectClaimAction;
 use App\Models\Klaim;
-use App\Services\UserNotificationService;
-use App\Support\WorkflowStatus;
-use Illuminate\Support\Facades\Schema;
+use App\States\Claims\ClaimStateResolver;
 
 class ClaimVerificationWorkflowService
 {
+    public function __construct(
+        private readonly ApproveClaimAction $approveClaimAction,
+        private readonly RejectClaimAction $rejectClaimAction,
+        private readonly CompleteClaimAction $completeClaimAction,
+        private readonly ClaimStateResolver $claimStateResolver
+    ) {
+    }
+
     /**
      * @return array<string, array<int, string>|string>
      */
@@ -32,45 +41,11 @@ class ClaimVerificationWorkflowService
      */
     public function approve(Klaim $klaim, array $validated, int $adminId): bool
     {
-        $verification = $this->buildVerificationResult($validated);
-        if (!$verification['can_approve']) {
+        if (!$this->canApprove($klaim)) {
             return false;
         }
 
-        $payload = [
-            'status_klaim' => 'disetujui',
-            'admin_id' => $adminId,
-        ];
-        if (Schema::hasColumn('klaims', 'status_verifikasi')) {
-            $payload['status_verifikasi'] = WorkflowStatus::CLAIM_APPROVED;
-        }
-        if (Schema::hasColumn('klaims', 'hasil_checklist')) {
-            $payload['hasil_checklist'] = $verification['checklist'];
-        }
-        if (Schema::hasColumn('klaims', 'skor_validitas')) {
-            $payload['skor_validitas'] = $verification['score'];
-        }
-        if (Schema::hasColumn('klaims', 'catatan_verifikasi_admin')) {
-            $payload['catatan_verifikasi_admin'] = $validated['catatan_verifikasi_admin'] ?? null;
-        }
-        if (Schema::hasColumn('klaims', 'alasan_penolakan')) {
-            $payload['alasan_penolakan'] = null;
-        }
-        if (Schema::hasColumn('klaims', 'diverifikasi_at')) {
-            $payload['diverifikasi_at'] = now();
-        }
-        $klaim->update($payload);
-
-        if ($klaim->barang) {
-            $klaim->barang->update(['status_barang' => 'sudah_diklaim']);
-        }
-        if ($klaim->pencocokan) {
-            $klaim->pencocokan->update(['status_pencocokan' => WorkflowStatus::MATCH_CLAIM_APPROVED]);
-        }
-
-        $this->notifyUser($klaim, 'klaim_disetujui', 'Klaim Disetujui', 'Admin menyetujui klaim untuk ');
-
-        return true;
+        return $this->approveClaimAction->execute($klaim, $validated, $adminId);
     }
 
     /**
@@ -78,150 +53,26 @@ class ClaimVerificationWorkflowService
      */
     public function reject(Klaim $klaim, array $validated, int $adminId): void
     {
-        $verification = $this->buildVerificationResult($validated);
-
-        $payload = [
-            'status_klaim' => 'ditolak',
-            'admin_id' => $adminId,
-        ];
-        if (Schema::hasColumn('klaims', 'status_verifikasi')) {
-            $payload['status_verifikasi'] = WorkflowStatus::CLAIM_REJECTED;
-        }
-        if (Schema::hasColumn('klaims', 'hasil_checklist')) {
-            $payload['hasil_checklist'] = $verification['checklist'];
-        }
-        if (Schema::hasColumn('klaims', 'skor_validitas')) {
-            $payload['skor_validitas'] = $verification['score'];
-        }
-        if (Schema::hasColumn('klaims', 'catatan_verifikasi_admin')) {
-            $payload['catatan_verifikasi_admin'] = $validated['catatan_verifikasi_admin'] ?? null;
-        }
-        if (Schema::hasColumn('klaims', 'alasan_penolakan')) {
-            $payload['alasan_penolakan'] = $validated['alasan_penolakan'];
-        }
-        if (Schema::hasColumn('klaims', 'diverifikasi_at')) {
-            $payload['diverifikasi_at'] = now();
-        }
-        $klaim->update($payload);
-
-        if ($klaim->barang && $klaim->barang->status_barang === 'dalam_proses_klaim') {
-            $klaim->barang->update(['status_barang' => 'tersedia']);
-        }
-        if ($klaim->pencocokan) {
-            $klaim->pencocokan->update(['status_pencocokan' => WorkflowStatus::MATCH_CLAIM_REJECTED]);
-        }
-
-        $this->notifyUser($klaim, 'klaim_ditolak', 'Klaim Ditolak', 'Admin menolak klaim untuk ');
+        $this->rejectClaimAction->execute($klaim, $validated, $adminId);
     }
 
     public function complete(Klaim $klaim, int $adminId): void
     {
-        $payload = [
-            'admin_id' => $adminId,
-        ];
-        if (Schema::hasColumn('klaims', 'status_verifikasi')) {
-            $payload['status_verifikasi'] = WorkflowStatus::CLAIM_COMPLETED;
-        }
-        $klaim->update($payload);
-
-        if ($klaim->barang) {
-            $barangPayload = [
-                'status_barang' => 'sudah_dikembalikan',
-            ];
-            if (Schema::hasColumn('barangs', 'status_laporan')) {
-                $barangPayload['status_laporan'] = WorkflowStatus::REPORT_COMPLETED;
-            }
-            if (Schema::hasColumn('barangs', 'tampil_di_home')) {
-                $barangPayload['tampil_di_home'] = false;
-            }
-            $klaim->barang->update($barangPayload);
-        }
-
-        if ($klaim->laporanHilang) {
-            $lostPayload = [];
-            if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-                $lostPayload['status_laporan'] = WorkflowStatus::REPORT_COMPLETED;
-            }
-            if (Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home')) {
-                $lostPayload['tampil_di_home'] = false;
-            }
-            if ($lostPayload !== []) {
-                $klaim->laporanHilang->update($lostPayload);
-            }
-        }
-
-        if ($klaim->pencocokan) {
-            $klaim->pencocokan->update(['status_pencocokan' => WorkflowStatus::MATCH_COMPLETED]);
-        }
-
-        if (!is_null($klaim->user_id)) {
-            $namaBarang = $klaim->barang?->nama_barang ?? $klaim->laporanHilang?->nama_barang ?? 'barang Anda';
-            UserNotificationService::notifyUser(
-                userId: (int) $klaim->user_id,
-                type: 'klaim_selesai',
-                title: 'Barang Sudah Diserahkan',
-                message: 'Proses klaim ' . $namaBarang . ' telah selesai dan barang dinyatakan dikembalikan.',
-                actionUrl: route('user.claim-history'),
-                meta: ['klaim_id' => $klaim->id]
-            );
-        }
+        $this->completeClaimAction->execute($klaim, $adminId);
     }
 
-    /**
-     * @param array<string,mixed> $validated
-     * @return array{score:int,checklist:array<string,bool>,can_approve:bool}
-     */
-    private function buildVerificationResult(array $validated): array
+    public function canApprove(Klaim $klaim): bool
     {
-        $checklist = [
-            'identitas_pelapor_valid' => ((string) ($validated['identitas_pelapor_valid'] ?? '0')) === '1',
-            'detail_barang_valid' => ((string) ($validated['detail_barang_valid'] ?? '0')) === '1',
-            'kronologi_valid' => ((string) ($validated['kronologi_valid'] ?? '0')) === '1',
-            'bukti_visual_valid' => ((string) ($validated['bukti_visual_valid'] ?? '0')) === '1',
-            'kecocokan_data_laporan' => ((string) ($validated['kecocokan_data_laporan'] ?? '0')) === '1',
-        ];
-
-        $weights = [
-            'identitas_pelapor_valid' => 20,
-            'detail_barang_valid' => 25,
-            'kronologi_valid' => 20,
-            'bukti_visual_valid' => 20,
-            'kecocokan_data_laporan' => 15,
-        ];
-
-        $score = 0;
-        foreach ($weights as $key => $weight) {
-            if (($checklist[$key] ?? false) === true) {
-                $score += $weight;
-            }
-        }
-
-        $criticalChecksPassed =
-            ($checklist['detail_barang_valid'] ?? false)
-            && ($checklist['kronologi_valid'] ?? false)
-            && ($checklist['bukti_visual_valid'] ?? false);
-
-        return [
-            'score' => $score,
-            'checklist' => $checklist,
-            'can_approve' => $criticalChecksPassed && $score >= 75,
-        ];
+        return $this->claimStateResolver->resolve($klaim)->canApprove();
     }
 
-    private function notifyUser(Klaim $klaim, string $type, string $title, string $prefixMessage): void
+    public function canReject(Klaim $klaim): bool
     {
-        if (is_null($klaim->user_id)) {
-            return;
-        }
+        return $this->claimStateResolver->resolve($klaim)->canReject();
+    }
 
-        $namaBarang = $klaim->barang?->nama_barang ?? $klaim->laporanHilang?->nama_barang ?? 'barang Anda';
-        UserNotificationService::notifyUser(
-            userId: (int) $klaim->user_id,
-            type: $type,
-            title: $title,
-            message: $prefixMessage . $namaBarang . '.',
-            actionUrl: route('user.claim-history'),
-            meta: ['klaim_id' => $klaim->id]
-        );
+    public function canComplete(Klaim $klaim): bool
+    {
+        return $this->claimStateResolver->resolve($klaim)->canComplete();
     }
 }

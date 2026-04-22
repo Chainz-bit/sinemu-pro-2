@@ -6,9 +6,23 @@
 body.super-login-fixed {
     height: 100dvh;
     overflow: hidden;
+    color: #10233f;
 }
 
 .super-login-shell {
+    --super-bg: #0b1424;
+    --super-bg-soft: #12243f;
+    --super-grid: rgba(97, 122, 164, 0.16);
+    --super-card-border: #cfddf0;
+    --super-card-bg: rgba(251, 253, 255, 0.95);
+    --super-heading: #17345f;
+    --super-text: #4d6688;
+    --super-label: #27456f;
+    --super-input-border: #aac2e2;
+    --super-input-bg: #f5f9ff;
+    --super-primary: #1f4aa8;
+    --super-primary-press: #1b3f8f;
+    --super-focus: rgba(34, 89, 187, 0.22);
     height: 100dvh;
     padding: clamp(10px, 2vh, 18px) clamp(20px, 3vw, 36px) clamp(44px, 9vh, 110px);
     display: grid;
@@ -16,19 +30,25 @@ body.super-login-fixed {
     align-content: start;
     overflow: hidden;
     background:
-        radial-gradient(1300px 600px at -10% -20%, #dfeafe 0%, transparent 60%),
-        radial-gradient(1000px 500px at 110% 110%, #e8f2ff 0%, transparent 65%),
-        linear-gradient(165deg, #f5f8ff 0%, #eef3ff 45%, #edf6f1 100%);
+        radial-gradient(900px 460px at -5% -18%, rgba(63, 116, 200, 0.2) 0%, transparent 62%),
+        radial-gradient(900px 520px at 115% 112%, rgba(45, 149, 138, 0.2) 0%, transparent 63%),
+        linear-gradient(var(--super-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--super-grid) 1px, transparent 1px),
+        linear-gradient(165deg, var(--super-bg) 0%, var(--super-bg-soft) 46%, #0d1e35 100%);
+    background-size: auto, auto, 44px 44px, 44px 44px, auto;
 }
 
 .super-login-card {
     width: min(520px, 100%);
-    border: 1px solid #dbe6f7;
+    border: 1px solid var(--super-card-border);
     border-radius: 24px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 24px 52px rgba(15, 23, 42, 0.14);
+    background:
+        linear-gradient(175deg, rgba(255, 255, 255, 0.95) 0%, var(--super-card-bg) 68%, rgba(244, 249, 255, 0.93) 100%);
+    box-shadow:
+        0 30px 62px rgba(3, 12, 26, 0.36),
+        inset 0 1px 0 rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(8px);
-    padding: clamp(20px, 2.6vw, 30px);
+    padding: clamp(20px, 2.6vw, 32px);
     margin-top: clamp(6px, 1.2vh, 16px);
     margin-bottom: 0;
 }
@@ -42,8 +62,8 @@ body.super-login-fixed {
 
 .super-login-head {
     display: grid;
-    gap: 14px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 14px;
 }
 
 .super-login-brand {
@@ -52,7 +72,7 @@ body.super-login-fixed {
 }
 
 .super-login-brand img {
-    width: 140px;
+    width: 122px;
     height: auto;
 }
 
@@ -64,38 +84,38 @@ body.super-login-fixed {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 32px;
-    padding: 0 13px;
+    min-height: 30px;
+    padding: 0 12px;
     border-radius: 999px;
-    border: 1px solid #c8daf8;
-    background: #edf4ff;
-    color: #2a5b9f;
-    font-size: 11px;
+    border: 1px solid #bfd2ee;
+    background: #eaf2ff;
+    color: #1e4f91;
+    font-size: 10.5px;
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
 }
 
 .super-login-title-wrap h1 {
-    margin: 11px 0 7px;
+    margin: 10px 0 8px;
     font-size: clamp(1.56rem, 2.4vw, 1.86rem);
-    line-height: 1.2;
-    color: #102f61;
+    line-height: 1.16;
+    color: var(--super-heading);
 }
 
 .super-login-title-wrap p {
     margin: 0;
-    color: #5f7493;
-    font-size: 14px;
-    line-height: 1.65;
+    color: var(--super-text);
+    font-size: 15px;
+    line-height: 1.6;
 }
 
 .super-login-alert {
     margin-bottom: 12px;
-    border: 1px solid #f6c7cd;
+    border: 1px solid #f1c4cc;
     border-radius: 12px;
-    background: #fff2f4;
-    color: #a12a33;
+    background: #fff3f5;
+    color: #9a2d37;
     font-size: 13px;
     line-height: 1.5;
     padding: 11px 12px;
@@ -103,7 +123,7 @@ body.super-login-fixed {
 
 .super-login-form {
     display: grid;
-    gap: 12px;
+    gap: 11px;
 }
 
 .super-login-field {
@@ -112,8 +132,8 @@ body.super-login-fixed {
 }
 
 .super-login-field label {
-    color: #324968;
-    font-size: 13px;
+    color: var(--super-label);
+    font-size: 14px;
     font-weight: 800;
 }
 
@@ -128,7 +148,7 @@ body.super-login-fixed {
     transform: translateY(-50%);
     width: 16px;
     height: 16px;
-    color: #6d86a8;
+    color: #587aa8;
     pointer-events: none;
 }
 
@@ -139,25 +159,25 @@ body.super-login-fixed {
 
 .super-login-field input {
     width: 100%;
-    height: 46px;
-    border: 1px solid #c6d5ea;
+    height: 48px;
+    border: 1px solid var(--super-input-border);
     border-radius: 12px;
-    background: #f8fbff;
-    color: #13243e;
+    background: var(--super-input-bg);
+    color: #0f2a4f;
     font: inherit;
-    font-size: 14px;
+    font-size: 15px;
     padding: 0 42px 0 38px;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .super-login-field input::placeholder {
-    color: #8da0bb;
+    color: #7690b4;
 }
 
 .super-login-field input:focus {
-    border-color: #7ea5dc;
-    box-shadow: 0 0 0 3px rgba(60, 111, 194, 0.16);
+    border-color: #5f8fce;
+    box-shadow: 0 0 0 3px var(--super-focus);
     background: #fff;
 }
 
@@ -171,7 +191,7 @@ body.super-login-fixed {
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: #7187a6;
+    color: #5f7fa9;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -179,8 +199,8 @@ body.super-login-fixed {
 }
 
 .super-password-toggle:hover {
-    background: #eef4ff;
-    color: #325f9d;
+    background: #eaf2ff;
+    color: #24538f;
 }
 
 .super-password-toggle svg {
@@ -189,36 +209,44 @@ body.super-login-fixed {
 }
 
 .super-login-help {
-    color: #7f8fa7;
-    font-size: 11.5px;
-    line-height: 1.45;
+    color: #647f9f;
+    font-size: 12.5px;
+    line-height: 1.55;
 }
 
 .super-login-submit {
     border: 0;
     border-radius: 12px;
-    height: 46px;
+    height: 48px;
     margin-top: 2px;
-    background: linear-gradient(135deg, #1d4ed8 0%, #2f4ac0 45%, #3730a3 100%);
+    background: linear-gradient(135deg, #1f4aa8 0%, #27539e 42%, #2b6e85 100%);
     color: #fff;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 10px 22px rgba(37, 69, 171, 0.34);
+    box-shadow: 0 12px 22px rgba(22, 56, 122, 0.36);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .super-login-submit:hover {
-    filter: brightness(1.03);
+    filter: brightness(1.02);
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px rgba(20, 49, 105, 0.38);
+}
+
+.super-login-submit:active {
+    transform: translateY(0);
+    box-shadow: 0 8px 18px rgba(20, 49, 105, 0.36);
 }
 
 .super-login-note {
     margin-top: 14px;
-    border: 1px solid #dce8f7;
+    border: 1px solid #d3e0f1;
     border-radius: 12px;
-    background: #f7fbff;
-    color: #617796;
-    font-size: 12px;
-    line-height: 1.65;
+    background: #f3f8ff;
+    color: #4f6d90;
+    font-size: 13px;
+    line-height: 1.6;
     padding: 11px 12px;
 }
 
@@ -235,6 +263,6 @@ body.super-login-fixed {
     }
 
     .super-login-brand img {
-        width: 128px;
+        width: 114px;
     }
 }

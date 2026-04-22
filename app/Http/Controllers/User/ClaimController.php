@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\User\SubmitClaimRequest;
 use App\Services\User\Claims\ClaimFormPageService;
 use App\Services\User\Claims\ClaimSubmissionService;
 use Illuminate\Contracts\View\View;
@@ -33,9 +34,12 @@ class ClaimController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SubmitClaimRequest $request): RedirectResponse
     {
-        $result = $this->submissionService->submit($request);
+        $result = $this->submissionService->submit(
+            $request->validated(),
+            $request->file('bukti_foto', [])
+        );
         if (!$result['ok']) {
             return back()->with('error', $result['message']);
         }
