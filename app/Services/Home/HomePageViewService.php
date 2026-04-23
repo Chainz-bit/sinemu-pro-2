@@ -2,17 +2,10 @@
 
 namespace App\Services\Home;
 
-use App\Models\Admin;
-use App\Models\Barang;
-use App\Models\Kategori;
-use App\Models\LaporanBarangHilang;
-use App\Models\Wilayah;
-use App\Support\ReportStatusPresenter;
+use App\Services\Support\DatabaseHealthService;
 use App\Support\WorkflowStatus;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -21,15 +14,28 @@ class HomePageViewService
     private const HOME_ITEMS_LIMIT = 24;
     private bool $skipDatabaseCalls = false;
     private bool $databaseFailureReported = false;
-    private bool $databaseReachabilityChecked = false;
     /** @var array<string,bool> */
     private array $tableExistsCache = [];
     /** @var array<string,bool> */
     private array $columnExistsCache = [];
 
+    public function __construct(
+        private readonly HomeLostItemService $lostItemService,
+        private readonly HomeFoundItemService $foundItemService,
+        private readonly HomeCategoryService $categoryService,
+        private readonly HomeRegionService $regionService,
+        private readonly HomePickupLocationService $pickupLocationService,
+        private readonly HomeClaimableLostReportService $claimableLostReportService,
+        private readonly DatabaseHealthService $databaseHealthService,
+        private readonly HomeMediaAssetService $mediaAssetService,
+        private readonly HomeLostDetailService $lostDetailService,
+        private readonly HomeFoundDetailService $foundDetailService
+    ) {
+    }
+
     public function isDatabaseResponsive(): bool
     {
-        return $this->isDatabaseSocketReachable();
+        return $this->databaseHealthService->isResponsive();
     }
 
     /**
@@ -43,7 +49,7 @@ class HomePageViewService
         [$regions, $mapRegions] = $this->getRegions($lostItems, $foundItems);
         $pickupLocations = $this->getPickupLocations();
         $userName = $this->resolveUserDisplayName($currentUser);
-        $userAvatar = $this->resolveUserAvatarUrl((string) ($currentUser?->profil ?? ''));
+        $userAvatar = $this->mediaAssetService->resolveUserAvatarUrl((string) ($currentUser?->profil ?? ''));
         $userLocation = $currentUser?->location ?? 'Lokasi Anda';
         $claimableLostReports = $includeClaimableReports
             ? $this->getClaimableLostReports((int) ($currentUser?->id ?? 0))
@@ -69,135 +75,17 @@ class HomePageViewService
     /**
      * @return array{pageTitle:string,detail:object}
      */
-    public function buildLostDetailViewData(LaporanBarangHilang $laporanBarangHilang): array
+    public function buildLostDetailViewData(\App\Models\LaporanBarangHilang $laporanBarangHilang): array
     {
-        $validStatuses = [
-            WorkflowStatus::REPORT_APPROVED,
-            WorkflowStatus::REPORT_MATCHED,
-            WorkflowStatus::REPORT_CLAIMED,
-            WorkflowStatus::REPORT_COMPLETED,
-        ];
-        $hasValidStatus = in_array((string) ($laporanBarangHilang->status_laporan ?? ''), $validStatuses, true);
-        $isPublished = (bool) ($laporanBarangHilang->tampil_di_home ?? false);
-        abort_unless($hasValidStatus || $isPublished, 404);
-
-        [$lostStatusLabel, $lostStatusClass] = match ((string) ($laporanBarangHilang->status_laporan ?? WorkflowStatus::REPORT_SUBMITTED)) {
-            WorkflowStatus::REPORT_APPROVED => ['Terverifikasi', 'is-in-progress'],
-            WorkflowStatus::REPORT_MATCHED => ['Sudah Dicocokkan', 'is-found'],
-            WorkflowStatus::REPORT_CLAIMED => ['Sedang Diproses Klaim', 'is-in-progress'],
-            WorkflowStatus::REPORT_COMPLETED => ['Selesai', 'is-returned'],
-            WorkflowStatus::REPORT_REJECTED => ['Ditolak Admin', 'is-returned'],
-            default => ['Menunggu Verifikasi', 'is-in-progress'],
-        };
-
-        $pelapor = $laporanBarangHilang->user?->nama ?? $laporanBarangHilang->user?->name ?? 'Pengguna';
-        $detail = (object) [
-            'type' => 'hilang',
-            'title' => (string) $laporanBarangHilang->nama_barang,
-            'category' => 'Umum',
-            'location' => (string) $laporanBarangHilang->lokasi_hilang,
-            'date_label' => $laporanBarangHilang->tanggal_hilang
-                ? Carbon::parse((string) $laporanBarangHilang->tanggal_hilang)->translatedFormat('d F Y')
-                : '-',
-            'status_label' => $lostStatusLabel,
-            'status_class' => $lostStatusClass,
-            'description' => trim((string) ($laporanBarangHilang->keterangan ?? '')) !== ''
-                ? (string) $laporanBarangHilang->keterangan
-                : 'Belum ada deskripsi tambahan dari pelapor.',
-            'reporter' => $pelapor,
-            'image_url' => $this->resolveItemImageUrl((string) ($laporanBarangHilang->foto_barang ?? ''), 'barang-hilang'),
-        ];
-
-        return [
-            'pageTitle' => 'Detail Barang Hilang - SiNemu',
-            'detail' => $detail,
-        ];
+        return $this->lostDetailService->build($laporanBarangHilang);
     }
 
     /**
      * @return array{pageTitle:string,detail:object}
      */
-    public function buildFoundDetailViewData(Barang $barang): array
+    public function buildFoundDetailViewData(\App\Models\Barang $barang): array
     {
-        $validStatuses = [
-            WorkflowStatus::REPORT_APPROVED,
-            WorkflowStatus::REPORT_MATCHED,
-            WorkflowStatus::REPORT_CLAIMED,
-            WorkflowStatus::REPORT_COMPLETED,
-        ];
-        $hasValidStatus = in_array((string) ($barang->status_laporan ?? ''), $validStatuses, true);
-        $isPublished = (bool) ($barang->tampil_di_home ?? false);
-        abort_unless($hasValidStatus || $isPublished, 404);
-
-        $statusBarang = (string) ($barang->status_barang ?? '');
-        $statusMeta = match ($statusBarang) {
-            'dalam_proses_klaim' => [
-                'label' => 'Sedang Diproses Klaim',
-                'class' => 'is-in-progress',
-                'claimable' => false,
-                'subtitle' => 'Barang ini sedang dalam proses verifikasi klaim. Pengajuan klaim baru tidak dapat dilakukan saat ini.',
-            ],
-            'sudah_diklaim' => [
-                'label' => 'Sudah Diklaim',
-                'class' => 'is-claimed',
-                'claimable' => false,
-                'subtitle' => 'Barang ini sudah melalui proses klaim dan tidak tersedia untuk pengajuan klaim baru.',
-            ],
-            'sudah_dikembalikan' => [
-                'label' => 'Sudah Dikembalikan',
-                'class' => 'is-returned',
-                'claimable' => false,
-                'subtitle' => 'Barang ini sudah dikembalikan kepada pemilik dan tidak tersedia untuk klaim baru.',
-            ],
-            default => [
-                'label' => 'Tersedia untuk Diklaim',
-                'class' => 'is-found',
-                'claimable' => true,
-                'subtitle' => 'Detail laporan barang temuan untuk membantu pengguna memahami informasi sebelum tindak lanjut.',
-            ],
-        };
-
-        $claimActionUrl = route('user.claims.create', ['barang_id' => $barang->id]);
-        $claimActionLabel = 'Ajukan Klaim';
-        if ($statusBarang === 'dalam_proses_klaim') {
-            $claimActionUrl = route('user.claim-history');
-            $claimActionLabel = 'Lihat Status Klaim';
-        } elseif ($statusBarang === 'sudah_diklaim') {
-            $claimActionUrl = route('user.claim-history');
-            $claimActionLabel = 'Lihat Instruksi Pengambilan';
-        } elseif ($statusBarang === 'sudah_dikembalikan') {
-            $claimActionUrl = route('user.claim-history');
-            $claimActionLabel = 'Lihat Riwayat Klaim';
-        }
-
-        $penanggungJawab = $barang->admin?->instansi ?? $barang->admin?->nama ?? 'Admin';
-        $detail = (object) [
-            'id' => (int) $barang->id,
-            'type' => 'temuan',
-            'title' => (string) $barang->nama_barang,
-            'category' => ucwords(strtolower((string) ($barang->kategori?->nama_kategori ?? 'Umum'))),
-            'location' => (string) $barang->lokasi_ditemukan,
-            'date_label' => $barang->tanggal_ditemukan
-                ? Carbon::parse((string) $barang->tanggal_ditemukan)->translatedFormat('d F Y')
-                : '-',
-            'status_label' => $statusMeta['label'],
-            'status_class' => $statusMeta['class'],
-            'description' => trim((string) ($barang->deskripsi ?? '')) !== ''
-                ? (string) $barang->deskripsi
-                : 'Belum ada deskripsi tambahan.',
-            'reporter' => $penanggungJawab,
-            'image_url' => $this->resolveItemImageUrl((string) ($barang->foto_barang ?? ''), 'barang-temuan'),
-            'subtitle' => $statusMeta['subtitle'],
-            'is_claimable' => $statusMeta['claimable'],
-            'claim_action_url' => $claimActionUrl,
-            'claim_action_label' => $claimActionLabel,
-            'preclaim_note' => 'Kecocokan barang tidak otomatis membuktikan kepemilikan. Anda wajib mengajukan klaim dengan bukti kepemilikan untuk diverifikasi admin.',
-        ];
-
-        return [
-            'pageTitle' => 'Detail Barang Temuan - SiNemu',
-            'detail' => $detail,
-        ];
+        return $this->foundDetailService->build($barang);
     }
 
     /**
@@ -208,57 +96,11 @@ class HomePageViewService
         $lostItems = [];
         $lostTotalCount = 0;
         if ($this->hasDatabaseTable('laporan_barang_hilangs')) {
-            [$lostItems, $lostTotalCount] = $this->safeDatabaseCall(function () {
-                $lostQuery = LaporanBarangHilang::query();
-                $lostQuery = $this->resolveHomeScopeQuery($lostQuery, 'laporan_barang_hilangs');
-                $lostTotalCount = (clone $lostQuery)->count();
-
-                $lostItemsQuery = $lostQuery
-                    ->select([
-                        'id',
-                        'kategori_barang',
-                        'nama_barang',
-                        'lokasi_hilang',
-                        'tanggal_hilang',
-                        'foto_barang',
-                        'status_laporan',
-                        'updated_at',
-                    ])
-                    ->latest('updated_at')
-                    ->limit(self::HOME_ITEMS_LIMIT);
-
-                $lostItems = $lostItemsQuery
-                    ->get()
-                    ->map(function ($item) {
-                        $categoryLabel = trim((string) ($item->kategori_barang ?? ''));
-                        $reportStatus = ReportStatusPresenter::key((string) ($item->status_laporan ?? WorkflowStatus::REPORT_SUBMITTED));
-                        [$lostStatusLabel, $lostStatusClass] = match ($reportStatus) {
-                            WorkflowStatus::REPORT_APPROVED => ['Terverifikasi', 'item-status-info'],
-                            WorkflowStatus::REPORT_MATCHED => ['Sudah Dicocokkan', 'item-status-success'],
-                            WorkflowStatus::REPORT_CLAIMED => ['Sedang Diklaim', 'item-status-warning'],
-                            WorkflowStatus::REPORT_COMPLETED => ['Selesai', 'item-status-success'],
-                            WorkflowStatus::REPORT_REJECTED => ['Ditolak', 'item-status-muted'],
-                            default => ['Menunggu Verifikasi', 'item-status-warning'],
-                        };
-
-                        return [
-                            'id' => $item->id,
-                            'category' => strtoupper($categoryLabel !== '' ? $categoryLabel : 'UMUM'),
-                            'name' => $item->nama_barang,
-                            'location' => $this->normalizeLocationLabel((string) $item->lokasi_hilang),
-                            'date' => $item->tanggal_hilang ? Carbon::parse((string) $item->tanggal_hilang)->format('m/d/Y') : '',
-                            'date_label' => $item->tanggal_hilang ? Carbon::parse((string) $item->tanggal_hilang)->translatedFormat('d M Y') : '-',
-                            'image_url' => $this->resolveItemImageUrl((string) ($item->foto_barang ?? ''), 'barang-hilang'),
-                            'detail_url' => route('home.lost-detail', $item->id),
-                            'status_label' => $lostStatusLabel,
-                            'status_class' => $lostStatusClass,
-                        ];
-                    })
-                    ->values()
-                    ->all();
-
-                return [$lostItems, $lostTotalCount];
-            }, [[], 0]);
+            [$lostItems, $lostTotalCount] = $this->lostItemService->build(
+                limit: self::HOME_ITEMS_LIMIT,
+                safeDatabaseCall: $this->safeDatabaseCall(...),
+                resolveHomeScopeQuery: $this->resolveHomeScopeQuery(...)
+            );
         }
 
         return [$lostItems, $lostTotalCount];
@@ -272,61 +114,11 @@ class HomePageViewService
         $foundItems = [];
         $foundTotalCount = 0;
         if ($this->hasDatabaseTable('barangs')) {
-            [$foundItems, $foundTotalCount] = $this->safeDatabaseCall(function () {
-                $foundQuery = Barang::query()
-                    ->with('kategori:id,nama_kategori');
-                $foundQuery = $this->resolveHomeScopeQuery($foundQuery, 'barangs');
-                $foundTotalCount = (clone $foundQuery)->count();
-
-                $foundItemsQuery = $foundQuery
-                    ->select([
-                        'id',
-                        'kategori_id',
-                        'nama_barang',
-                        'lokasi_ditemukan',
-                        'tanggal_ditemukan',
-                        'status_barang',
-                        'foto_barang',
-                        'updated_at',
-                    ])
-                    ->latest('updated_at')
-                    ->limit(self::HOME_ITEMS_LIMIT);
-
-                $foundItems = $foundItemsQuery
-                    ->get()
-                    ->map(function ($item) {
-                        $statusBarang = (string) ($item->status_barang ?? '');
-                        $claimStatusKey = match ($statusBarang) {
-                            'dalam_proses_klaim' => 'in_progress',
-                            'sudah_diklaim' => 'claimed',
-                            'sudah_dikembalikan' => 'returned',
-                            default => 'available',
-                        };
-
-                        return [
-                            'id' => $item->id,
-                            'category' => strtoupper($item->kategori->nama_kategori ?? 'UMUM'),
-                            'name' => $item->nama_barang,
-                            'location' => $this->normalizeLocationLabel((string) $item->lokasi_ditemukan),
-                            'date' => $item->tanggal_ditemukan ? Carbon::parse((string) $item->tanggal_ditemukan)->format('m/d/Y') : '',
-                            'date_label' => $item->tanggal_ditemukan ? Carbon::parse((string) $item->tanggal_ditemukan)->translatedFormat('d M Y') : '-',
-                            'image_url' => $this->resolveItemImageUrl((string) ($item->foto_barang ?? ''), 'barang-temuan'),
-                            'detail_url' => route('home.found-detail', $item->id),
-                            'claim_status_key' => $claimStatusKey,
-                            'claim_status_label' => match ($claimStatusKey) {
-                                'in_progress' => 'Sedang Diproses Klaim',
-                                'claimed' => 'Sudah Diklaim',
-                                'returned' => 'Sudah Dikembalikan',
-                                default => 'Tersedia untuk Diklaim',
-                            },
-                            'is_claimable' => $claimStatusKey === 'available',
-                        ];
-                    })
-                    ->values()
-                    ->all();
-
-                return [$foundItems, $foundTotalCount];
-            }, [[], 0]);
+            [$foundItems, $foundTotalCount] = $this->foundItemService->build(
+                limit: self::HOME_ITEMS_LIMIT,
+                safeDatabaseCall: $this->safeDatabaseCall(...),
+                resolveHomeScopeQuery: $this->resolveHomeScopeQuery(...)
+            );
         }
 
         return [$foundItems, $foundTotalCount];
@@ -338,38 +130,11 @@ class HomePageViewService
      */
     private function getCategories(array $foundItems): array
     {
-        $categories = ['Semua Kategori'];
-        $kategoriOptions = collect();
-        if ($this->hasDatabaseTable('kategoris')) {
-            $kategoriOptions = $this->safeDatabaseCall(
-                fn () => Kategori::query()->forForm()->get(['id', 'nama_kategori']),
-                collect()
-            );
-        }
-
-        $categoryLabels = $kategoriOptions
-            ->pluck('nama_kategori')
-            ->merge(
-                collect($foundItems)
-                    ->pluck('category')
-                    ->map(fn ($label) => ucwords(strtolower((string) $label)))
-            )
-            ->map(fn ($label) => trim((string) $label))
-            ->filter(fn ($label) => $label !== '')
-            ->reject(fn ($label) => Str::lower($label) === 'tas')
-            ->unique(fn ($label) => Str::lower($label))
-            ->sortBy(function ($label) {
-                $lower = Str::lower($label);
-                return $lower === 'lainnya' ? 'zzzzzz' : $lower;
-            })
-            ->values()
-            ->all();
-
-        if (count($categoryLabels) > 0) {
-            $categories = array_merge(['Semua Kategori'], $categoryLabels);
-        }
-
-        return [$categories, $kategoriOptions];
+        return $this->categoryService->build(
+            foundItems: $foundItems,
+            hasCategoryTable: $this->hasDatabaseTable('kategoris'),
+            safeDatabaseCall: $this->safeDatabaseCall(...)
+        );
     }
 
     /**
@@ -379,71 +144,12 @@ class HomePageViewService
      */
     private function getRegions(array $lostItems, array $foundItems): array
     {
-        $regions = ['Seluruh Wilayah'];
-        $mapRegions = [];
-        if ($this->hasDatabaseTable('wilayahs')) {
-            [$regions, $mapRegions] = $this->safeDatabaseCall(function () use ($lostItems, $foundItems) {
-                $regions = ['Seluruh Wilayah'];
-                $mapRegions = [];
-
-                $wilayahs = Wilayah::query()
-                    ->orderBy('nama_wilayah')
-                    ->get(['nama_wilayah', 'lat', 'lng']);
-
-                $regionLabels = $wilayahs
-                    ->pluck('nama_wilayah')
-                    ->map(fn ($label) => trim((string) $label))
-                    ->filter(fn ($label) => $label !== '')
-                    ->unique(fn ($label) => Str::lower($label))
-                    ->values()
-                    ->all();
-
-                if (count($regionLabels) > 0) {
-                    $regions = array_merge(['Seluruh Wilayah'], $regionLabels);
-                }
-
-                $allLocations = collect(array_merge(
-                    array_column($lostItems, 'location'),
-                    array_column($foundItems, 'location')
-                ))->map(fn ($loc) => Str::lower((string) $loc));
-
-                $mapRegions = $wilayahs->map(function ($wilayah) use ($allLocations) {
-                    $key = Str::lower(str_replace('kecamatan', '', (string) $wilayah->nama_wilayah));
-                    $activePoints = $allLocations->filter(function ($loc) use ($key) {
-                        return str_contains($loc, trim($key));
-                    })->count();
-
-                    return [
-                        'name' => $wilayah->nama_wilayah,
-                        'slug' => Str::slug((string) $wilayah->nama_wilayah),
-                        'lat' => $wilayah->lat ? (float) $wilayah->lat : null,
-                        'lng' => $wilayah->lng ? (float) $wilayah->lng : null,
-                        'active_points' => $activePoints,
-                    ];
-                })->values()->all();
-
-                return [$regions, $mapRegions];
-            }, [$regions, []]);
-        }
-
-        if (count($regions) === 1) {
-            $regionFromItems = collect(array_merge(
-                array_column($lostItems, 'location'),
-                array_column($foundItems, 'location')
-            ))
-                ->map(fn ($label) => trim((string) $label))
-                ->filter(fn ($label) => $label !== '')
-                ->unique(fn ($label) => Str::lower($label))
-                ->sortBy(fn ($label) => Str::lower($label))
-                ->values()
-                ->all();
-
-            if (count($regionFromItems) > 0) {
-                $regions = array_merge(['Seluruh Wilayah'], $regionFromItems);
-            }
-        }
-
-        return [$regions, $mapRegions];
+        return $this->regionService->build(
+            lostItems: $lostItems,
+            foundItems: $foundItems,
+            hasRegionTable: $this->hasDatabaseTable('wilayahs'),
+            safeDatabaseCall: $this->safeDatabaseCall(...)
+        );
     }
 
     /**
@@ -451,63 +157,11 @@ class HomePageViewService
      */
     private function getPickupLocations(): array
     {
-        $pickupLocations = [];
-        if ($this->hasDatabaseTable('admins')) {
-            $pickupLocations = $this->safeDatabaseCall(function () {
-                $hasStatusVerifikasi = $this->hasDatabaseColumn('admins', 'status_verifikasi');
-                $hasKecamatan = $this->hasDatabaseColumn('admins', 'kecamatan');
-                $hasAlamatLengkap = $this->hasDatabaseColumn('admins', 'alamat_lengkap');
-                $hasLat = $this->hasDatabaseColumn('admins', 'lat');
-                $hasLng = $this->hasDatabaseColumn('admins', 'lng');
-
-                $selectColumns = ['id', 'instansi'];
-                if ($hasKecamatan) {
-                    $selectColumns[] = 'kecamatan';
-                }
-                if ($hasAlamatLengkap) {
-                    $selectColumns[] = 'alamat_lengkap';
-                }
-                if ($hasLat) {
-                    $selectColumns[] = 'lat';
-                }
-                if ($hasLng) {
-                    $selectColumns[] = 'lng';
-                }
-
-                $pickupQuery = Admin::query()->orderBy('instansi');
-
-                if ($hasStatusVerifikasi) {
-                    $pickupQuery->where('status_verifikasi', 'active');
-                }
-
-                return $pickupQuery
-                    ->get($selectColumns)
-                    ->map(function (Admin $admin) use ($hasKecamatan, $hasAlamatLengkap, $hasLat, $hasLng) {
-                        $instansi = trim((string) ($admin->instansi ?? ''));
-                        $kecamatan = $hasKecamatan ? trim((string) ($admin->kecamatan ?? '')) : '';
-                        $alamatLengkap = $hasAlamatLengkap ? trim((string) ($admin->alamat_lengkap ?? '')) : '';
-                        $address = $alamatLengkap !== ''
-                            ? $alamatLengkap
-                            : ($kecamatan !== '' ? ('Kecamatan ' . $kecamatan) : ($instansi !== '' ? $instansi : 'Alamat belum tersedia'));
-
-                        return [
-                            'id' => $admin->id,
-                            'name' => $instansi !== '' ? $instansi : 'Admin SiNemu',
-                            'manager_label' => 'Admin Pengelola',
-                            'address' => $address,
-                            'kecamatan' => $kecamatan,
-                            'lat' => $hasLat && $admin->lat !== null ? (float) $admin->lat : null,
-                            'lng' => $hasLng && $admin->lng !== null ? (float) $admin->lng : null,
-                            'phone' => '0812-3456-7890',
-                            'hours' => '08.00-20.00 WIB',
-                        ];
-                    })
-                    ->values()
-                    ->all();
-            }, []);
-        }
-
-        return $pickupLocations;
+        return $this->pickupLocationService->build(
+            hasAdminTable: $this->hasDatabaseTable('admins'),
+            safeDatabaseCall: $this->safeDatabaseCall(...),
+            hasDatabaseColumn: $this->hasDatabaseColumn(...)
+        );
     }
 
     private function getClaimableLostReports(int $userId): Collection
@@ -516,132 +170,11 @@ class HomePageViewService
             return collect();
         }
 
-        return $this->safeDatabaseCall(function () use ($userId) {
-            $query = LaporanBarangHilang::query()
-                ->where('user_id', $userId)
-                ->select([
-                    'id',
-                    'nama_barang',
-                    'lokasi_hilang',
-                    'tanggal_hilang',
-                    'kontak_pelapor',
-                    'bukti_kepemilikan',
-                ]);
-
-            if ($this->hasDatabaseColumn('laporan_barang_hilangs', 'sumber_laporan')) {
-                $query->where('sumber_laporan', 'lapor_hilang');
-            }
-            if ($this->hasDatabaseColumn('laporan_barang_hilangs', 'status_laporan')) {
-                $query->whereIn('status_laporan', [
-                    WorkflowStatus::REPORT_APPROVED,
-                    WorkflowStatus::REPORT_MATCHED,
-                    WorkflowStatus::REPORT_CLAIMED,
-                ]);
-            }
-
-            return $query
-                ->orderByDesc('tanggal_hilang')
-                ->orderByDesc('updated_at')
-                ->get();
-        }, collect());
-    }
-
-    private function resolveItemImageUrl(string $fotoPath, string $defaultFolder): string
-    {
-        $cleanPath = str_replace('\\', '/', trim($fotoPath, '/'));
-        if ($cleanPath === '') {
-            return asset('img/login-image.png');
-        }
-
-        if (Str::startsWith($cleanPath, ['http://', 'https://'])) {
-            return $cleanPath;
-        }
-
-        if (Str::startsWith($cleanPath, 'storage/')) {
-            $cleanPath = substr($cleanPath, 8);
-        } elseif (Str::startsWith($cleanPath, 'public/')) {
-            $cleanPath = substr($cleanPath, 7);
-        }
-
-        [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
-
-        if (in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
-            $relative = $folder . '/' . $subPath;
-            $dataUri = $this->buildImageDataUri($relative);
-            if ($dataUri !== null) {
-                return $dataUri;
-            }
-            $version = Storage::disk('public')->exists($relative)
-                ? (string) @filemtime(Storage::disk('public')->path($relative))
-                : null;
-            $url = Storage::disk('public')->exists($relative)
-                ? asset('storage/' . $relative)
-                : route('media.image', ['folder' => $folder, 'path' => $subPath]);
-
-            return $version ? ($url . '?v=' . $version) : $url;
-        }
-
-        if ($subPath !== '') {
-            $relative = $defaultFolder . '/' . $cleanPath;
-            if (Storage::disk('public')->exists($relative)) {
-                $dataUri = $this->buildImageDataUri($relative);
-                if ($dataUri !== null) {
-                    return $dataUri;
-                }
-                $version = (string) @filemtime(Storage::disk('public')->path($relative));
-                $url = asset('storage/' . $relative);
-                return $version ? ($url . '?v=' . $version) : $url;
-            }
-
-            return asset('img/login-image.png');
-        }
-
-        if (Storage::disk('public')->exists($cleanPath)) {
-            return asset('storage/' . $cleanPath);
-        }
-
-        if (Storage::disk('public')->exists($defaultFolder . '/' . $cleanPath)) {
-            $relative = $defaultFolder . '/' . $cleanPath;
-            $dataUri = $this->buildImageDataUri($relative);
-            if ($dataUri !== null) {
-                return $dataUri;
-            }
-            $version = (string) @filemtime(Storage::disk('public')->path($relative));
-            $url = asset('storage/' . $relative);
-            return $version ? ($url . '?v=' . $version) : $url;
-        }
-
-        return asset('img/login-image.png');
-    }
-
-    private function buildImageDataUri(string $relativePath): ?string
-    {
-        if (!Storage::disk('public')->exists($relativePath)) {
-            return null;
-        }
-
-        $absolutePath = Storage::disk('public')->path($relativePath);
-        $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
-        if (!is_string($mimeType) || !str_starts_with($mimeType, 'image/')) {
-            $extension = strtolower(pathinfo($relativePath, PATHINFO_EXTENSION));
-            $mimeType = match ($extension) {
-                'webp' => 'image/webp',
-                'png' => 'image/png',
-                'jpg', 'jpeg' => 'image/jpeg',
-                default => 'image/jpeg',
-            };
-        }
-        $size = @filesize($absolutePath);
-        if ($size === false || $size > 2 * 1024 * 1024) {
-            return null;
-        }
-
-        $binary = @file_get_contents($absolutePath);
-        if ($binary === false) {
-            return null;
-        }
-
-        return 'data:' . $mimeType . ';base64,' . base64_encode($binary);
+        return $this->claimableLostReportService->build(
+            userId: $userId,
+            safeDatabaseCall: $this->safeDatabaseCall(...),
+            hasDatabaseColumn: $this->hasDatabaseColumn(...)
+        );
     }
 
     private function resolveUserDisplayName(mixed $user): string
@@ -661,51 +194,6 @@ class HomePageViewService
         }
 
         return 'Pengguna';
-    }
-
-    private function resolveUserAvatarUrl(?string $profilePath): string
-    {
-        $defaultAvatar = asset('img/profil.jpg');
-        $profilePath = trim((string) $profilePath);
-        if ($profilePath === '') {
-            return $defaultAvatar;
-        }
-
-        if (str_starts_with($profilePath, 'http://') || str_starts_with($profilePath, 'https://')) {
-            return $profilePath;
-        }
-
-        $normalized = str_replace('\\', '/', ltrim($profilePath, '/'));
-        if (str_starts_with($normalized, 'storage/')) {
-            $normalized = substr($normalized, 8);
-        } elseif (str_starts_with($normalized, 'public/')) {
-            $normalized = substr($normalized, 7);
-        }
-
-        [$folder, $subPath] = array_pad(explode('/', $normalized, 2), 2, '');
-        if (in_array($folder, ['profil-admin', 'profil-user', 'barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
-            if (Storage::disk('public')->exists($normalized)) {
-                $dataUri = $this->buildImageDataUri($normalized);
-                if ($dataUri !== null) {
-                    return $dataUri;
-                }
-
-                return route('media.image', ['folder' => $folder, 'path' => $subPath]);
-            }
-
-            return $defaultAvatar;
-        }
-
-        if (Storage::disk('public')->exists($normalized)) {
-            $dataUri = $this->buildImageDataUri($normalized);
-            if ($dataUri !== null) {
-                return $dataUri;
-            }
-
-            return asset('storage/' . $normalized);
-        }
-
-        return $defaultAvatar;
     }
 
     private function normalizeLocationLabel(string $location): string
@@ -796,13 +284,9 @@ class HomePageViewService
             return $fallback;
         }
 
-        if (!$this->databaseReachabilityChecked) {
-            $this->databaseReachabilityChecked = true;
-
-            if (!$this->isDatabaseSocketReachable()) {
-                $this->skipDatabaseCalls = true;
-                return $fallback;
-            }
+        if (!$this->databaseHealthService->isResponsive()) {
+            $this->skipDatabaseCalls = true;
+            return $fallback;
         }
 
         try {
@@ -817,47 +301,5 @@ class HomePageViewService
 
             return $fallback;
         }
-    }
-
-    private function isDatabaseSocketReachable(): bool
-    {
-        $defaultConnection = (string) config('database.default', 'mysql');
-        $connection = (array) config('database.connections.' . $defaultConnection, []);
-        $driver = (string) ($connection['driver'] ?? '');
-
-        if (!in_array($driver, ['mysql', 'mariadb'], true)) {
-            return true;
-        }
-
-        $host = (string) ($connection['host'] ?? '');
-        $port = (int) ($connection['port'] ?? 3306);
-
-        if ($host === '' || $port <= 0) {
-            return false;
-        }
-
-        if (!in_array($host, ['127.0.0.1', 'localhost'], true)) {
-            return true;
-        }
-
-        $socket = @fsockopen($host, $port, $errno, $errstr, 0.25);
-        if (is_resource($socket)) {
-            stream_set_timeout($socket, 0, 250000);
-            $probe = @fread($socket, 1);
-            $meta = stream_get_meta_data($socket);
-            fclose($socket);
-
-            if ($probe === false) {
-                return false;
-            }
-
-            if ($probe === '' && (($meta['timed_out'] ?? false) === true)) {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
     }
 }

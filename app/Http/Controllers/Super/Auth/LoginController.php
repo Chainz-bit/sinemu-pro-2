@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Super\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Support\DatabaseHealthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,6 +11,11 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
+    public function __construct(
+        private readonly DatabaseHealthService $databaseHealthService
+    ) {
+    }
+
     public function create(): View|RedirectResponse
     {
         if ($this->isDatabaseResponsive() && Auth::guard('super_admin')->check()) {
@@ -67,35 +73,6 @@ class LoginController extends Controller
 
     private function isDatabaseResponsive(): bool
     {
-        $defaultConnection = (string) config('database.default', 'mysql');
-        $connection = (array) config('database.connections.' . $defaultConnection, []);
-        $driver = (string) ($connection['driver'] ?? '');
-
-        if (!in_array($driver, ['mysql', 'mariadb'], true)) {
-            return true;
-        }
-
-        $host = (string) ($connection['host'] ?? '');
-        $port = (int) ($connection['port'] ?? 3306);
-
-        if ($host === '' || $port <= 0) {
-            return false;
-        }
-
-        if (!in_array($host, ['127.0.0.1', 'localhost'], true)) {
-            return true;
-        }
-
-        $socket = @fsockopen($host, $port, $errno, $errstr, 0.25);
-        if (!is_resource($socket)) {
-            return false;
-        }
-
-        stream_set_timeout($socket, 0, 250000);
-        $probe = @fread($socket, 1);
-        $meta = stream_get_meta_data($socket);
-        fclose($socket);
-
-        return !($probe === false || ($probe === '' && (($meta['timed_out'] ?? false) === true)));
+        return $this->databaseHealthService->isResponsive();
     }
 }
