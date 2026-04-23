@@ -34,7 +34,7 @@ class AdminProfilePageService
         if ($hasClaimVerification) {
             $klaimMenungguQuery->whereIn('status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]);
         } else {
-            $klaimMenungguQuery->where('status_klaim', 'pending');
+            $klaimMenungguQuery->where('status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING);
         }
         $klaimMenunggu = $klaimMenungguQuery->count();
 
@@ -46,7 +46,10 @@ class AdminProfilePageService
                 WorkflowStatus::CLAIM_COMPLETED,
             ]);
         } else {
-            $selesaiDitanganiQuery->whereIn('status_klaim', ['disetujui', 'ditolak']);
+            $selesaiDitanganiQuery->whereIn('status_klaim', [
+                WorkflowStatus::CLAIM_LEGACY_APPROVED,
+                WorkflowStatus::CLAIM_LEGACY_REJECTED,
+            ]);
         }
         $selesaiDitangani = $selesaiDitanganiQuery->count();
 
@@ -119,14 +122,14 @@ class AdminProfilePageService
             ])
             ->map(function (Barang $barang) {
                 $statusClass = match ($barang->status_barang) {
-                    'sudah_diklaim', 'sudah_dikembalikan' => 'selesai',
-                    'dalam_proses_klaim' => 'dalam_peninjauan',
+                    WorkflowStatus::FOUND_CLAIMED, WorkflowStatus::FOUND_RETURNED => 'selesai',
+                    WorkflowStatus::FOUND_CLAIM_IN_PROGRESS => 'dalam_peninjauan',
                     default => 'diproses',
                 };
 
                 $statusLabel = match ($barang->status_barang) {
-                    'sudah_diklaim', 'sudah_dikembalikan' => 'SELESAI',
-                    'dalam_proses_klaim' => 'SEDANG DIKLAIM',
+                    WorkflowStatus::FOUND_CLAIMED, WorkflowStatus::FOUND_RETURNED => 'SELESAI',
+                    WorkflowStatus::FOUND_CLAIM_IN_PROGRESS => 'SEDANG DIKLAIM',
                     default => 'DIPROSES',
                 };
 

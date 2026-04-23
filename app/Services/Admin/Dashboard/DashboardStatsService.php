@@ -24,7 +24,7 @@ class DashboardStatsService
             ? Klaim::query()
                 ->whereIn('status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW])
                 ->count()
-            : Klaim::where('status_klaim', 'pending')->count();
+            : Klaim::where('status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING)->count();
 
         return [
             'totalHilang' => $totalHilangQuery->count(),

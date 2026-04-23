@@ -112,9 +112,9 @@ class LostItemQueryService
         }
 
         $legacyStatusMap = [
-            WorkflowStatus::REPORT_SUBMITTED => 'pending',
-            WorkflowStatus::REPORT_REJECTED => 'ditolak',
-            WorkflowStatus::REPORT_COMPLETED => 'disetujui',
+            WorkflowStatus::REPORT_SUBMITTED => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            WorkflowStatus::REPORT_REJECTED => WorkflowStatus::CLAIM_LEGACY_REJECTED,
+            WorkflowStatus::REPORT_COMPLETED => WorkflowStatus::CLAIM_LEGACY_APPROVED,
         ];
         $claimStatus = $legacyStatusMap[$status] ?? null;
         if ($claimStatus === null) {
@@ -139,9 +139,9 @@ class LostItemQueryService
     private function applySort(Builder $query, string $sort): void
     {
         match ($sort) {
-            'terlama' => $query->orderBy('updated_at'),
-            'nama_asc' => $query->orderBy('nama_barang'),
-            'nama_desc' => $query->orderByDesc('nama_barang'),
+            LostItemIndexRequest::SORT_OLDEST => $query->orderBy('updated_at'),
+            LostItemIndexRequest::SORT_NAME_ASC => $query->orderBy('nama_barang'),
+            LostItemIndexRequest::SORT_NAME_DESC => $query->orderByDesc('nama_barang'),
             default => $query->orderByDesc('updated_at'),
         };
     }

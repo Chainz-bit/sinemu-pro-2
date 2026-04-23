@@ -5,6 +5,7 @@ namespace App\Services\Admin\Dashboard;
 use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Support\ReportStatusPresenter;
+use App\Support\WorkflowStatus;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
@@ -63,9 +64,9 @@ class DashboardLostFeedService
                     ];
                 } else {
                     $statusPayload = match ($report->latest_claim_status) {
-                        'disetujui' => ['status' => 'selesai', 'status_class' => 'status-selesai', 'status_text' => 'DITEMUKAN'],
-                        'ditolak' => ['status' => 'ditolak', 'status_class' => 'status-ditolak', 'status_text' => 'DITOLAK'],
-                        'pending' => ['status' => 'diproses', 'status_class' => 'status-diproses', 'status_text' => 'DALAM PENINJAUAN'],
+                        WorkflowStatus::CLAIM_LEGACY_APPROVED => ['status' => 'selesai', 'status_class' => 'status-selesai', 'status_text' => 'DITEMUKAN'],
+                        WorkflowStatus::CLAIM_LEGACY_REJECTED => ['status' => 'ditolak', 'status_class' => 'status-ditolak', 'status_text' => 'DITOLAK'],
+                        WorkflowStatus::CLAIM_LEGACY_PENDING => ['status' => 'diproses', 'status_class' => 'status-diproses', 'status_text' => 'DALAM PENINJAUAN'],
                         default => ['status' => 'dalam_peninjauan', 'status_class' => 'status-dalam_peninjauan', 'status_text' => 'BELUM DITEMUKAN'],
                     };
                 }

@@ -3,6 +3,7 @@
 namespace App\Services\Admin\Dashboard;
 
 use App\Models\Barang;
+use App\Support\WorkflowStatus;
 use Illuminate\Support\Collection;
 
 class DashboardFoundFeedService
@@ -39,10 +40,10 @@ class DashboardFoundFeedService
             ->get()
             ->map(function ($report) {
                 $statusPayload = match ($report->status_barang) {
-                    'tersedia' => ['status' => 'dalam_peninjauan', 'status_class' => 'status-dalam_peninjauan', 'status_text' => 'TERSEDIA'],
-                    'dalam_proses_klaim' => ['status' => 'diproses', 'status_class' => 'status-diproses', 'status_text' => 'DALAM PROSES KLAIM'],
-                    'sudah_diklaim' => ['status' => 'selesai', 'status_class' => 'status-selesai', 'status_text' => 'SUDAH DIKLAIM'],
-                    'sudah_dikembalikan' => ['status' => 'selesai', 'status_class' => 'status-selesai', 'status_text' => 'SELESAI'],
+                    WorkflowStatus::FOUND_AVAILABLE => ['status' => 'dalam_peninjauan', 'status_class' => 'status-dalam_peninjauan', 'status_text' => 'TERSEDIA'],
+                    WorkflowStatus::FOUND_CLAIM_IN_PROGRESS => ['status' => 'diproses', 'status_class' => 'status-diproses', 'status_text' => 'DALAM PROSES KLAIM'],
+                    WorkflowStatus::FOUND_CLAIMED => ['status' => 'selesai', 'status_class' => 'status-selesai', 'status_text' => 'SUDAH DIKLAIM'],
+                    WorkflowStatus::FOUND_RETURNED => ['status' => 'selesai', 'status_class' => 'status-selesai', 'status_text' => 'SELESAI'],
                     default => ['status' => 'diproses', 'status_class' => 'status-diproses', 'status_text' => 'UNKNOWN'],
                 };
 

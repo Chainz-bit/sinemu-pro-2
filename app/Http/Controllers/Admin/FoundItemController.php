@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\FoundItemIndexRequest;
+use App\Http\Requests\Admin\UpdateFoundItemRequest;
+use App\Http\Requests\Admin\UpdateFoundItemStatusRequest;
+use App\Http\Requests\Admin\VerifyFoundItemReportRequest;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Services\Admin\FoundItems\FoundItemCommandService;
@@ -12,9 +16,9 @@ use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FoundItemController extends Controller
 {
@@ -27,7 +31,7 @@ class FoundItemController extends Controller
     {
     }
 
-    public function index(Request $request)
+    public function index(FoundItemIndexRequest $request): View|StreamedResponse
     {
         /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
@@ -35,7 +39,7 @@ class FoundItemController extends Controller
         $query = $state['query'];
         $sort = $state['sort'];
 
-        if ($request->boolean('export')) {
+        if ($request->shouldExport()) {
             return $this->queryService->exportCsv($query->get());
         }
 
@@ -74,18 +78,18 @@ class FoundItemController extends Controller
         return view('admin.pages.found-item-edit', compact('barang', 'admin', 'kategoriOptions'));
     }
 
-    public function update(Request $request, Barang $barang): RedirectResponse
+    public function update(UpdateFoundItemRequest $request, Barang $barang): RedirectResponse
     {
-        $this->commandService->update($request, $barang, $this->imageUploader);
+        $this->commandService->update($barang, $request->validated(), $request->file('foto_barang'), $this->imageUploader);
 
         return redirect()
             ->route('admin.found-items.show', $barang->id)
             ->with('status', 'Data barang temuan berhasil diperbarui.');
     }
 
-    public function updateStatus(Request $request, Barang $barang): RedirectResponse
+    public function updateStatus(UpdateFoundItemStatusRequest $request, Barang $barang): RedirectResponse
     {
-        $result = $this->commandService->updateStatus($request, $barang);
+        $result = $this->commandService->updateStatus($barang, $request->validated());
         $flashType = $result['ok'] ? 'status' : 'error';
 
         return redirect()
@@ -93,9 +97,9 @@ class FoundItemController extends Controller
             ->with($flashType, $result['message']);
     }
 
-    public function verify(Request $request, Barang $barang): RedirectResponse
+    public function verify(VerifyFoundItemReportRequest $request, Barang $barang): RedirectResponse
     {
-        $this->commandService->verify($request, $barang);
+        $this->commandService->verify($barang, $request->validated());
 
         return back()->with('status', 'Verifikasi laporan barang temuan berhasil diperbarui.');
     }

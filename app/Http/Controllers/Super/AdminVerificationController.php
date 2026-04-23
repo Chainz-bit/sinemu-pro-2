@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Super;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Super\RejectAdminVerificationRequest;
 use App\Models\Admin;
 use App\Services\Super\Admins\AdminApprovalService;
 use App\Services\Super\Admins\AdminVerificationQueryService;
@@ -50,15 +51,11 @@ class AdminVerificationController extends Controller
         return back()->with($flash['key'], $flash['message']);
     }
 
-    public function reject(Request $request, Admin $admin): RedirectResponse
+    public function reject(RejectAdminVerificationRequest $request, Admin $admin): RedirectResponse
     {
-        $validated = $request->validate([
-            'alasan_penolakan' => ['nullable', 'string', 'max:1200'],
-        ]);
-
         $flash = $this->adminApprovalService->reject(
             admin: $admin,
-            reason: $validated['alasan_penolakan'] ?? null,
+            reason: $request->validated('alasan_penolakan'),
             superAdminId: Auth::guard('super_admin')->id()
         );
 

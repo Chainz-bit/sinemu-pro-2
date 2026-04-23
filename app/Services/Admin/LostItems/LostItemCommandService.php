@@ -7,34 +7,17 @@ use App\Services\ReportImageCleaner;
 use App\Services\UserNotificationService;
 use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
-use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
 class LostItemCommandService
 {
-    public function update(Request $request, LaporanBarangHilang $item, OptimizedImageUploader $uploader): void
+    public function update(LaporanBarangHilang $item, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): void
     {
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $item->sumber_laporan !== 'lapor_hilang') {
             abort(404);
         }
-
-        $validated = $request->validate([
-            'nama_barang' => ['required', 'string', 'max:255'],
-            'kategori_barang' => ['nullable', 'string', 'max:100'],
-            'warna_barang' => ['nullable', 'string', 'max:100'],
-            'merek_barang' => ['nullable', 'string', 'max:120'],
-            'nomor_seri' => ['nullable', 'string', 'max:150'],
-            'lokasi_hilang' => ['required', 'string', 'max:255'],
-            'detail_lokasi_hilang' => ['nullable', 'string', 'max:2000'],
-            'tanggal_hilang' => ['required', 'date'],
-            'waktu_hilang' => ['nullable', 'date_format:H:i'],
-            'keterangan' => ['required', 'string', 'max:2000'],
-            'ciri_khusus' => ['nullable', 'string', 'max:2000'],
-            'kontak_pelapor' => ['nullable', 'string', 'max:50'],
-            'bukti_kepemilikan' => ['nullable', 'string', 'max:2000'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
-        ]);
 
         $payload = [
             'nama_barang' => $validated['nama_barang'],
@@ -63,7 +46,6 @@ class LostItemCommandService
         ];
 
         $oldPhotoPath = null;
-        $photo = $request->file('foto_barang');
         if ($photo) {
             $oldPhotoPath = $item->foto_barang;
             $payload['foto_barang'] = $uploader->upload($photo, 'barang-hilang/' . now()->format('Y/m'));
@@ -90,13 +72,8 @@ class LostItemCommandService
     /**
      * @return array{ok:bool,message:string}
      */
-    public function verify(Request $request, LaporanBarangHilang $item): array
+    public function verify(LaporanBarangHilang $item, array $validated): array
     {
-        $validated = $request->validate([
-            'status_laporan' => ['required', 'in:approved,rejected'],
-            'catatan' => ['nullable', 'string', 'max:2000'],
-        ]);
-
         if (!Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
             return ['ok' => false, 'message' => 'Status verifikasi laporan belum tersedia di database.'];
         }

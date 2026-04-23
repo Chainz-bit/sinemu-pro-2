@@ -11,7 +11,8 @@ class SuperTopbarNotificationService
     private const MAX_ITEMS = 8;
 
     public function __construct(
-        private readonly AdminVerificationQueryService $adminVerificationQueryService
+        private readonly AdminVerificationQueryService $adminVerificationQueryService,
+        private readonly SuperTopbarNotificationPresenter $notificationPresenter
     ) {
     }
 
@@ -33,44 +34,15 @@ class SuperTopbarNotificationService
         $pendingAdmins = $this->adminVerificationQueryService->buildPendingPreview(self::MAX_ITEMS);
         $latestActivities = $this->adminVerificationQueryService->buildLatestActivities(self::MAX_ITEMS);
 
-        $pendingNotifications = $pendingAdmins->map(function ($admin) {
-            return [
-                'title' => 'Admin menunggu verifikasi',
-                'message' => sprintf(
-                    '%s dari %s perlu ditinjau sekarang.',
-                    (string) $admin->nama,
-                    (string) ($admin->instansi ?: 'instansi belum diisi')
-                ),
-                'action_url' => route('super.admin-verifications.index', ['search' => $admin->nama]),
-                'created_at' => $admin->created_at,
-                'is_urgent' => true,
-                'tag' => 'Perlu tindakan',
-            ];
-        });
+        $pendingNotifications = $pendingAdmins->map(
+            fn ($admin) => $this->notificationPresenter->pending($admin)
+        );
 
         $activityNotifications = $latestActivities
             ->filter(function ($admin) {
                 return AdminVerificationStatusPresenter::key($admin->status_verifikasi) !== 'pending';
             })
-            ->map(function ($admin) {
-                $statusKey = AdminVerificationStatusPresenter::key($admin->status_verifikasi);
-                $statusLabel = AdminVerificationStatusPresenter::label($statusKey);
-                $activityTime = $admin->verified_at ?? $admin->updated_at ?? $admin->created_at;
-
-                return [
-                    'title' => sprintf('Status admin %s', $statusLabel),
-                    'message' => sprintf(
-                        '%s dari %s masuk ke status %s.',
-                        (string) $admin->nama,
-                        (string) ($admin->instansi ?: 'instansi belum diisi'),
-                        strtolower($statusLabel)
-                    ),
-                    'action_url' => route('super.admins.index', ['search' => $admin->nama]),
-                    'created_at' => $activityTime,
-                    'is_urgent' => false,
-                    'tag' => 'Aktivitas',
-                ];
-            });
+            ->map(fn ($admin) => $this->notificationPresenter->activity($admin));
 
         $notifications = $pendingNotifications
             ->concat($activityNotifications)

@@ -91,7 +91,7 @@ class InputItemService
             'deskripsi' => $deskripsiGabungan,
             'lokasi_ditemukan' => $validated['lokasi'],
             'tanggal_ditemukan' => $reportDate,
-            'status_barang' => 'tersedia',
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
             'foto_barang' => $fotoPath,
             'lokasi_pengambilan' => trim((string) ($validated['lokasi_pengambilan'] ?? '')) ?: null,
             'alamat_pengambilan' => trim((string) ($validated['alamat_pengambilan'] ?? '')) ?: null,

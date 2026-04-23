@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LostItemIndexRequest;
+use App\Http\Requests\Admin\UpdateLostItemRequest;
+use App\Http\Requests\Admin\VerifyLostItemReportRequest;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
 use App\Services\Admin\Matching\MatchingService;
@@ -87,9 +89,9 @@ class LostItemController extends Controller
         return view('admin.pages.lost-item-edit', compact('laporanBarangHilang', 'admin', 'lostCategoryOptions'));
     }
 
-    public function update(Request $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse
+    public function update(UpdateLostItemRequest $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse
     {
-        $this->commandService->update($request, $laporanBarangHilang, $this->imageUploader);
+        $this->commandService->update($laporanBarangHilang, $request->validated(), $request->file('foto_barang'), $this->imageUploader);
 
         return redirect()
             ->route('admin.lost-items.show', $laporanBarangHilang->id)
@@ -114,9 +116,9 @@ class LostItemController extends Controller
             ->with('error', 'Perbarui status klaim dari halaman Verifikasi Klaim agar checklist keamanan tetap diterapkan.');
     }
 
-    public function verify(Request $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse
+    public function verify(VerifyLostItemReportRequest $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse
     {
-        $result = $this->commandService->verify($request, $laporanBarangHilang);
+        $result = $this->commandService->verify($laporanBarangHilang, $request->validated());
         $flashType = $result['ok'] ? 'status' : 'error';
 
         return back()->with($flashType, $result['message']);

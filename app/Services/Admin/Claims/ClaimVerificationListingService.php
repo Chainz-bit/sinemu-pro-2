@@ -77,23 +77,23 @@ class ClaimVerificationListingService
 
         if ($request->filled('status')) {
             $status = (string) $request->query('status');
-            if (in_array($status, ['menunggu', 'pending', 'disetujui', 'ditolak', 'selesai'], true)) {
+            if (in_array($status, ['menunggu', WorkflowStatus::CLAIM_LEGACY_PENDING, WorkflowStatus::CLAIM_LEGACY_APPROVED, WorkflowStatus::CLAIM_LEGACY_REJECTED, 'selesai'], true)) {
                 if ($hasClaimVerificationStatus) {
-                    if (in_array($status, ['menunggu', 'pending'], true)) {
+                    if (in_array($status, ['menunggu', WorkflowStatus::CLAIM_LEGACY_PENDING], true)) {
                         $query->whereIn('klaims.status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]);
-                    } elseif ($status === 'disetujui') {
+                    } elseif ($status === WorkflowStatus::CLAIM_LEGACY_APPROVED) {
                         $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_APPROVED);
-                    } elseif ($status === 'ditolak') {
+                    } elseif ($status === WorkflowStatus::CLAIM_LEGACY_REJECTED) {
                         $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_REJECTED);
                     } else {
                         $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_COMPLETED);
                     }
                 } else {
-                    if (in_array($status, ['menunggu', 'pending'], true)) {
-                        $query->where('klaims.status_klaim', 'pending');
+                    if (in_array($status, ['menunggu', WorkflowStatus::CLAIM_LEGACY_PENDING], true)) {
+                        $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING);
                     } elseif ($status === 'selesai') {
-                        $query->where('klaims.status_klaim', 'disetujui')
-                            ->where('barangs.status_barang', 'sudah_dikembalikan');
+                        $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_APPROVED)
+                            ->where('barangs.status_barang', WorkflowStatus::FOUND_RETURNED);
                     } else {
                         $query->where('klaims.status_klaim', $status);
                     }

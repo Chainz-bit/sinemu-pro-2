@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\User\SubmitLostReportRequest;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
 use App\Services\User\LostReports\LostReportCommandService;
@@ -34,9 +35,9 @@ class LostReportController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SubmitLostReportRequest $request): RedirectResponse
     {
-        $result = $this->commandService->store($request);
+        $result = $this->commandService->store($request, $request->validated());
         $flashType = $result['ok'] ? 'status' : 'error';
 
         return back()->with($flashType, $result['message']);

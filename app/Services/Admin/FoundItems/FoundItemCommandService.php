@@ -9,39 +9,16 @@ use App\Services\UserNotificationService;
 use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class FoundItemCommandService
 {
-    public function update(Request $request, Barang $barang, OptimizedImageUploader $uploader): void
+    public function update(Barang $barang, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): void
     {
-        $validated = $request->validate([
-            'nama_barang' => ['required', 'string', 'max:255'],
-            'kategori_id' => ['nullable', 'integer', 'exists:kategoris,id'],
-            'warna_barang' => ['nullable', 'string', 'max:100'],
-            'merek_barang' => ['nullable', 'string', 'max:120'],
-            'nomor_seri' => ['nullable', 'string', 'max:150'],
-            'deskripsi' => ['nullable', 'string', 'max:2000'],
-            'ciri_khusus' => ['nullable', 'string', 'max:2000'],
-            'nama_penemu' => ['nullable', 'string', 'max:150'],
-            'kontak_penemu' => ['nullable', 'string', 'max:50'],
-            'lokasi_ditemukan' => ['required', 'string', 'max:255'],
-            'detail_lokasi_ditemukan' => ['nullable', 'string', 'max:2000'],
-            'tanggal_ditemukan' => ['required', 'date'],
-            'waktu_ditemukan' => ['nullable', 'date_format:H:i'],
-            'lokasi_pengambilan' => ['nullable', 'string', 'max:255'],
-            'alamat_pengambilan' => ['nullable', 'string', 'max:255'],
-            'penanggung_jawab_pengambilan' => ['nullable', 'string', 'max:255'],
-            'kontak_pengambilan' => ['nullable', 'string', 'max:255'],
-            'jam_layanan_pengambilan' => ['nullable', 'string', 'max:255'],
-            'catatan_pengambilan' => ['nullable', 'string', 'max:2000'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
-        ]);
-
         $payload = [
             'nama_barang' => $validated['nama_barang'],
             'kategori_id' => $validated['kategori_id'] ?? $barang->kategori_id,
@@ -87,7 +64,6 @@ class FoundItemCommandService
         ];
 
         $oldPhotoPath = null;
-        $photo = $request->file('foto_barang');
         if ($photo) {
             $oldPhotoPath = $barang->foto_barang;
             $payload['foto_barang'] = $uploader->upload($photo, 'barang-temuan/' . now()->format('Y/m'));
@@ -103,15 +79,10 @@ class FoundItemCommandService
     /**
      * @return array{ok:bool,message:string}
      */
-    public function updateStatus(Request $request, Barang $barang): array
+    public function updateStatus(Barang $barang, array $validated): array
     {
         /** @var \App\Models\Admin|null $admin */
         $admin = Auth::guard('admin')->user();
-
-        $validated = $request->validate([
-            'status_barang' => ['required', 'in:tersedia,dalam_proses_klaim,sudah_diklaim,sudah_dikembalikan'],
-            'catatan_status' => ['nullable', 'string', 'max:500'],
-        ]);
 
         $oldStatus = (string) $barang->status_barang;
         $newStatus = (string) $validated['status_barang'];
@@ -121,20 +92,20 @@ class FoundItemCommandService
             : '';
         $latestClaimLegacyStatus = (string) ($latestClaim?->status_klaim ?? '');
 
-        if ($newStatus === 'sudah_diklaim') {
+        if ($newStatus === WorkflowStatus::FOUND_CLAIMED) {
             $canMarkClaimed = Schema::hasColumn('klaims', 'status_verifikasi')
                 ? in_array($latestClaimVerificationStatus, [WorkflowStatus::CLAIM_APPROVED, WorkflowStatus::CLAIM_COMPLETED], true)
-                : $latestClaimLegacyStatus === 'disetujui';
+                : $latestClaimLegacyStatus === WorkflowStatus::CLAIM_LEGACY_APPROVED;
 
             if (!$canMarkClaimed) {
                 return ['ok' => false, 'message' => 'Status "Sudah Diklaim" hanya bisa dipilih setelah klaim disetujui.'];
             }
         }
 
-        if ($newStatus === 'sudah_dikembalikan') {
+        if ($newStatus === WorkflowStatus::FOUND_RETURNED) {
             $canMarkCompleted = Schema::hasColumn('klaims', 'status_verifikasi')
                 ? $latestClaimVerificationStatus === WorkflowStatus::CLAIM_COMPLETED
-                : ($latestClaimLegacyStatus === 'disetujui' && $oldStatus === 'sudah_diklaim');
+                : ($latestClaimLegacyStatus === WorkflowStatus::CLAIM_LEGACY_APPROVED && $oldStatus === WorkflowStatus::FOUND_CLAIMED);
 
             if (!$canMarkCompleted) {
                 return ['ok' => false, 'message' => 'Status "Selesai" hanya bisa dipilih setelah klaim ditandai selesai pada Verifikasi Klaim.'];
@@ -156,10 +127,10 @@ class FoundItemCommandService
         ]);
 
         $statusLabel = match ($newStatus) {
-            'tersedia' => 'Tersedia',
-            'dalam_proses_klaim' => 'Dalam Proses Klaim',
-            'sudah_diklaim' => 'Sudah Diklaim',
-            'sudah_dikembalikan' => 'Sudah Dikembalikan',
+            WorkflowStatus::FOUND_AVAILABLE => 'Tersedia',
+            WorkflowStatus::FOUND_CLAIM_IN_PROGRESS => 'Dalam Proses Klaim',
+            WorkflowStatus::FOUND_CLAIMED => 'Sudah Diklaim',
+            WorkflowStatus::FOUND_RETURNED => 'Sudah Dikembalikan',
             default => $newStatus,
         };
 
@@ -182,12 +153,8 @@ class FoundItemCommandService
         return ['ok' => true, 'message' => 'Perubahan status berhasil disimpan.'];
     }
 
-    public function verify(Request $request, Barang $barang): void
+    public function verify(Barang $barang, array $validated): void
     {
-        $validated = $request->validate([
-            'status_laporan' => ['required', 'in:approved,rejected'],
-        ]);
-
         $newStatus = $validated['status_laporan'] === 'approved'
             ? WorkflowStatus::REPORT_APPROVED
             : WorkflowStatus::REPORT_REJECTED;
@@ -217,10 +184,10 @@ class FoundItemCommandService
         $barang->loadMissing(['kategori:id,nama_kategori', 'admin:id,nama,email']);
 
         $statusLabel = match ($barang->status_barang) {
-            'tersedia' => 'Tersedia',
-            'dalam_proses_klaim' => 'Dalam Proses Klaim',
-            'sudah_diklaim' => 'Sudah Diklaim',
-            'sudah_dikembalikan' => 'Sudah Dikembalikan',
+            WorkflowStatus::FOUND_AVAILABLE => 'Tersedia',
+            WorkflowStatus::FOUND_CLAIM_IN_PROGRESS => 'Dalam Proses Klaim',
+            WorkflowStatus::FOUND_CLAIMED => 'Sudah Diklaim',
+            WorkflowStatus::FOUND_RETURNED => 'Sudah Dikembalikan',
             default => 'Tidak Diketahui',
         };
 

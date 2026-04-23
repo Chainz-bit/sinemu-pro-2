@@ -10,15 +10,15 @@ final class ClaimStatusPresenter
         $statusVerifikasi = (string) ($statusVerifikasi ?? '');
         $statusBarang = (string) ($statusBarang ?? '');
 
-        if ($statusVerifikasi === WorkflowStatus::CLAIM_COMPLETED || $statusBarang === 'sudah_dikembalikan') {
+        if ($statusVerifikasi === WorkflowStatus::CLAIM_COMPLETED || $statusBarang === WorkflowStatus::FOUND_RETURNED) {
             return 'selesai';
         }
 
-        if ($statusVerifikasi === WorkflowStatus::CLAIM_REJECTED || $statusKlaim === 'ditolak') {
+        if ($statusVerifikasi === WorkflowStatus::CLAIM_REJECTED || $statusKlaim === WorkflowStatus::CLAIM_LEGACY_REJECTED) {
             return 'ditolak';
         }
 
-        if ($statusVerifikasi === WorkflowStatus::CLAIM_APPROVED || $statusKlaim === 'disetujui') {
+        if ($statusVerifikasi === WorkflowStatus::CLAIM_APPROVED || $statusKlaim === WorkflowStatus::CLAIM_LEGACY_APPROVED) {
             return 'disetujui';
         }
 

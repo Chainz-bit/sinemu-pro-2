@@ -9,7 +9,8 @@ use Illuminate\Support\Collection;
 class SuperDashboardQueryService
 {
     public function __construct(
-        private readonly AdminVerificationQueryService $adminVerificationQueryService
+        private readonly AdminVerificationQueryService $adminVerificationQueryService,
+        private readonly SuperDashboardNewestAdminService $newestAdminService
     ) {
     }
 
@@ -26,17 +27,7 @@ class SuperDashboardQueryService
         return [
             'summary' => $this->adminVerificationQueryService->buildSummary($superAdminId),
             'priorityAdmins' => $this->adminVerificationQueryService->buildPendingPreview(4, $superAdminId),
-            'newestAdmins' => Admin::query()
-                ->when($superAdminId !== null, function ($query) use ($superAdminId) {
-                    $query->where(function ($builder) use ($superAdminId) {
-                        $builder
-                            ->where('super_admin_id', $superAdminId)
-                            ->orWhereNull('super_admin_id');
-                    });
-                })
-                ->latest()
-                ->limit(5)
-                ->get(),
+            'newestAdmins' => $this->newestAdminService->build(5, $superAdminId),
             'latestActivities' => $this->adminVerificationQueryService->buildLatestActivities(5, $superAdminId),
         ];
     }

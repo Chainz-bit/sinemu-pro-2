@@ -6,7 +6,7 @@ use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class LostItemIndexRequest extends FormRequest
+class FoundItemIndexRequest extends FormRequest
 {
     public const SORT_NEWEST = 'terbaru';
     public const SORT_OLDEST = 'terlama';
@@ -32,7 +32,7 @@ class LostItemIndexRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', Rule::in(WorkflowStatus::reportStatuses())],
+            'status' => ['nullable', 'string', Rule::in(WorkflowStatus::foundItemStatuses())],
             'date' => ['nullable', 'date'],
             'sort' => ['nullable', 'string', Rule::in(self::ALLOWED_SORTS)],
             'export' => ['nullable', 'boolean'],
@@ -50,14 +50,7 @@ class LostItemIndexRequest extends FormRequest
     {
         $value = (string) $this->query('status', '');
 
-        return in_array($value, WorkflowStatus::reportStatuses(), true) ? $value : null;
-    }
-
-    public function sort(): string
-    {
-        $value = (string) $this->query('sort', self::SORT_NEWEST);
-
-        return in_array($value, self::ALLOWED_SORTS, true) ? $value : self::SORT_NEWEST;
+        return in_array($value, WorkflowStatus::foundItemStatuses(), true) ? $value : null;
     }
 
     public function filterDate(): ?string
@@ -65,6 +58,13 @@ class LostItemIndexRequest extends FormRequest
         $value = (string) $this->query('date', '');
 
         return $value === '' ? null : $value;
+    }
+
+    public function sort(): string
+    {
+        $value = (string) $this->query('sort', self::SORT_NEWEST);
+
+        return in_array($value, self::ALLOWED_SORTS, true) ? $value : self::SORT_NEWEST;
     }
 
     public function shouldExport(): bool

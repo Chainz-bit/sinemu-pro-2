@@ -41,7 +41,10 @@ class MatchingService
             $query->where('status_laporan', WorkflowStatus::REPORT_APPROVED);
         }
 
-        $query->whereIn('status_barang', ['tersedia', 'dalam_proses_klaim']);
+        $query->whereIn('status_barang', [
+            WorkflowStatus::FOUND_AVAILABLE,
+            WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+        ]);
 
         $query->whereDoesntHave('pencocokans', function ($matchQuery) use ($laporan): void {
             $matchQuery

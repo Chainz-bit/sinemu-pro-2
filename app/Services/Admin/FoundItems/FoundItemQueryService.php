@@ -2,9 +2,9 @@
 
 namespace App\Services\Admin\FoundItems;
 
+use App\Http\Requests\Admin\FoundItemIndexRequest;
 use App\Models\Barang;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FoundItemQueryService
@@ -12,49 +12,53 @@ class FoundItemQueryService
     /**
      * @return array{query:Builder,sort:string}
      */
-    public function buildIndexQuery(Request $request): array
+    public function buildIndexQuery(FoundItemIndexRequest $request): array
     {
         $query = Barang::query()
-            ->with(['kategori', 'admin:id,nama'])
-            ->orderByDesc('updated_at');
+            ->with(['kategori', 'admin:id,nama']);
 
-        if ($request->filled('search')) {
-            $search = trim((string) $request->query('search'));
-            $query->where('nama_barang', 'like', '%' . $search . '%');
-        }
+        $sort = $request->sort();
 
-        if ($request->filled('status')) {
-            $allowedStatus = ['tersedia', 'dalam_proses_klaim', 'sudah_diklaim', 'sudah_dikembalikan'];
-            $status = (string) $request->query('status');
-            if (in_array($status, $allowedStatus, true)) {
-                $query->where('status_barang', $status);
-            }
-        }
-
-        if ($request->filled('date')) {
-            $query->whereDate('tanggal_ditemukan', $request->query('date'));
-        }
-
-        $sort = (string) $request->query('sort', 'terbaru');
-        switch ($sort) {
-            case 'terlama':
-                $query->orderBy('updated_at');
-                break;
-            case 'nama_asc':
-                $query->orderBy('nama_barang');
-                break;
-            case 'nama_desc':
-                $query->orderByDesc('nama_barang');
-                break;
-            default:
-                $query->orderByDesc('updated_at');
-                break;
-        }
+        $this->applySearch($query, $request->search());
+        $this->applyStatus($query, $request->status());
+        $this->applyDate($query, $request->filterDate());
+        $this->applySort($query, $sort);
 
         return [
             'query' => $query,
             'sort' => $sort,
         ];
+    }
+
+    private function applySearch(Builder $query, ?string $search): void
+    {
+        if ($search !== null) {
+            $query->where('nama_barang', 'like', '%' . $search . '%');
+        }
+    }
+
+    private function applyStatus(Builder $query, ?string $status): void
+    {
+        if ($status !== null) {
+            $query->where('status_barang', $status);
+        }
+    }
+
+    private function applyDate(Builder $query, ?string $date): void
+    {
+        if ($date !== null) {
+            $query->whereDate('tanggal_ditemukan', $date);
+        }
+    }
+
+    private function applySort(Builder $query, string $sort): void
+    {
+        match ($sort) {
+            FoundItemIndexRequest::SORT_OLDEST => $query->orderBy('updated_at'),
+            FoundItemIndexRequest::SORT_NAME_ASC => $query->orderBy('nama_barang'),
+            FoundItemIndexRequest::SORT_NAME_DESC => $query->orderByDesc('nama_barang'),
+            default => $query->orderByDesc('updated_at'),
+        };
     }
 
     public function exportCsv($items): StreamedResponse

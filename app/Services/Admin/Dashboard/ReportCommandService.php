@@ -10,6 +10,7 @@ use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 
 class ReportCommandService
 {
@@ -121,7 +122,7 @@ class ReportCommandService
         if ($type === 'klaim') {
             $report = Klaim::query()->with('barang')->findOrFail($id);
             $validated = $request->validate([
-                'status_klaim' => ['required', 'in:pending,disetujui,ditolak'],
+                'status_klaim' => ['required', Rule::in(WorkflowStatus::legacyClaimStatuses())],
                 'catatan' => ['nullable', 'string', 'max:2000'],
             ]);
 
@@ -135,10 +136,10 @@ class ReportCommandService
             ]);
 
             if ($report->barang && $oldStatus !== $newStatus) {
-                if ($newStatus === 'disetujui') {
-                    $report->barang->update(['status_barang' => 'sudah_diklaim']);
-                } elseif ($newStatus === 'ditolak' && $report->barang->status_barang === 'dalam_proses_klaim') {
-                    $report->barang->update(['status_barang' => 'tersedia']);
+                if ($newStatus === WorkflowStatus::CLAIM_LEGACY_APPROVED) {
+                    $report->barang->update(['status_barang' => WorkflowStatus::FOUND_CLAIMED]);
+                } elseif ($newStatus === WorkflowStatus::CLAIM_LEGACY_REJECTED && $report->barang->status_barang === WorkflowStatus::FOUND_CLAIM_IN_PROGRESS) {
+                    $report->barang->update(['status_barang' => WorkflowStatus::FOUND_AVAILABLE]);
                 }
             }
 
