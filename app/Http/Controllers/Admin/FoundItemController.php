@@ -10,7 +10,11 @@ use App\Http\Requests\Admin\VerifyFoundItemReportRequest;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Services\Admin\FoundItems\FoundItemCommandService;
+use App\Services\Admin\FoundItems\FoundItemDeletionService;
+use App\Services\Admin\FoundItems\FoundItemExportService;
 use App\Services\Admin\FoundItems\FoundItemQueryService;
+use App\Services\Admin\FoundItems\FoundItemStatusService;
+use App\Services\Admin\FoundItems\FoundItemVerificationService;
 use App\Services\Admin\Matching\MatchingService;
 use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
@@ -26,6 +30,10 @@ class FoundItemController extends Controller
         private readonly OptimizedImageUploader $imageUploader,
         private readonly FoundItemQueryService $queryService,
         private readonly FoundItemCommandService $commandService,
+        private readonly FoundItemExportService $exportService,
+        private readonly FoundItemDeletionService $deletionService,
+        private readonly FoundItemStatusService $statusService,
+        private readonly FoundItemVerificationService $verificationService,
         private readonly MatchingService $matchingService,
     )
     {
@@ -89,7 +97,7 @@ class FoundItemController extends Controller
 
     public function updateStatus(UpdateFoundItemStatusRequest $request, Barang $barang): RedirectResponse
     {
-        $result = $this->commandService->updateStatus($barang, $request->validated());
+        $result = $this->statusService->updateStatus($barang, $request->validated());
         $flashType = $result['ok'] ? 'status' : 'error';
 
         return redirect()
@@ -99,19 +107,19 @@ class FoundItemController extends Controller
 
     public function verify(VerifyFoundItemReportRequest $request, Barang $barang): RedirectResponse
     {
-        $this->commandService->verify($barang, $request->validated());
+        $this->verificationService->verify($barang, $request->validated());
 
         return back()->with('status', 'Verifikasi laporan barang temuan berhasil diperbarui.');
     }
 
     public function export(Barang $barang): Response
     {
-        return $this->commandService->export($barang);
+        return $this->exportService->export($barang);
     }
 
     public function destroy(Barang $barang): RedirectResponse
     {
-        $this->commandService->destroy($barang);
+        $this->deletionService->destroy($barang);
 
         return redirect()->back()->with('status', 'Laporan barang temuan berhasil dihapus.');
     }

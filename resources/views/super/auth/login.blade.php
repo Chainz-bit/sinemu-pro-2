@@ -7,14 +7,18 @@
 @section('content')
 <main class="super-login-shell">
     <section class="super-login-card">
+        <div class="super-login-circuit super-login-circuit-left" aria-hidden="true"></div>
+        <div class="super-login-circuit super-login-circuit-right" aria-hidden="true"></div>
         <div class="super-login-head">
             <div class="super-login-brand">
-                <img src="{{ asset('img/logo.png') }}" alt="Sinemu">
+                <span class="super-login-brand-mark">
+                    <img src="{{ asset('img/logo.png') }}" alt="Sinemu">
+                </span>
             </div>
             <div class="super-login-title-wrap">
-                <span class="super-login-pill">Portal Internal</span>
-                <h1>Login Super Admin</h1>
-                <p>Akses ini khusus untuk pengelolaan verifikasi admin dan pemantauan operasional sistem.</p>
+                <span class="super-login-pill">Login</span>
+                <h1>Super Admin</h1>
+                <p>Kelola verifikasi admin dan operasional sistem internal SiNemu.</p>
             </div>
         </div>
 
@@ -24,7 +28,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('super.login.store') }}" class="super-login-form">
+        <form method="POST" action="{{ route('super.login.store') }}" class="super-login-form" data-super-login-form>
             @csrf
             <input type="text" name="fake_login" autocomplete="username" tabindex="-1" aria-hidden="true" style="display:none">
             <input type="password" name="fake_password" autocomplete="current-password" tabindex="-1" aria-hidden="true" style="display:none">
@@ -38,7 +42,6 @@
                     </span>
                     <input id="login" name="login" type="text" required placeholder="admin" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');">
                 </div>
-                <small class="super-login-help">Gunakan email internal atau username yang terdaftar.</small>
             </div>
             <div class="super-login-field">
                 <label for="password">Kata Sandi</label>
@@ -56,14 +59,13 @@
                         </svg>
                     </button>
                 </div>
-                <small class="super-login-help">Pastikan Anda login di perangkat internal yang aman.</small>
             </div>
-            <button type="submit" class="super-login-submit">Masuk</button>
+            <button type="submit" class="super-login-submit">
+                <span class="super-login-submit-label">Masuk</span>
+                <span class="super-login-submit-spinner" aria-hidden="true"></span>
+            </button>
         </form>
 
-        <div class="super-login-note">
-            URL ini tidak ditampilkan di landing page publik. Gunakan hanya untuk operasional internal.
-        </div>
     </section>
 </main>
 @endsection
@@ -71,13 +73,33 @@
 @push('scripts')
     <script>
         document.body.classList.add('super-login-fixed');
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.querySelector('[data-super-login-form]');
+            var loginInput = document.getElementById('login');
+
+            if (loginInput) {
+                loginInput.focus();
+            }
+
+            if (form) {
+                form.addEventListener('submit', function () {
+                    form.classList.add('is-submitting');
+                });
+            }
+        });
+
         window.addEventListener('pageshow', function () {
             ['login', 'password'].forEach(function (id) {
                 var input = document.getElementById(id);
                 if (!input) return;
                 input.value = '';
             });
+            var form = document.querySelector('[data-super-login-form]');
+            if (form) {
+                form.classList.remove('is-submitting');
+            }
         });
+
         document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
             button.addEventListener('click', function () {
                 var targetId = button.getAttribute('data-toggle-password');

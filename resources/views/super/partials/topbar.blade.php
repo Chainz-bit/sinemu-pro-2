@@ -39,6 +39,10 @@
             @endif
         </button>
 
+        <a href="{{ route('super.settings') }}" class="top-action-link {{ ($activeMenu ?? '') === 'settings' ? 'active' : '' }}" aria-label="Pengaturan">
+            <iconify-icon icon="mdi:cog-outline"></iconify-icon>
+        </a>
+
         <div class="notification-modal" id="notification-modal">
             <div class="notification-head">
                 <strong>Notifikasi Super Admin</strong>

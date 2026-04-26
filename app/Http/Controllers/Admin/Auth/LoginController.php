@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdminLoginRequest;
 use App\Models\Admin;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
@@ -17,27 +17,10 @@ class LoginController extends Controller
         return view('admin.auth.login');
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(AdminLoginRequest $request): RedirectResponse
     {
-        $request->merge([
-            'login' => $request->input('login') !== null ? (string) $request->input('login') : null,
-            'password' => $request->input('password') !== null ? (string) $request->input('password') : null,
-        ]);
-
-        $validated = $request->validate(
-            [
-                'login' => 'required|string',
-                'password' => 'required|string',
-            ],
-            [
-                'login.required' => 'Email atau username wajib diisi.',
-                'login.string' => 'Email atau username harus berupa teks.',
-                'password.required' => 'Kata sandi wajib diisi.',
-                'password.string' => 'Kata sandi harus berupa teks.',
-            ]
-        );
-
-        $loginInput = trim((string) $validated['login']);
+        $validated = $request->validated();
+        $loginInput = $request->loginInput();
         $loginField = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $admin = Admin::query()->where($loginField, $loginInput)->first();

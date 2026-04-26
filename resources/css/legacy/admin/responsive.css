@@ -1,5 +1,28 @@
 /* section: tablet */
 @media (max-width: 1024px) {
+    html,
+    body {
+        height: auto;
+        overflow-y: auto;
+    }
+
+    body.dashboard-fixed-mode {
+        overflow-y: auto;
+    }
+
+    body.dashboard-fixed-mode .admin-shell,
+    body.dashboard-fixed-mode .main-content,
+    body.dashboard-fixed-mode .main-content-scroll {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+    }
+
+    body.dashboard-fixed-mode .dashboard-page-content {
+        height: auto;
+        overflow: visible;
+    }
+
     .admin-shell {
         grid-template-columns: 1fr;
         position: relative;
@@ -80,6 +103,16 @@
 }
 
 @media (max-width: 640px) {
+    .dashboard-hub-page .intro {
+        padding: 20px 18px;
+        border-radius: 20px;
+    }
+
+    .dashboard-hub-page .intro h1 {
+        max-width: none;
+        font-size: 28px;
+    }
+
     .topbar {
         display: grid;
         grid-template-columns: 38px minmax(0, 1fr) 32px 32px;

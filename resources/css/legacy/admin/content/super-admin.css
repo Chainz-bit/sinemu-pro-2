@@ -1,5 +1,5 @@
 .super-page-content {
-    padding-bottom: 26px;
+    padding-bottom: 0;
 }
 
 .dashboard-page-content.super-page-content {
@@ -117,6 +117,126 @@
     max-width: 700px;
     font-size: 12px;
     line-height: 1.55;
+}
+
+.super-dashboard-focus {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: 12px;
+    align-items: stretch;
+}
+
+.super-focus-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 360px;
+}
+
+.super-dashboard-focus > .report-card > header,
+.super-dashboard-focus > .dashboard-report-card > header {
+    min-height: 74px;
+    align-items: flex-start;
+}
+
+.super-dashboard-focus .report-heading {
+    gap: 5px;
+}
+
+.super-dashboard-focus .report-heading h2 {
+    font-size: 15px;
+    line-height: 1.2;
+}
+
+.super-dashboard-focus .report-heading p {
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.super-dashboard-focus .report-actions {
+    align-self: center;
+}
+
+.super-dashboard-focus .super-activity-list,
+.super-dashboard-focus .report-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.super-dashboard-focus .super-activity-list {
+    justify-content: flex-start;
+    padding: 12px;
+}
+
+.super-dashboard-focus .super-activity-card .super-empty-panel {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.super-dashboard-focus .dashboard-report-card .report-table {
+    min-width: 100%;
+}
+
+.super-dashboard-focus .dashboard-report-card .empty-row {
+    padding: 0;
+}
+
+.super-dashboard-focus .super-table-empty-state {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 22px 16px;
+}
+
+.super-dashboard-focus .super-table-empty-state p {
+    max-width: 34ch;
+}
+
+.super-dashboard-focus .dashboard-report-card .report-table th,
+.super-dashboard-focus .dashboard-report-card .report-table td {
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.super-dashboard-focus .super-activity-item {
+    min-height: 72px;
+}
+
+.super-dashboard-focus .report-table tbody {
+    flex: 1 1 auto;
+}
+
+.super-dashboard-spotlight {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+.super-spotlight-card {
+    min-height: 100%;
+    border-color: #dfe9f6;
+    box-shadow: 0 16px 32px rgba(18, 54, 102, 0.08);
+}
+
+.super-spotlight-card > header {
+    background: linear-gradient(180deg, #f6faff 0%, #ffffff 100%);
+}
+
+.super-dashboard-spotlight .super-activity-list,
+.super-dashboard-spotlight .report-table-wrap {
+    min-height: 100%;
+}
+
+.super-stats-grid-secondary {
+    margin-top: 2px;
 }
 
 .super-control-bar {
@@ -353,14 +473,6 @@
     display: grid;
     gap: 10px;
     padding: 12px;
-}
-
-.super-page-content:not(.super-verification-page) .super-priority-list,
-.super-page-content:not(.super-verification-page) .super-activity-list {
-    max-height: 260px;
-    overflow-y: auto;
-    align-content: start;
-    scrollbar-gutter: stable;
 }
 
 .dashboard-report-card .super-verification-stack {
@@ -980,7 +1092,15 @@
     background: #f9fcff;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
+    .super-dashboard-spotlight {
+        grid-template-columns: 1fr;
+    }
+
+    .super-dashboard-focus {
+        grid-template-columns: 1fr;
+    }
+
     .super-control-bar {
         grid-template-columns: 1fr;
     }

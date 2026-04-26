@@ -2,17 +2,17 @@
    Register - Variables
 ========================================= */
 :root {
-    --auth-bg: #eef1f5;
-    --auth-left: #6f97cf;
-    --auth-left-dark: #5d86c0;
-    --auth-text: #1f2937;
-    --auth-muted: #6b7280;
+    --auth-bg: #e8f0fb;
+    --auth-left: #173863;
+    --auth-left-dark: #102a49;
+    --auth-text: #213752;
+    --auth-muted: #607a9d;
     --auth-white: #ffffff;
-    --auth-border: #d8dce4;
-    --auth-input: #eef1f4;
-    --auth-primary: #6f97cf;
-    --auth-primary-hover: #5f88c4;
-    --auth-shadow: 0 12px 30px rgba(16, 24, 40, 0.1);
+    --auth-border: rgba(129, 161, 207, 0.24);
+    --auth-input: rgba(242, 247, 255, 0.9);
+    --auth-primary: #2f80ed;
+    --auth-primary-hover: #256fce;
+    --auth-shadow: 0 24px 48px rgba(17, 35, 64, 0.14);
 }
 
 /* =========================================
@@ -28,65 +28,81 @@ html,
 body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
     font-family: "Plus Jakarta Sans", sans-serif;
     color: var(--auth-text);
-    background: var(--auth-bg);
+    background:
+        radial-gradient(760px 280px at 8% 6%, rgba(88, 138, 216, 0.18), transparent 64%),
+        linear-gradient(180deg, #eef4fb 0%, #e3edf9 100%);
 }
 
 /* =========================================
    Register - Layout
 ========================================= */
 .register-body {
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100dvh;
 }
 
 .register-shell {
-    height: 100vh;
+    min-height: 100dvh;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     overflow: hidden;
 }
 
 .register-shell .login-left {
-    background: linear-gradient(180deg, var(--auth-left) 0%, var(--auth-left-dark) 100%);
+    position: relative;
+    background:
+        radial-gradient(560px 240px at 12% 14%, rgba(74, 136, 225, 0.22), transparent 68%),
+        linear-gradient(180deg, var(--auth-left) 0%, var(--auth-left-dark) 100%);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2.5rem;
+    padding: 3rem;
+    overflow: hidden;
+}
+
+.register-shell .login-left::before {
+    content: "";
+    position: absolute;
+    inset: 32px;
+    border: 1px solid rgba(180, 208, 246, 0.12);
+    border-radius: 28px;
+    pointer-events: none;
 }
 
 .left-content {
-    width: min(500px, 100%);
+    width: min(520px, 100%);
+    position: relative;
+    z-index: 1;
 }
 
 .left-title {
     margin: 0 0 1.1rem;
-    font-size: 2.4rem;
+    font-size: clamp(2rem, 3vw, 2.9rem);
     line-height: 1.15;
     font-weight: 800;
 }
 
 .left-subtitle {
     margin: 0;
-    font-size: 1.02rem;
+    font-size: 1rem;
     line-height: 1.8;
-    color: rgba(255, 255, 255, 0.86);
+    color: rgba(231, 241, 255, 0.86);
 }
 
 .left-illustration {
-    margin-top: 1.5rem;
+    margin-top: 2rem;
     width: 100%;
-    aspect-ratio: 16 / 8;
+    aspect-ratio: 16 / 7.8;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 14px;
+    border-radius: 24px;
     overflow: hidden;
-    background: linear-gradient(180deg, #eef2ff 0%, #cfd9f5 100%);
-    box-shadow: 0 20px 34px rgba(17, 38, 78, 0.28);
+    background: linear-gradient(180deg, rgba(241, 247, 255, 0.96) 0%, rgba(208, 224, 248, 0.94) 100%);
+    box-shadow: 0 24px 44px rgba(8, 20, 42, 0.3);
 }
 
 .left-illustration-img {
@@ -100,14 +116,16 @@ body {
 }
 
 /* =========================================
-   Register - Right Panel (Scrollable)
+   Register - Right Panel
 ========================================= */
 .register-shell .login-right {
     display: flex;
     align-items: flex-start;
     justify-content: center;
     padding: 1.5rem;
-    background: url("/img/login-form.jpg") center center / cover no-repeat;
+    background:
+        linear-gradient(rgba(238, 244, 251, 0.92), rgba(228, 238, 249, 0.96)),
+        url("/img/login-form.jpg") center center / cover no-repeat;
     overflow-y: auto;
 }
 
@@ -116,12 +134,12 @@ body {
 }
 
 .register-shell .login-right::-webkit-scrollbar-thumb {
-    background: rgba(111, 151, 207, 0.5);
+    background: rgba(111, 151, 207, 0.45);
     border-radius: 999px;
 }
 
 .right-content {
-    width: min(420px, 100%);
+    width: min(440px, 100%);
     margin: 0.25rem 0 1.5rem;
 }
 
@@ -130,6 +148,7 @@ body {
 ========================================= */
 .brand-wrap {
     text-align: center;
+    margin-bottom: 0.35rem;
 }
 
 .brand-logo {
@@ -139,29 +158,29 @@ body {
 
 .login-header {
     text-align: center;
-    margin-bottom: 1.3rem;
+    margin-bottom: 1.25rem;
 }
 
 .login-header h2 {
     margin: 0 0 0.45rem;
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     font-weight: 800;
-    color: #22252d;
+    color: #1b365d;
 }
 
 .login-header p {
     margin: 0;
     color: var(--auth-muted);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
 }
 
 /* =========================================
    Register - Alerts
 ========================================= */
 .alert-box {
-    border-radius: 10px;
-    padding: 0.72rem 0.9rem;
-    margin-bottom: 0.9rem;
+    border-radius: 12px;
+    padding: 0.76rem 0.95rem;
+    margin-bottom: 0.95rem;
     font-size: 0.9rem;
     font-weight: 600;
 }
@@ -176,14 +195,14 @@ body {
    Register - Form
 ========================================= */
 .login-form {
-    background: rgba(255, 255, 255, 0.74);
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 14px;
-    padding: 1.3rem;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    border-radius: 22px;
+    padding: 1.35rem;
     box-shadow: var(--auth-shadow);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    max-height: calc(100vh - 290px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    max-height: calc(100vh - 280px);
     overflow-y: auto;
     overscroll-behavior: contain;
 }
@@ -198,7 +217,7 @@ body {
 }
 
 .field-group {
-    margin-bottom: 0.95rem;
+    margin-bottom: 1rem;
 }
 
 .field-group label {
@@ -206,7 +225,7 @@ body {
     font-size: 0.87rem;
     font-weight: 700;
     margin-bottom: 0.45rem;
-    color: #3a404c;
+    color: #355072;
 }
 
 .input-wrap {
@@ -218,21 +237,22 @@ body {
 .input-wrap textarea {
     width: 100%;
     border: 1px solid var(--auth-border);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--auth-input);
     padding: 0.75rem 2.6rem 0.75rem 2.2rem;
     font-size: 0.95rem;
     color: #2f3442;
     outline: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .input-wrap input,
 .input-wrap select {
-    height: 46px;
+    height: 48px;
 }
 
 .input-wrap textarea {
-    min-height: 92px;
+    min-height: 96px;
     resize: vertical;
 }
 
@@ -240,12 +260,12 @@ body {
 .input-wrap select:focus,
 .input-wrap textarea:focus {
     border-color: var(--auth-primary);
-    box-shadow: 0 0 0 3px rgba(111, 151, 207, 0.16);
+    box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.15);
 }
 
 .input-wrap input::placeholder,
 .input-wrap textarea::placeholder {
-    color: #9aa2af;
+    color: #9aa9bf;
 }
 
 .input-icon {
@@ -283,6 +303,12 @@ body {
     justify-content: center;
     color: #7f8794;
     cursor: pointer;
+    border-radius: 8px;
+}
+
+.toggle-password:hover {
+    background: rgba(47, 128, 237, 0.08);
+    color: #376eaf;
 }
 
 .toggle-password svg {
@@ -292,19 +318,19 @@ body {
 
 .btn-submit {
     width: 100%;
-    border-radius: 10px;
-    height: 46px;
+    border-radius: 12px;
+    height: 48px;
     font-size: 0.99rem;
     font-weight: 700;
     cursor: pointer;
     border: 0;
     color: #fff;
-    background: var(--auth-primary);
-    box-shadow: 0 8px 18px rgba(111, 151, 207, 0.35);
+    background: linear-gradient(180deg, #3c8df5 0%, #2f7fe7 100%);
+    box-shadow: 0 12px 24px rgba(47, 128, 237, 0.28);
 }
 
 .btn-submit:hover {
-    background: var(--auth-primary-hover);
+    background: linear-gradient(180deg, #4293f6 0%, #2a76d8 100%);
 }
 
 .register-link {
@@ -377,6 +403,7 @@ body {
     }
 
     .login-form {
-        padding: 0.92rem;
+        padding: 1rem;
+        border-radius: 18px;
     }
 }

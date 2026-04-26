@@ -2,11 +2,11 @@
 
 namespace App\Services\Admin\Claims;
 
+use App\Http\Requests\Admin\ClaimVerificationIndexRequest;
 use App\Models\Klaim;
 use App\Support\ClaimStatusPresenter;
 use App\Support\WorkflowStatus;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -16,7 +16,7 @@ class ClaimVerificationListingService
     /**
      * @return array{query:EloquentBuilder,sort:string}
      */
-    public function prepareIndexQuery(Request $request): array
+    public function prepareIndexQuery(ClaimVerificationIndexRequest $request): array
     {
         $hasNamaColumn = Schema::hasColumn('users', 'nama');
         $hasNameColumn = Schema::hasColumn('users', 'name');
@@ -59,63 +59,82 @@ class ClaimVerificationListingService
                 DB::raw(($hasFoundHomeFlag ? 'COALESCE(barangs.tampil_di_home, 0)' : '0') . ' as barang_tampil_di_home'),
             ]);
 
-        if ($request->filled('search')) {
-            $search = trim((string) $request->query('search'));
-            $query->where(function ($q) use ($search, $hasNamaColumn, $hasNameColumn) {
-                $q->where('laporan_barang_hilangs.nama_barang', 'like', '%' . $search . '%')
-                    ->orWhere('barangs.nama_barang', 'like', '%' . $search . '%');
+        $sort = $request->sort();
 
-                if ($hasNamaColumn) {
-                    $q->orWhere('users.nama', 'like', '%' . $search . '%');
-                }
-
-                if ($hasNameColumn) {
-                    $q->orWhere('users.name', 'like', '%' . $search . '%');
-                }
-            });
-        }
-
-        if ($request->filled('status')) {
-            $status = (string) $request->query('status');
-            if (in_array($status, ['menunggu', WorkflowStatus::CLAIM_LEGACY_PENDING, WorkflowStatus::CLAIM_LEGACY_APPROVED, WorkflowStatus::CLAIM_LEGACY_REJECTED, 'selesai'], true)) {
-                if ($hasClaimVerificationStatus) {
-                    if (in_array($status, ['menunggu', WorkflowStatus::CLAIM_LEGACY_PENDING], true)) {
-                        $query->whereIn('klaims.status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]);
-                    } elseif ($status === WorkflowStatus::CLAIM_LEGACY_APPROVED) {
-                        $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_APPROVED);
-                    } elseif ($status === WorkflowStatus::CLAIM_LEGACY_REJECTED) {
-                        $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_REJECTED);
-                    } else {
-                        $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_COMPLETED);
-                    }
-                } else {
-                    if (in_array($status, ['menunggu', WorkflowStatus::CLAIM_LEGACY_PENDING], true)) {
-                        $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING);
-                    } elseif ($status === 'selesai') {
-                        $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_APPROVED)
-                            ->where('barangs.status_barang', WorkflowStatus::FOUND_RETURNED);
-                    } else {
-                        $query->where('klaims.status_klaim', $status);
-                    }
-                }
-            }
-        }
-
-        if ($request->filled('date')) {
-            $query->whereDate('klaims.created_at', $request->query('date'));
-        }
-
-        $sort = (string) $request->query('sort', 'terbaru');
-        if ($sort === 'terlama') {
-            $query->orderBy('klaims.updated_at');
-        } else {
-            $query->orderByDesc('klaims.updated_at');
-        }
+        $this->applySearch($query, $request->search(), $hasNamaColumn, $hasNameColumn);
+        $this->applyStatus($query, $request->status(), $hasClaimVerificationStatus);
+        $this->applyDate($query, $request->filterDate());
+        $this->applySort($query, $sort);
 
         return [
             'query' => $query,
             'sort' => $sort,
         ];
+    }
+
+    private function applySearch(EloquentBuilder $query, ?string $search, bool $hasNamaColumn, bool $hasNameColumn): void
+    {
+        if ($search === null) {
+            return;
+        }
+
+        $query->where(function ($builder) use ($search, $hasNamaColumn, $hasNameColumn): void {
+            $builder->where('laporan_barang_hilangs.nama_barang', 'like', '%' . $search . '%')
+                ->orWhere('barangs.nama_barang', 'like', '%' . $search . '%');
+
+            if ($hasNamaColumn) {
+                $builder->orWhere('users.nama', 'like', '%' . $search . '%');
+            }
+
+            if ($hasNameColumn) {
+                $builder->orWhere('users.name', 'like', '%' . $search . '%');
+            }
+        });
+    }
+
+    private function applyStatus(EloquentBuilder $query, ?string $status, bool $hasClaimVerificationStatus): void
+    {
+        if ($status === null) {
+            return;
+        }
+
+        if ($hasClaimVerificationStatus) {
+            match ($status) {
+                ClaimVerificationIndexRequest::STATUS_WAITING, WorkflowStatus::CLAIM_LEGACY_PENDING => $query->whereIn(
+                    'klaims.status_verifikasi',
+                    [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]
+                ),
+                WorkflowStatus::CLAIM_LEGACY_APPROVED => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_APPROVED),
+                WorkflowStatus::CLAIM_LEGACY_REJECTED => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_REJECTED),
+                ClaimVerificationIndexRequest::STATUS_DONE => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_COMPLETED),
+                default => null,
+            };
+
+            return;
+        }
+
+        match ($status) {
+            ClaimVerificationIndexRequest::STATUS_WAITING, WorkflowStatus::CLAIM_LEGACY_PENDING => $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING),
+            ClaimVerificationIndexRequest::STATUS_DONE => $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_APPROVED)
+                ->where('barangs.status_barang', WorkflowStatus::FOUND_RETURNED),
+            WorkflowStatus::CLAIM_LEGACY_APPROVED, WorkflowStatus::CLAIM_LEGACY_REJECTED => $query->where('klaims.status_klaim', $status),
+            default => null,
+        };
+    }
+
+    private function applyDate(EloquentBuilder $query, ?string $date): void
+    {
+        if ($date !== null) {
+            $query->whereDate('klaims.created_at', $date);
+        }
+    }
+
+    private function applySort(EloquentBuilder $query, string $sort): void
+    {
+        match ($sort) {
+            ClaimVerificationIndexRequest::SORT_OLDEST => $query->orderBy('klaims.updated_at'),
+            default => $query->orderByDesc('klaims.updated_at'),
+        };
     }
 
     public function exportCsv(EloquentBuilder $query): StreamedResponse

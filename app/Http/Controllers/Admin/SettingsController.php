@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SettingsLogIndexRequest;
+use App\Http\Requests\Admin\UpdateSettingsRequest;
 use App\Models\Admin;
 use App\Models\AdminNotification;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -21,27 +22,20 @@ class SettingsController extends Controller
         return view('admin.pages.settings', compact('admin'));
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(UpdateSettingsRequest $request): RedirectResponse
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
         abort_if(!$admin, 403);
 
-        $validated = $request->validate([
-            'kecamatan' => ['required', 'string', 'max:100'],
-            'nama' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:admins,email,' . $admin->id],
-            'alamat_lengkap' => ['required', 'string', 'max:1200'],
-        ]);
-
-        $admin->forceFill($validated)->save();
+        $admin->forceFill($request->validated())->save();
 
         return redirect()
             ->route('admin.settings')
             ->with('status', 'Pengaturan sistem berhasil diperbarui.');
     }
 
-    public function logs(Request $request): View
+    public function logs(SettingsLogIndexRequest $request): View
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
@@ -51,24 +45,24 @@ class SettingsController extends Controller
             ->where('admin_id', $admin->id)
             ->latest('created_at');
 
-        $statusFilter = (string) $request->query('status', '');
+        $statusFilter = $request->status();
         if ($statusFilter === 'unread') {
             $query->whereNull('read_at');
         } elseif ($statusFilter === 'read') {
             $query->whereNotNull('read_at');
         }
 
-        $typeFilter = trim((string) $request->query('type', ''));
+        $typeFilter = $request->typeFilter();
         if ($typeFilter !== '') {
             $query->where('type', $typeFilter);
         }
 
-        $dateFilter = trim((string) $request->query('date', ''));
+        $dateFilter = $request->dateFilter();
         if ($dateFilter !== '') {
             $query->whereDate('created_at', $dateFilter);
         }
 
-        $search = trim((string) $request->query('search', ''));
+        $search = $request->search();
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
                 $builder->where('title', 'like', '%' . $search . '%')

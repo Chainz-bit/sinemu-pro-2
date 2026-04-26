@@ -200,6 +200,65 @@ class AdminDashboardTest extends TestCase
         $this->assertStringContainsString('DISETUJUI', $tableBody);
     }
 
+    public function test_dashboard_report_update_validates_payload_by_type(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Dompet Kulit',
+            'deskripsi' => 'Ditemukan di ruang rapat',
+            'lokasi_ditemukan' => 'Ruang Rapat',
+            'tanggal_ditemukan' => now()->subDay()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $response = $this->from(route('admin.dashboard'))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.dashboard.reports.update', ['type' => 'temuan', 'id' => $foundItem->id]), [
+                'lokasi_ditemukan' => 'Lobi Utama',
+                'tanggal_ditemukan' => now()->toDateString(),
+            ]);
+
+        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertSessionHasErrors('nama_barang');
+        $this->assertSame('Dompet Kulit', $foundItem->fresh()?->nama_barang);
+    }
+
+    public function test_dashboard_publish_home_validates_route_type(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Kunci Motor',
+            'deskripsi' => 'Ditemukan di parkiran timur',
+            'lokasi_ditemukan' => 'Parkiran Timur',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $response = $this->from(route('admin.dashboard'))
+            ->actingAs($admin, 'admin')
+            ->post(route('admin.dashboard.reports.publish-home', ['type' => 'invalid-type', 'id' => $foundItem->id]));
+
+        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertSessionHasErrors('type');
+        $this->assertFalse((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
     private function extractTableBody(string $content): string
     {
         $start = strpos($content, '<tbody>');

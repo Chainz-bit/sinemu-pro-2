@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateAdminProfileRequest;
 use App\Models\Admin;
 use App\Services\Admin\Profile\AdminProfilePageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -51,12 +51,12 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(UpdateAdminProfileRequest $request): RedirectResponse
     {
         /** @var \App\Models\Admin|null $admin */
         $admin = Auth::guard('admin')->user();
         abort_if(!$admin, 403);
-        $this->profileService->update($admin, $request);
+        $this->profileService->update($admin, $request->validated(), $request->file('profil'));
 
         return redirect()
             ->route('admin.profile')

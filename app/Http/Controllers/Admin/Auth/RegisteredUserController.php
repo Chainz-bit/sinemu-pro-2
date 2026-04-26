@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdminRegisterRequest;
 use App\Models\Admin;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -49,24 +48,9 @@ class RegisteredUserController extends Controller
         return view('admin.auth.register', compact('kecamatanOptions'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(AdminRegisterRequest $request): RedirectResponse
     {
-        $request->merge([
-            'password' => $request->input('password') !== null ? (string) $request->input('password') : null,
-            'password_confirmation' => $request->input('password_confirmation') !== null ? (string) $request->input('password_confirmation') : null,
-            'nomor_telepon' => $request->input('nomor_telepon') !== null ? trim((string) $request->input('nomor_telepon')) : null,
-        ]);
-
-        $validated = $request->validate([
-            'nama' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:admins,email'],
-            'nomor_telepon' => ['required', 'string', 'max:50'],
-            'username' => ['required', 'string', 'max:255'],
-            'instansi' => ['required', 'string', 'max:255'],
-            'kecamatan' => ['required', 'string', 'max:100'],
-            'alamat_lengkap' => ['required', 'string', 'max:1200'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        $validated = $request->validated();
 
         $username = $this->buildUniqueAdminUsername($validated['username']);
 

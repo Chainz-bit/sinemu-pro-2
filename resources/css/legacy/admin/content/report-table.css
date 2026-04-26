@@ -1,9 +1,10 @@
 /* Bagian ini untuk card laporan, toolbar filter, dan struktur tabel data. */
 .report-card {
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 20px;
     background: var(--surface);
     overflow: hidden;
+    box-shadow: 0 20px 44px rgba(27, 66, 123, 0.08);
 }
 
 .report-card-scrollable {
@@ -17,13 +18,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 14px;
+    padding: 16px 18px;
     border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #fbfdff 0%, #f6faff 100%);
 }
 
 .report-card h2 {
     margin: 0;
-    font-size: 17px;
+    font-size: 19px;
+    color: #173865;
 }
 
 .report-heading {
@@ -33,8 +36,8 @@
 
 .report-heading p {
     margin: 0;
-    color: #7a889b;
-    font-size: 12px;
+    color: #627892;
+    font-size: 12.5px;
 }
 
 .report-actions {
@@ -51,11 +54,12 @@
 
 .filter-btn {
     border: 1px solid var(--line);
-    background: #f9fbff;
-    border-radius: 8px;
-    padding: 6px 10px;
+    background: #f8fbff;
+    border-radius: 12px;
+    padding: 6px 12px;
     font-size: 12px;
-    color: #5f6f84;
+    color: #48627f;
+    box-shadow: 0 8px 20px rgba(57, 96, 157, 0.06);
 }
 
 a.filter-btn {
@@ -69,8 +73,8 @@ a.filter-btn {
 }
 
 .dashboard-filter-select {
-    min-width: 150px;
-    height: 32px;
+    min-width: 170px;
+    height: 38px;
 }
 
 .dashboard-table-toolbar {
@@ -78,9 +82,9 @@ a.filter-btn {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 12px 14px 10px;
-    border-bottom: 1px solid #edf1f6;
-    background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid #e8eef6;
+    background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
 }
 
 .dashboard-quick-filters {
@@ -94,34 +98,41 @@ a.filter-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 30px;
-    padding: 0 12px;
+    min-height: 34px;
+    padding: 0 14px;
     border-radius: 999px;
-    border: 1px solid #d9e2ef;
+    border: 1px solid #d7e3f0;
     background: #ffffff;
-    color: #617288;
+    color: #536b86;
     text-decoration: none;
     font-size: 12px;
     font-weight: 600;
+    box-shadow: 0 8px 18px rgba(43, 86, 146, 0.05);
     transition: all 0.2s ease;
 }
 
 .dashboard-filter-chip:hover {
-    background: #f7fbff;
-    border-color: #c8d7eb;
-    color: #35506f;
+    background: #f4f8ff;
+    border-color: #bfd2eb;
+    color: #2d4e77;
+    transform: translateY(-1px);
 }
 
 .dashboard-filter-chip.is-active {
-    background: #eaf2ff;
-    border-color: #bfd3f7;
-    color: #275fa1;
+    background: linear-gradient(180deg, #ebf3ff 0%, #dceaff 100%);
+    border-color: #b8cff0;
+    color: #265fa2;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .dashboard-toolbar-note {
-    color: #728197;
+    color: #5f7894;
     font-size: 12px;
     white-space: nowrap;
+    padding: 8px 12px;
+    border: 1px solid #dce5f0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
 }
 
 .lost-toolbar {
@@ -171,18 +182,19 @@ a.filter-btn {
 
 .report-table th,
 .report-table td {
-    border-bottom: 1px solid #edf1f6;
-    padding: 11px 14px;
+    border-bottom: 1px solid #edf2f8;
+    padding: 13px 18px;
     font-size: 13px;
     vertical-align: middle;
     text-align: left;
 }
 
 .report-table th {
-    color: #71819b;
+    color: #7b8ca3;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    background: #fbfdff;
 }
 
 .item-cell {
@@ -193,15 +205,17 @@ a.filter-btn {
 
 .item-avatar {
     position: relative;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     display: grid;
     place-items: center;
     font-weight: 700;
     font-size: 13px;
     color: #344054;
     overflow: hidden;
+    border: 1px solid #dce7f4;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .item-avatar-fallback {
@@ -234,45 +248,52 @@ a.filter-btn {
 .date-cell strong {
     display: block;
     font-size: 13px;
+    color: #183a64;
 }
 
 .item-cell small,
 .date-cell small {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 11.5px;
 }
 
 /* Bagian ini memberi warna status agar pengguna cepat membaca kondisi data. */
 .status-chip {
     display: inline-block;
-    padding: 5px 8px;
+    padding: 6px 10px;
     border-radius: 999px;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: 0.03em;
+    border: 1px solid transparent;
 }
 
 .status-diproses {
     background: #fff7db;
     color: var(--warn);
+    border-color: #f5df98;
 }
 
 .status-dalam_peninjauan {
     background: #e6f0ff;
     color: #2563eb;
+    border-color: #c9dcff;
 }
 
 .status-selesai {
     background: #e5f7ea;
     color: var(--success);
+    border-color: #bfe8ca;
 }
 
 .status-ditolak {
     background: #ffe7e7;
     color: var(--danger);
+    border-color: #f5c4c4;
 }
 
 .empty-row {
     text-align: center;
     color: var(--muted);
+    padding: 28px 18px;
 }

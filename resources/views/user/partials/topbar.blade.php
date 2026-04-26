@@ -33,6 +33,10 @@
                 @endif
             </button>
 
+            <a href="{{ route('user.settings') }}" class="top-action-link {{ ($activeMenu ?? '') === 'settings' ? 'active' : '' }}" aria-label="Pengaturan">
+                <iconify-icon icon="mdi:cog-outline" class="topbar-icon" aria-hidden="true"></iconify-icon>
+            </a>
+
             <div class="notification-modal" id="user-notification-modal">
                 <div class="notification-head">
                     <strong>Notifikasi Anda</strong>

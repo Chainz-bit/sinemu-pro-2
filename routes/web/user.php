@@ -7,6 +7,7 @@ use App\Http\Controllers\User\FoundReportController;
 use App\Http\Controllers\User\LostReportController;
 use App\Http\Controllers\User\ProfileController as UserProfileController;
 use App\Http\Controllers\User\RiwayatKlaimController;
+use App\Http\Controllers\User\SettingsController;
 use App\Http\Controllers\User\UserNotificationController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('user')->name('user.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/profil', [UserProfileController::class, 'index'])->name('profile');
+        Route::get('/pengaturan', [SettingsController::class, 'index'])->name('settings');
+        Route::put('/pengaturan', [SettingsController::class, 'update'])->name('settings.update');
+        Route::get('/pengaturan/riwayat', [SettingsController::class, 'history'])->name('settings.history');
         Route::get('/klaim', [ClaimController::class, 'create'])->name('claims.create');
         Route::get('/riwayat-klaim', [RiwayatKlaimController::class, 'index'])->name('claim-history');
         Route::delete('/riwayat-klaim/{klaim}', [RiwayatKlaimController::class, 'destroy'])->name('claim-history.destroy');

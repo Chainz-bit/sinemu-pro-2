@@ -5,14 +5,17 @@ namespace Tests\Unit;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
+use App\Services\Admin\Matching\MatchingCandidateQueryService;
 use App\Services\Admin\Matching\MatchingService;
+use App\Services\Admin\Matching\MatchingScoreService;
 use Tests\TestCase;
 
 class MatchingServiceTest extends TestCase
 {
     public function test_score_is_high_for_strongly_similar_items(): void
     {
-        $service = new MatchingService();
+        $scoreService = new MatchingScoreService();
+        $service = new MatchingService(new MatchingCandidateQueryService($scoreService), $scoreService);
 
         $laporan = new LaporanBarangHilang([
             'nama_barang' => 'Laptop Asus ROG',
@@ -46,7 +49,8 @@ class MatchingServiceTest extends TestCase
 
     public function test_score_is_low_for_unrelated_items(): void
     {
-        $service = new MatchingService();
+        $scoreService = new MatchingScoreService();
+        $service = new MatchingService(new MatchingCandidateQueryService($scoreService), $scoreService);
 
         $laporan = new LaporanBarangHilang([
             'nama_barang' => 'Dompet Kulit Coklat',

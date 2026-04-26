@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LostItemIndexRequest;
+use App\Http\Requests\Admin\UpdateLostItemStatusRequest;
 use App\Http\Requests\Admin\UpdateLostItemRequest;
 use App\Http\Requests\Admin\VerifyLostItemReportRequest;
 use App\Models\Kategori;
@@ -14,7 +15,6 @@ use App\Services\Admin\LostItems\LostItemExportService;
 use App\Services\Admin\LostItems\LostItemQueryService;
 use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
-use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -105,7 +105,7 @@ class LostItemController extends Controller
         return redirect()->back()->with('status', 'Laporan barang hilang berhasil dihapus.');
     }
 
-    public function updateStatus(Request $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse
+    public function updateStatus(UpdateLostItemStatusRequest $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse
     {
         $latestKlaim = $laporanBarangHilang->klaims()->latest('created_at')->first();
         if (!$latestKlaim) {

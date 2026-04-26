@@ -9,7 +9,7 @@
 @endphp
 
 @section('page-content')
-    <div class="dashboard-page-content">
+    <div class="dashboard-page-content dashboard-hub-page">
 {{-- BAGIAN: Header ringkasan --}}
         <section class="intro">
             <h1>Ringkasan Dashboard User</h1>

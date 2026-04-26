@@ -47,6 +47,62 @@ body.dashboard-fixed-mode .main-content-scroll {
     flex: 0 0 auto;
 }
 
+@media (max-width: 1024px) {
+    body.dashboard-fixed-mode {
+        overflow-y: auto;
+    }
+
+    body.dashboard-fixed-mode .admin-shell,
+    body.dashboard-fixed-mode .main-content,
+    body.dashboard-fixed-mode .main-content-scroll {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+    }
+
+    body.dashboard-fixed-mode .dashboard-page-content,
+    body.dashboard-fixed-mode .dashboard-report-card,
+    body.dashboard-fixed-mode .dashboard-report-card .report-table-wrap {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+}
+
+/* Super dashboard should scroll as a full page when content exceeds viewport. */
+body.super-dashboard-page-mode {
+    overflow-y: auto;
+}
+
+body.super-dashboard-page-mode .admin-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+}
+
+body.super-dashboard-page-mode .main-content {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+}
+
+body.super-dashboard-page-mode .main-content-scroll {
+    overflow: visible;
+}
+
+body.super-dashboard-page-mode .dashboard-page-content {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+}
+
+body.super-dashboard-page-mode .dashboard-report-card,
+body.super-dashboard-page-mode .dashboard-report-card .report-table-wrap {
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+}
+
 /* Bagian ini mengunci layout halaman input agar form scroll di dalam card. */
 body.input-page-mode {
     overflow: hidden;

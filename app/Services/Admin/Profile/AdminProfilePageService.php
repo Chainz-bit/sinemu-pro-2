@@ -8,7 +8,7 @@ use App\Models\Klaim;
 use App\Services\Common\ProfileAvatarService;
 use App\Support\ClaimStatusPresenter;
 use App\Support\WorkflowStatus;
-use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -81,18 +81,8 @@ class AdminProfilePageService
         ];
     }
 
-    public function update(Admin $admin, Request $request): void
+    public function update(Admin $admin, array $validated, ?UploadedFile $photo): void
     {
-        $validated = $request->validate([
-            'nama' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:admins,email,' . $admin->id],
-            'instansi' => ['required', 'string', 'max:255'],
-            'kecamatan' => ['required', 'string', 'max:100'],
-            'alamat_lengkap' => ['required', 'string', 'max:1200'],
-            'profil' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
-        ]);
-
-        $photo = $request->file('profil');
         if ($photo) {
             $oldProfilePath = trim((string) ($admin->profil ?? ''));
             if ($oldProfilePath !== '' && !str_starts_with($oldProfilePath, 'http://') && !str_starts_with($oldProfilePath, 'https://') && !str_starts_with($oldProfilePath, '/')) {
