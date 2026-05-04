@@ -58,7 +58,7 @@ class HomePickupLocationService
                             'kecamatan' => $kecamatan,
                             'lat' => $hasLat && $admin->lat !== null ? (float) $admin->lat : null,
                             'lng' => $hasLng && $admin->lng !== null ? (float) $admin->lng : null,
-                            'phone' => '0812-3456-7890',
+                            'phone' => '0851-7438-6642',
                             'hours' => '08.00-20.00 WIB',
                         ];
                     })

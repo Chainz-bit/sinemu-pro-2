@@ -9,6 +9,7 @@ export function initContactForm() {
     const phoneInput = document.getElementById('contactPhone');
     const messageInput = document.getElementById('contactMessage');
     const feedback = document.getElementById('contactFormFeedback');
+    const supportWhatsappNumber = '6285174386642';
 
     function setFeedback(type, message) {
         if (!feedback) return;
@@ -60,17 +61,46 @@ export function initContactForm() {
             return false;
         }
 
-        setFeedback('success', 'Pesan berhasil dikirim. Tim kami akan segera menghubungi Anda.');
-        return true;
+        return {
+            name: name,
+            email: email,
+            phone: phone,
+            message: message
+        };
+    }
+
+    function buildWhatsappUrl(data) {
+        const text = [
+            'Halo Sinemu Support, saya ingin menghubungi tim support.',
+            '',
+            'Nama: ' + data.name,
+            'Email: ' + data.email,
+            'Telepon: ' + data.phone,
+            '',
+            'Pesan:',
+            data.message
+        ].join('\n');
+
+        return 'https://wa.me/' + supportWhatsappNumber + '?text=' + encodeURIComponent(text);
     }
 
     contactForm.addEventListener('submit', function (event) {
         event.preventDefault();
 
-        if (!validateForm()) {
+        const formData = validateForm();
+        if (!formData) {
             return;
         }
 
+        const whatsappUrl = buildWhatsappUrl(formData);
+        const openedWindow = window.open(whatsappUrl, '_blank', 'noopener');
+
+        if (!openedWindow) {
+            window.location.href = whatsappUrl;
+            return;
+        }
+
+        setFeedback('success', 'WhatsApp dibuka dengan pesan yang sudah terisi. Silakan tekan kirim di WhatsApp.');
         contactForm.reset();
         [nameInput, emailInput, phoneInput, messageInput].forEach(function (field) {
             if (!field) return;

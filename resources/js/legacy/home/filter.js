@@ -42,12 +42,16 @@ function toItemDateString(dateValue) {
 function updateCountText(groupName, count) {
     const countEl = document.getElementById(groupName + 'CountText');
     const emptyEl = document.getElementById(groupName + 'EmptyState');
+    const listEl = document.getElementById(groupName + 'ItemsList');
 
     if (countEl) {
         countEl.textContent = count + ' item';
     }
     if (emptyEl) {
-        emptyEl.style.display = count === 0 ? 'block' : 'none';
+        emptyEl.style.display = count === 0 ? 'flex' : 'none';
+    }
+    if (listEl) {
+        listEl.classList.toggle('is-single', count === 1);
     }
 }
 
@@ -236,4 +240,5 @@ export function initFilterAndCounts() {
             applyFilters();
         });
     }
+
 }

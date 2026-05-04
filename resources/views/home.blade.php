@@ -292,7 +292,13 @@
                     @empty
                     @endforelse
                 </div>
-                <div id="lostEmptyState" class="empty-state mt-3">Tidak ada barang hilang yang cocok dengan filter saat ini.</div>
+                <div id="lostEmptyState" class="empty-state empty-state-lost mt-3" role="status" aria-live="polite">
+                    <div class="empty-state-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                    <div class="empty-state-body">
+                        <h3 class="empty-state-title">Belum ada barang hilang sesuai filter</h3>
+                        <p class="empty-state-text">Coba ubah kata kunci, kategori, waktu, atau wilayah pencarian untuk melihat laporan lainnya.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="item-block surface-card p-3 p-lg-4">
@@ -365,7 +371,13 @@
                     @empty
                     @endforelse
                 </div>
-                <div id="foundEmptyState" class="empty-state mt-3">Tidak ada barang temuan yang cocok dengan filter saat ini.</div>
+                <div id="foundEmptyState" class="empty-state empty-state-found mt-3" role="status" aria-live="polite">
+                    <div class="empty-state-icon"><i class="fa-regular fa-map"></i></div>
+                    <div class="empty-state-body">
+                        <h3 class="empty-state-title">Belum ada barang temuan sesuai filter</h3>
+                        <p class="empty-state-text">Perluas wilayah atau kosongkan filter untuk melihat semua barang temuan terbaru.</p>
+                    </div>
+                </div>
             </div>
         </section>
         {{-- Daftar Barang End --}}
@@ -437,7 +449,7 @@
         <section id="lokasi-pengambilan" class="section-space pt-0">
             <div class="surface-card lokasi-wrap p-3 p-lg-4">
                 <header class="lokasi-header">
-                    <h2 class="lokasi-main-title mb-1">Lokasi Pengambilan Sinemu - Indramayu</h2>
+                    <h2 class="lokasi-main-title mb-1">Lokasi Pengambilan Sinemu &ndash; Indramayu</h2>
                     <p class="lokasi-main-subtitle mb-0">Butuh bantuan klaim? Hubungi Support Center kami.</p>
                 </header>
 
@@ -455,7 +467,7 @@
                         <p class="lokasi-subtitle mb-3">Pilih lokasi pengambilan terdekat, lalu buka peta atau dapatkan rute langsung.</p>
 
                         <div class="lokasi-contact-chip mb-3">
-                            <span class="lokasi-chip-icon"><i class="fa-solid fa-location-dot"></i></span>
+                            <span class="lokasi-chip-icon"><i class="fa-solid fa-lock"></i></span>
                             <div>
                                 <small class="lokasi-manager-label" id="selectedLocationManager">Admin Pengelola</small>
                                 <p class="mb-0 fw-bold" id="selectedLocationName">Sinemu Center Indramayu</p>
@@ -478,16 +490,15 @@
                             <button id="locateMeButton" type="button" class="lokasi-action-btn lokasi-action-light mt-2">
                                 <i class="fa-solid fa-location-crosshairs me-2"></i>Lokasi Saya
                             </button>
+                            <a
+                                class="lokasi-action-btn lokasi-action-support mt-2"
+                                href="https://wa.me/6281234567890?text=Halo%20Sinemu%20Support%20Indramayu%2C%20saya%20butuh%20bantuan%20proses%20klaim."
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                <i class="fa-brands fa-whatsapp me-2"></i>Hubungi Support Center (0851-7438-6642)
+                            </a>
                         </div>
-
-                        <a
-                            class="lokasi-support-link"
-                            href="https://wa.me/6281234567890?text=Halo%20Sinemu%20Support%20Indramayu%2C%20saya%20butuh%20bantuan%20proses%20klaim."
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            <i class="fa-brands fa-whatsapp me-2"></i>Hubungi Support Center (0812-3456-7890)
-                        </a>
                     </aside>
                 </div>
 
@@ -522,36 +533,67 @@
                 <div class="row g-3 g-lg-4 align-items-stretch">
                     <div class="col-lg-7">
                         <div class="row g-3">
-                            <div class="col-6">
+                            <div class="col-12 col-sm-6">
                                 <article class="contact-info-card h-100">
                                     <span class="contact-info-icon bg-email"><i class="fa-regular fa-envelope"></i></span>
-                                    <p class="contact-info-label">EMAIL</p>
-                                    <p class="contact-info-text mb-0">
-                                        <a href="mailto:support@sinemu.id" class="contact-info-link">support@sinemu.id</a>
-                                    </p>
+                                    <div class="contact-info-body">
+                                        <p class="contact-info-label">EMAIL</p>
+                                        <p class="contact-info-text mb-0">
+                                            <a href="mailto:support@sinemu.id" class="contact-info-link">support@sinemu.id</a>
+                                        </p>
+                                        <p class="contact-info-note mb-0">Untuk bantuan klaim dan verifikasi data.</p>
+                                    </div>
                                 </article>
                             </div>
-                            <div class="col-6">
+                            <div class="col-12 col-sm-6">
                                 <article class="contact-info-card h-100">
                                     <span class="contact-info-icon bg-phone"><i class="fa-solid fa-phone"></i></span>
-                                    <p class="contact-info-label">TELEPON</p>
-                                    <p class="contact-info-text mb-0">
-                                        <a href="tel:+6281234567890" class="contact-info-link">0812-3456-7890</a>
-                                    </p>
+                                    <div class="contact-info-body">
+                                        <p class="contact-info-label">TELEPON</p>
+                                        <p class="contact-info-text mb-0">
+                                            <a href="tel:+6285174386642" class="contact-info-link">0851-7438-6642</a>
+                                        </p>
+                                        <p class="contact-info-note mb-0">Respon lebih cepat pada jam operasional.</p>
+                                    </div>
                                 </article>
                             </div>
-                            <div class="col-6">
+                            <div class="col-12 col-sm-6">
                                 <article class="contact-info-card h-100">
                                     <span class="contact-info-icon bg-location"><i class="fa-solid fa-location-dot"></i></span>
-                                    <p class="contact-info-label">ALAMAT KANTOR</p>
-                                    <p class="contact-info-text mb-0">Jl. Jenderal Sudirman No. 88, Indramayu</p>
+                                    <div class="contact-info-body">
+                                        <p class="contact-info-label">ALAMAT KANTOR</p>
+                                        <p class="contact-info-text mb-0">Jl. Jenderal Sudirman No. 88, Indramayu</p>
+                                        <p class="contact-info-note mb-0">Kunjungan terkait barang hanya sesuai arahan admin.</p>
+                                    </div>
                                 </article>
                             </div>
-                            <div class="col-6">
+                            <div class="col-12 col-sm-6">
                                 <article class="contact-info-card h-100">
                                     <span class="contact-info-icon bg-clock"><i class="fa-regular fa-clock"></i></span>
-                                    <p class="contact-info-label">JAM OPERASIONAL</p>
-                                    <p class="contact-info-text mb-0">Senin - Jumat<br>08.00 - 16.00</p>
+                                    <div class="contact-info-body">
+                                        <p class="contact-info-label">JAM OPERASIONAL</p>
+                                        <p class="contact-info-text mb-0">Senin - Jumat<br>08.00 - 16.00</p>
+                                        <p class="contact-info-note mb-0">Pesan di luar jam kerja diproses hari berikutnya.</p>
+                                    </div>
+                                </article>
+                            </div>
+                            <div class="col-12">
+                                <article class="contact-support-card">
+                                    <div class="contact-support-main">
+                                        <span class="contact-support-icon"><i class="fa-solid fa-headset"></i></span>
+                                        <div>
+                                            <h3 class="contact-support-title mb-1">Butuh bantuan cepat?</h3>
+                                            <p class="contact-support-text mb-0">Sertakan nama barang, lokasi, dan nomor klaim jika ada agar tim Sinemu bisa mengecek lebih cepat.</p>
+                                        </div>
+                                    </div>
+                                    <div class="contact-support-actions">
+                                        <a href="https://wa.me/6285174386642?text=Halo%20Sinemu%20Support%2C%20saya%20butuh%20bantuan." target="_blank" rel="noopener" class="contact-support-btn contact-support-primary">
+                                            <i class="fa-brands fa-whatsapp"></i>WhatsApp
+                                        </a>
+                                        <a href="mailto:support@sinemu.id" class="contact-support-btn contact-support-secondary">
+                                            <i class="fa-regular fa-envelope"></i>Email
+                                        </a>
+                                    </div>
                                 </article>
                             </div>
                         </div>
@@ -559,21 +601,25 @@
 
                     <div class="col-lg-5">
                         <form id="contactForm" class="contact-form-card h-100" novalidate>
+                            <div class="contact-form-head">
+                                <h3 class="contact-form-title mb-1">Kirim Pesan</h3>
+                                <p class="contact-form-subtitle mb-0">Isi detail singkat agar tim support dapat membantu lebih tepat.</p>
+                            </div>
                             <div class="mb-3">
                                 <label for="contactName" class="form-label">Nama Lengkap</label>
-                                <input id="contactName" name="name" type="text" class="form-control" placeholder="Masukkan nama" required>
+                                <input id="contactName" name="name" type="text" class="form-control" placeholder="Nama lengkap" required>
                             </div>
                             <div class="mb-3">
                                 <label for="contactEmail" class="form-label">Alamat Email</label>
-                                <input id="contactEmail" name="email" type="email" class="form-control" placeholder="Masukkan email" required>
+                                <input id="contactEmail" name="email" type="email" class="form-control" placeholder="Email aktif" required>
                             </div>
                             <div class="mb-3">
                                 <label for="contactPhone" class="form-label">Telepon</label>
-                                <input id="contactPhone" name="phone" type="text" class="form-control" placeholder="Masukkan nomor telepon" required>
+                                <input id="contactPhone" name="phone" type="text" class="form-control" placeholder="Nomor telepon" required>
                             </div>
                             <div class="mb-3">
                                 <label for="contactMessage" class="form-label">Pesan</label>
-                                <textarea id="contactMessage" name="message" class="form-control contact-textarea" rows="3" placeholder="Tuliskan pesan Anda" required></textarea>
+                                <textarea id="contactMessage" name="message" class="form-control contact-textarea" rows="5" placeholder="Tuliskan pesan Anda" required></textarea>
                             </div>
                             <div id="contactFormFeedback" class="contact-form-feedback" aria-live="polite"></div>
                             <button type="submit" class="btn btn-sinemu btn-sinemu-primary w-100 contact-submit-btn">

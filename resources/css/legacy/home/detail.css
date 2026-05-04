@@ -48,16 +48,18 @@
     position: relative;
     border-radius: 18px;
     overflow: hidden;
-    background: #eef2fb;
+    background:
+        linear-gradient(135deg, rgba(248, 250, 255, 0.96), rgba(238, 242, 251, 0.92));
     border: 1px solid rgba(211, 222, 243, 0.7);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.78);
     z-index: 1;
 }
 
 .report-detail-media img {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    inset: 22px;
+    width: calc(100% - 44px);
+    height: calc(100% - 44px);
     object-fit: contain;
     object-position: center center;
     image-rendering: auto;
@@ -109,20 +111,24 @@
     align-items: center;
     gap: 5px;
     border-radius: 999px;
-    padding: 5px 13px;
+    padding: 5px 12px;
     font-size: 0.68rem;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.055em;
     text-transform: uppercase;
     font-weight: 800;
     width: fit-content;
     border: 1px solid transparent;
 }
 
+.report-detail-chip iconify-icon {
+    font-size: 0.86rem;
+}
+
 .report-detail-chip.is-lost {
-    color: #b6504b; background: #fff0ef; border-color: rgba(182,80,75,0.2);
+    color: #9a3412; background: #fff7ed; border-color: rgba(251, 146, 60, 0.28);
 }
 .report-detail-chip.is-found {
-    color: #1f8d5e; background: #e8f8ef; border-color: rgba(31,141,94,0.2);
+    color: #047857; background: #ecfdf5; border-color: rgba(16, 185, 129, 0.24);
 }
 .report-detail-chip.is-in-progress {
     color: #a16207; background: #fef3c7; border-color: rgba(161,98,7,0.2);
@@ -265,8 +271,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.45rem;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     text-decoration: none;
+}
+
+.report-detail-actions .btn iconify-icon {
+    font-size: 1rem;
+    flex: 0 0 auto;
 }
 
 .report-detail-actions .btn:hover {
@@ -312,8 +324,9 @@
     /* img can go back to normal flow since container has defined height */
     .report-detail-media img {
         position: static;
-        width: 100%;
-        height: 100%;
+        width: calc(100% - 28px);
+        height: calc(100% - 28px);
+        margin: 14px;
     }
 
     .report-detail-main h1 {

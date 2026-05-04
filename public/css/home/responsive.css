@@ -12,8 +12,9 @@
     }
 
     .hero-modern-section {
-        padding-top: 4.7rem;
-        padding-bottom: 0.8rem;
+        min-height: 100vh;
+        padding-top: 4.35rem;
+        padding-bottom: 0.7rem;
         border-radius: 0;
     }
 
@@ -109,8 +110,8 @@
     }
 
     .filter-wrap {
-        padding: 1rem;
-        transform: translateY(6px);
+        padding: 0.9rem;
+        transform: none;
     }
 
     .filter-subtitle {
@@ -137,8 +138,9 @@
 
 @media (max-width: 575.98px) {
     .hero-modern-section {
+        min-height: 100vh;
         gap: 0.65rem;
-        padding-top: 4.4rem;
+        padding-top: 4.15rem;
         padding-bottom: 0.35rem;
     }
 

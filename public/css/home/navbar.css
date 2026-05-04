@@ -1,11 +1,11 @@
 .floating-nav {
     margin-top: 0;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     border: 0;
     border-radius: 0;
     box-shadow: 0 1px 0 rgba(17, 24, 39, 0.07);
     backdrop-filter: blur(8px);
-    min-height: 76px;
+    min-height: 70px;
 }
 
 .fixed-nav {
@@ -25,10 +25,11 @@
 }
 
 .brand-logo {
-    height: 50px;
+    height: 46px;
     width: auto;
     object-fit: contain;
     padding-left: 8px;
+    filter: contrast(1.08) saturate(1.06);
 }
 
 .nav-link {
@@ -36,7 +37,7 @@
     font-weight: 600;
     letter-spacing: 0.01em;
     border-radius: 10px;
-    padding: 0.5rem 0.65rem !important;
+    padding: 0.46rem 0.62rem !important;
     transition: color 0.2s ease, background-color 0.2s ease;
 }
 
@@ -46,7 +47,7 @@
 }
 
 .nav-centered .nav-link {
-    font-size: 0.96rem;
+    font-size: 0.92rem;
     padding-inline: 0.55rem;
 }
 
@@ -57,6 +58,29 @@
 .nav-profile.nav-guest {
     display: flex;
     align-items: center;
+}
+
+@media (min-width: 992px) {
+    .floating-nav .navbar-collapse {
+        position: static;
+        flex-grow: 0;
+    }
+
+    .floating-nav .nav-centered {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0 !important;
+    }
+
+    .floating-nav .nav-profile {
+        position: absolute;
+        right: clamp(1.25rem, 2.4vw, 2rem);
+        top: 50%;
+        transform: translateY(-50%);
+        margin-left: 0;
+    }
 }
 
 .user-chip {

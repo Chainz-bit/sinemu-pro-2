@@ -3,16 +3,16 @@
 ========================================= */
 :root {
     --auth-bg: #eef1f5;
-    --auth-left: #6f97cf;
-    --auth-left-dark: #5d86c0;
+    --auth-left: #183b67;
+    --auth-left-dark: #102f55;
     --auth-text: #1f2937;
     --auth-muted: #6b7280;
     --auth-white: #ffffff;
-    --auth-border: #d8dce4;
-    --auth-input: #eef1f4;
-    --auth-primary: #6f97cf;
-    --auth-primary-hover: #5f88c4;
-    --auth-shadow: 0 12px 30px rgba(16, 24, 40, 0.1);
+    --auth-border: rgba(129, 161, 207, 0.24);
+    --auth-input: rgba(242, 247, 255, 0.9);
+    --auth-primary: #5a3ff6;
+    --auth-primary-hover: #4f39e8;
+    --auth-shadow: 0 24px 48px rgba(45, 37, 122, 0.14);
 }
 
 /* =========================================
@@ -31,7 +31,9 @@ body {
     min-height: 100%;
     font-family: "Plus Jakarta Sans", sans-serif;
     color: var(--auth-text);
-    background: var(--auth-bg);
+    background:
+        radial-gradient(760px 280px at 8% 6%, rgba(90, 63, 246, 0.12), transparent 64%),
+        linear-gradient(180deg, #f6f8ff 0%, #edf3fb 100%);
     overflow: hidden;
 }
 
@@ -46,26 +48,42 @@ body {
 .login-shell {
     min-height: 100dvh;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     overflow: hidden;
 }
 
 .login-left {
-    background: linear-gradient(180deg, var(--auth-left) 0%, var(--auth-left-dark) 100%);
+    position: relative;
+    background:
+        radial-gradient(560px 240px at 12% 14%, rgba(105, 84, 255, 0.18), transparent 68%),
+        radial-gradient(520px 260px at 86% 88%, rgba(20, 184, 166, 0.12), transparent 70%),
+        linear-gradient(180deg, var(--auth-left) 0%, var(--auth-left-dark) 100%);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2.5rem;
+    padding: clamp(2.2rem, 4vw, 3rem);
+    overflow: hidden;
+}
+
+.login-left::before {
+    content: "";
+    position: absolute;
+    inset: 32px;
+    border: 1px solid rgba(226, 232, 255, 0.14);
+    border-radius: 28px;
+    pointer-events: none;
 }
 
 .left-content {
     width: min(540px, 100%);
+    position: relative;
+    z-index: 1;
 }
 
 .left-title {
     margin: 0 0 1.1rem;
-    font-size: clamp(2rem, 3.1vw, 3rem);
+    font-size: clamp(2rem, 3vw, 2.9rem);
     line-height: 1.15;
     font-weight: 800;
 }
@@ -74,27 +92,29 @@ body {
     margin: 0;
     font-size: 1.02rem;
     line-height: 1.8;
-    color: rgba(255, 255, 255, 0.86);
+    color: rgba(231, 241, 255, 0.86);
 }
 
 .left-illustration {
-    margin-top: 1.75rem;
+    margin-top: 2.15rem;
     width: 100%;
     aspect-ratio: 16 / 7.6;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 14px;
+    border-radius: 28px;
     overflow: hidden;
-    background: linear-gradient(180deg, #eef2ff 0%, #cfd9f5 100%);
-    box-shadow: 0 20px 34px rgba(17, 38, 78, 0.28);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(234, 241, 255, 0.84));
+    border: 1px solid rgba(226, 232, 255, 0.28);
+    box-shadow: 0 24px 44px rgba(8, 20, 42, 0.24);
 }
 
 .left-illustration-img {
-    width: 100%;
-    height: 100%;
-    max-width: 96%;
-    max-height: 96%;
+    width: calc(100% - 48px);
+    height: calc(100% - 34px);
+    max-width: 90%;
+    max-height: 90%;
     display: block;
     object-fit: contain;
     object-position: center;
@@ -105,11 +125,14 @@ body {
     align-items: center;
     justify-content: center;
     padding: clamp(1rem, 2.4vw, 2rem);
-    background: url("/img/login-form.jpg") center center / cover no-repeat;
+    background:
+        linear-gradient(rgba(248, 250, 255, 0.92), rgba(239, 246, 255, 0.96)),
+        url("/img/login-form.jpg") center center / cover no-repeat;
 }
 
 .right-content {
     width: min(460px, 100%);
+    transform: translateY(-0.35rem);
 }
 
 /* =========================================
@@ -117,6 +140,7 @@ body {
 ========================================= */
 .brand-wrap {
     text-align: center;
+    margin-bottom: 0.15rem;
 }
 
 .brand-logo {
@@ -126,14 +150,14 @@ body {
 
 .login-header {
     text-align: center;
-    margin-bottom: 1.1rem;
+    margin-bottom: 1rem;
 }
 
 .login-header h2 {
     margin: 0 0 0.45rem;
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     font-weight: 800;
-    color: #22252d;
+    color: #172033;
 }
 
 .login-header p {
@@ -177,11 +201,11 @@ body {
 .login-form {
     background: rgba(255, 255, 255, 0.84);
     border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 14px;
-    padding: 1.2rem;
+    border-radius: 22px;
+    padding: 1.35rem;
     box-shadow: var(--auth-shadow);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
 }
 
 .field-group {
@@ -193,7 +217,7 @@ body {
     font-size: 0.87rem;
     font-weight: 700;
     margin-bottom: 0.45rem;
-    color: #3a404c;
+    color: #334155;
 }
 
 .label-row {
@@ -220,9 +244,9 @@ body {
 
 .input-wrap input {
     width: 100%;
-    height: 46px;
+    height: 48px;
     border: 1px solid var(--auth-border);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--auth-input);
     padding: 0.75rem 2.6rem 0.75rem 2.2rem;
     font-size: 0.95rem;
@@ -232,7 +256,7 @@ body {
 
 .input-wrap input:focus {
     border-color: var(--auth-primary);
-    box-shadow: 0 0 0 3px rgba(111, 151, 207, 0.16);
+    box-shadow: 0 0 0 4px rgba(90, 63, 246, 0.14);
 }
 
 .input-wrap input::placeholder {
@@ -269,6 +293,12 @@ body {
     justify-content: center;
     color: #7f8794;
     cursor: pointer;
+    border-radius: 8px;
+}
+
+.toggle-password:hover {
+    background: rgba(90, 63, 246, 0.08);
+    color: var(--auth-primary);
 }
 
 .toggle-password svg {
@@ -296,7 +326,7 @@ body {
 .btn-google {
     width: 100%;
     border-radius: 10px;
-    height: 46px;
+    height: 48px;
     font-size: 0.99rem;
     font-weight: 700;
     cursor: pointer;
@@ -305,12 +335,12 @@ body {
 .btn-submit {
     border: 0;
     color: #fff;
-    background: var(--auth-primary);
-    box-shadow: 0 8px 18px rgba(111, 151, 207, 0.35);
+    background: linear-gradient(135deg, var(--auth-primary) 0%, #705cff 100%);
+    box-shadow: 0 12px 24px rgba(90, 63, 246, 0.28);
 }
 
 .btn-submit:hover {
-    background: var(--auth-primary-hover);
+    background: linear-gradient(135deg, #705cff 0%, var(--auth-primary-hover) 100%);
 }
 
 .divider {
@@ -357,7 +387,7 @@ body {
 }
 
 .register-link {
-    margin: 1rem 0 0;
+    margin: 1.1rem 0 0;
     text-align: center;
     color: #5b6271;
     font-size: 0.95rem;
@@ -400,6 +430,10 @@ body {
         align-items: flex-start;
         padding: 1.25rem 0.95rem;
     }
+
+    .right-content {
+        transform: none;
+    }
 }
 
 @media (max-height: 760px) and (min-width: 1081px) {
@@ -411,6 +445,7 @@ body {
     .right-content {
         padding-top: 1rem;
         padding-bottom: 1rem;
+        transform: none;
     }
 }
 

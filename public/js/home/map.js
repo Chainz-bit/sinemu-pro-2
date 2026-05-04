@@ -1,4 +1,4 @@
-const DEFAULT_PHONE = '0812-3456-7890';
+const DEFAULT_PHONE = '0851-7438-6642';
 const DEFAULT_HOURS = '08.00-20.00 WIB';
 const GEOCODE_CACHE_KEY = 'sinemu_pickup_geocode_cache_v1';
 
@@ -193,11 +193,32 @@ export function initMap() {
         if (selectedAddress) selectedAddress.textContent = 'Lokasi akan muncul setelah admin diverifikasi super admin.';
         if (selectedHours) selectedHours.textContent = 'Jam Operasional: -';
         if (selectedDistance) selectedDistance.textContent = 'Jarak: -';
-        if (selectedOpenMaps) selectedOpenMaps.removeAttribute('href');
+        if (selectedOpenMaps) {
+            selectedOpenMaps.removeAttribute('href');
+            selectedOpenMaps.setAttribute('aria-disabled', 'true');
+        }
         if (selectedGetRoute) selectedGetRoute.setAttribute('disabled', 'disabled');
         if (locateMeButton) locateMeButton.setAttribute('disabled', 'disabled');
+        if (carouselPrevButton || carouselNextButton) {
+            [carouselPrevButton, carouselNextButton].forEach(function (button) {
+                if (!button) return;
+                button.hidden = true;
+                button.setAttribute('aria-hidden', 'true');
+                button.tabIndex = -1;
+            });
+        }
 
-        listElement.innerHTML = '<article class="lokasi-item"><p style="margin:0;color:#64748b;">Belum ada titik pengambilan aktif. Verifikasi admin melalui dashboard super admin.</p></article>';
+        listElement.innerHTML = [
+            '<article class="lokasi-empty-state" aria-label="Belum ada titik pengambilan aktif">',
+            '<div class="lokasi-empty-content">',
+            '<div class="lokasi-empty-illustration" aria-hidden="true">',
+            '<span class="lokasi-empty-map"></span>',
+            '<span class="lokasi-empty-pin"></span>',
+            '</div>',
+            '<p class="lokasi-empty-text">Belum ada titik pengambilan aktif. Verifikasi admin melalui dashboard super admin.</p>',
+            '</div>',
+            '</article>'
+        ].join('');
 
         setTimeout(function () {
             map.invalidateSize();
@@ -218,6 +239,18 @@ export function initMap() {
 
     const markerById = new Map();
     const locationById = new Map();
+
+    function setCarouselControlsVisible(isVisible) {
+        [carouselPrevButton, carouselNextButton].forEach(function (button) {
+            if (!button) {
+                return;
+            }
+
+            button.hidden = !isVisible;
+            button.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+            button.tabIndex = isVisible ? 0 : -1;
+        });
+    }
 
     function buildPopupHtml(location) {
         const routeUrl = Number.isFinite(location.lat) && Number.isFinite(location.lng)
@@ -267,6 +300,14 @@ export function initMap() {
         return formatDistance(distanceKm);
     }
 
+    function getDistanceBadgeText(location) {
+        if (!userCoords) {
+            return 'Estimasi jarak';
+        }
+
+        return getDistanceText(location);
+    }
+
     function focusOnLocation(location, zoom) {
         map.setView([location.lat, location.lng], zoom || 14, {
             animate: true,
@@ -290,6 +331,7 @@ export function initMap() {
 
         if (selectedOpenMaps) {
             selectedOpenMaps.href = buildMapsLink(location);
+            selectedOpenMaps.removeAttribute('aria-disabled');
         }
 
         if (selectedGetRoute) {
@@ -299,6 +341,9 @@ export function initMap() {
     }
 
     function renderLocationList() {
+        listElement.classList.toggle('is-single', locations.length === 1);
+        setCarouselControlsVisible(locations.length > 1);
+
         listElement.innerHTML = locations.map(function (location) {
             const isActive = location.id === selectedLocationId;
             const mapLink = buildMapsLink(location);
@@ -314,20 +359,24 @@ export function initMap() {
                 '<small class="lokasi-item-manager">' + escapeHtml(location.managerLabel || 'Admin Pengelola') + '</small>',
                 '<h4>' + escapeHtml(location.name) + '</h4>',
                 '</div>',
-                '<span class="lokasi-item-distance">' + escapeHtml(getDistanceText(location)) + '</span>',
+                '<span class="lokasi-item-distance" title="' + escapeHtml(getDistanceText(location)) + '"><i class="fa-solid fa-location-arrow"></i>' + escapeHtml(getDistanceBadgeText(location)) + '</span>',
                 '</div>',
-                '<p>' + escapeHtml(addressLabel) + '</p>',
+                '<p class="lokasi-item-address"><i class="fa-solid fa-location-dot"></i><span>' + escapeHtml(addressLabel) + '</span></p>',
                 '<div class="lokasi-item-meta">',
-                '<span><i class="fa-regular fa-clock"></i> ' + escapeHtml(location.hours) + '</span>',
-                '<span><i class="fa-solid fa-phone"></i> ' + escapeHtml(location.phone) + '</span>',
+                '<span><i class="fa-regular fa-clock"></i><strong>' + escapeHtml(location.hours) + '</strong></span>',
+                '<span><i class="fa-solid fa-phone"></i><strong>' + escapeHtml(location.phone) + '</strong></span>',
                 '</div>',
                 '<div class="lokasi-item-actions">',
-                '<a href="' + mapLink + '" target="_blank" rel="noopener" class="lokasi-mini-btn lokasi-mini-btn-primary" data-action="open-maps">Buka di Maps</a>',
-                '<a href="' + routeLink + '" target="_blank" rel="noopener" class="lokasi-mini-btn lokasi-mini-btn-secondary" data-action="get-route">Dapatkan Route</a>',
+                '<a href="' + mapLink + '" target="_blank" rel="noopener" class="lokasi-mini-btn lokasi-mini-btn-primary" data-action="open-maps"><i class="fa-regular fa-map"></i>Buka di Maps</a>',
+                '<a href="' + routeLink + '" target="_blank" rel="noopener" class="lokasi-mini-btn lokasi-mini-btn-secondary" data-action="get-route"><i class="fa-solid fa-route"></i>Dapatkan Route</a>',
                 '</div>',
                 '</article>'
             ].join('');
         }).join('');
+
+        window.requestAnimationFrame(function () {
+            setCarouselControlsVisible(locations.length > 1 && listElement.scrollWidth > listElement.clientWidth + 8);
+        });
     }
 
     function refreshMarkerPopups() {

@@ -421,19 +421,105 @@
 
 .found-matching-card > header {
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
 }
 
 .found-matching-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
+    border-bottom: 1px solid #e5eaf2;
+    margin: -2px -2px 0;
+    padding: 0 0 18px;
 }
 
 .found-matching-header-copy {
     display: grid;
     gap: 4px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.found-matching-header-copy h2 {
+    color: #1f3b63;
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.found-matching-header-copy p {
+    max-width: 820px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.found-matching-header-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    color: #2563eb;
+    background: #eaf2ff;
+}
+
+.found-matching-refresh {
+    min-height: 36px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+    background: #fff;
+    border-color: #dbe3ef;
+    color: #1f3b63;
+}
+
+.found-matching-refresh:hover {
+    background: #f8fbff;
+    border-color: #bfcef2;
+    color: #1d4ed8;
+}
+
+.found-matching-empty {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid #e5eaf2;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f8fbff 0%, #ffffff 70%);
+    margin-top: 16px;
+    padding: 16px;
+}
+
+.found-matching-empty-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    color: #2563eb;
+    background: #eaf2ff;
+}
+
+.found-matching-empty h3 {
+    margin: 0 0 4px;
+    color: #172033;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.found-matching-empty p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
 .found-matching-score {
@@ -565,9 +651,17 @@
         flex-direction: column;
     }
 
+    .found-matching-header-icon {
+        display: none;
+    }
+
     .found-matching-header .filter-btn {
         width: 100%;
         justify-content: center;
+    }
+
+    .found-matching-empty {
+        flex-direction: column;
     }
 
     .found-detail-body h2 {

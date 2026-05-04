@@ -12,8 +12,9 @@
     }
 
     .hero-modern-section {
-        padding-top: 4.7rem;
-        padding-bottom: 0.8rem;
+        min-height: 100vh;
+        padding-top: 4.35rem;
+        padding-bottom: 0.7rem;
         border-radius: 0;
     }
 
@@ -109,8 +110,8 @@
     }
 
     .filter-wrap {
-        padding: 0.8rem;
-        transform: translateY(2px);
+        padding: 0.9rem;
+        transform: none;
     }
 
     .filter-subtitle {
@@ -137,8 +138,9 @@
 
 @media (max-width: 575.98px) {
     .hero-modern-section {
+        min-height: 100vh;
         gap: 0.65rem;
-        padding-top: 4.4rem;
+        padding-top: 4.15rem;
         padding-bottom: 0.35rem;
     }
 
@@ -178,29 +180,6 @@
 
     .filter-wrap {
         transform: translateY(0);
-        padding: 0.72rem;
-        border-radius: 16px;
-    }
-
-    .filter-title {
-        font-size: 0.82rem;
-    }
-
-    .filter-subtitle {
-        font-size: 0.68rem;
-        margin-bottom: 0 !important;
-    }
-
-    .form-control,
-    .form-select,
-    .filter-search-btn {
-        min-height: 38px;
-        height: 38px;
-        font-size: 0.82rem;
-    }
-
-    .form-label {
-        font-size: 0.62rem;
     }
 
     .hero-modern-meta {

@@ -14,7 +14,10 @@
 
                 <div class="report-detail-main">
                     <h1>{{ $detail->title }}</h1>
-                    <span class="report-detail-chip {{ $detail->status_class }}">{{ $detail->status_label }}</span>
+                    <span class="report-detail-chip {{ $detail->status_class }}">
+                        <iconify-icon icon="mdi:shield-check-outline" aria-hidden="true"></iconify-icon>
+                        {{ $detail->status_label }}
+                    </span>
                     <p class="report-detail-subtitle">
                         {{ $detail->subtitle ?? ('Detail laporan barang ' . ($detail->type === 'hilang' ? 'hilang' : 'temuan') . ' untuk membantu pengguna memahami informasi sebelum tindak lanjut.') }}
                     </p>
@@ -64,6 +67,7 @@
 
                     <div class="report-detail-actions">
                         <a href="{{ route('home') }}" class="btn btn-sinemu btn-sinemu-primary">
+                            <iconify-icon icon="mdi:arrow-left" aria-hidden="true"></iconify-icon>
                             Lihat Laporan Lain
                         </a>
                         @if($detail->type === 'temuan')

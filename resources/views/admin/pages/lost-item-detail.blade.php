@@ -289,17 +289,34 @@
 
         <article class="report-card mt-3 lost-matching-card" id="kandidat-pencocokan">
             <header class="mb-3 lost-matching-header">
+                <span class="lost-matching-header-icon" aria-hidden="true">
+                    <i class="fa-solid fa-link"></i>
+                </span>
                 <div class="lost-matching-header-copy">
                     <h2 class="mb-1">Kandidat Pencocokan Barang Temuan</h2>
                     <p class="mb-0">Sistem menilai kandidat berdasarkan kategori, nama barang, warna, merek, nomor seri, lokasi, tanggal, deskripsi, dan ciri khusus.</p>
                 </div>
-                <a href="{{ route('admin.lost-items.show', $laporanBarangHilang->id) }}#kandidat-pencocokan" class="filter-btn">Muat Ulang Kandidat</a>
+                <a href="{{ route('admin.lost-items.show', $laporanBarangHilang->id) }}#kandidat-pencocokan" class="filter-btn lost-matching-refresh">
+                    <i class="fa-solid fa-rotate-right"></i>Muat Ulang Kandidat
+                </a>
             </header>
 
             @if((string) ($laporanBarangHilang->status_laporan ?? '') !== \App\Support\WorkflowStatus::REPORT_APPROVED)
-                <p class="mb-0">Kandidat baru tersedia setelah laporan barang hilang disetujui admin.</p>
+                <div class="lost-matching-empty">
+                    <span class="lost-matching-empty-icon"><i class="fa-solid fa-clock"></i></span>
+                    <div>
+                        <h3>Kandidat belum tersedia</h3>
+                        <p>Kandidat baru akan muncul setelah laporan barang hilang disetujui admin.</p>
+                    </div>
+                </div>
             @elseif(($matchingCandidates ?? collect())->isEmpty())
-                <p class="mb-0">Belum ada kandidat dengan skor kecocokan yang cukup atau semua kandidat sudah ditinjau.</p>
+                <div class="lost-matching-empty">
+                    <span class="lost-matching-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <div>
+                        <h3>Belum ada kandidat kuat</h3>
+                        <p>Belum ada kandidat dengan skor kecocokan yang cukup, atau semua kandidat sudah ditinjau.</p>
+                    </div>
+                </div>
             @else
                 <div class="report-table-wrap">
                     <table class="report-table">
