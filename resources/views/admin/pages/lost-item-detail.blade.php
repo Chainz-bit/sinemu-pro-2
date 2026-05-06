@@ -39,7 +39,9 @@
 
     if (!empty($localFotoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($localFotoPath)) {
         $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($localFotoPath);
-        $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($localFotoPath) ?: 'image/jpeg';
+        $ext = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
+        $mimeMap = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'];
+        $mimeType = $mimeMap[$ext] ?? 'image/jpeg';
         $binary = @file_get_contents($absolutePath);
         if ($binary !== false) {
             $fotoSrc = 'data:' . $mimeType . ';base64,' . base64_encode($binary);
@@ -314,7 +316,7 @@
                     <span class="lost-matching-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
                     <div>
                         <h3>Belum ada kandidat kuat</h3>
-                        <p>Belum ada kandidat dengan skor kecocokan yang cukup, atau semua kandidat sudah ditinjau.</p>
+                        <p>Belum ada kandidat dengan skor kecocokan yang cukup atau semua kandidat sudah ditinjau.</p>
                     </div>
                 </div>
             @else
