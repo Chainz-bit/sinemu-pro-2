@@ -39,6 +39,7 @@
                             <option value="pending" @selected($statusFilter === 'pending')>Menunggu</option>
                             <option value="active" @selected($statusFilter === 'active')>Aktif</option>
                             <option value="rejected" @selected($statusFilter === 'rejected')>Ditolak</option>
+                            <option value="inactive" @selected($statusFilter === 'inactive')>Nonaktif</option>
                         </select>
                     </form>
                 </div>
@@ -50,6 +51,7 @@
                     <a href="{{ route('super.admins.index', array_filter(['search' => $search, 'status' => 'pending'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'pending' ? 'is-active' : '' }}">Menunggu</a>
                     <a href="{{ route('super.admins.index', array_filter(['search' => $search, 'status' => 'active'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'active' ? 'is-active' : '' }}">Aktif</a>
                     <a href="{{ route('super.admins.index', array_filter(['search' => $search, 'status' => 'rejected'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'rejected' ? 'is-active' : '' }}">Ditolak</a>
+                    <a href="{{ route('super.admins.index', array_filter(['search' => $search, 'status' => 'inactive'])) }}" class="dashboard-filter-chip {{ $statusFilter === 'inactive' ? 'is-active' : '' }}">Nonaktif</a>
                 </div>
                 <div class="dashboard-toolbar-note">
                     Menampilkan {{ $admins->total() }} {{ $managerRoleLabelLower }}
@@ -96,9 +98,20 @@
                                     </span>
                                 </td>
                                 <td class="menu-cell card-action-cell" data-label="Aksi">
-                                    <x-dashboard.action-menu id="super-manager-menu-{{ $index }}">
-                                        <a href="{{ route('super.admins.index', ['search' => $admin->nama]) }}">Lihat Detail</a>
-                                        <a href="{{ route('super.admin-verifications.index', ['search' => $admin->nama]) }}">Kelola Verifikasi</a>
+                                    <x-dashboard.action-menu id="super-manager-menu-{{ $index }}" label="Buka menu aksi pengelola">
+                                        <a href="{{ route('super.admins.show', $admin) }}">Lihat Detail</a>
+                                        <a href="{{ route('super.admins.edit', $admin) }}">Edit Akun</a>
+                                        <form method="POST"
+                                            action="{{ route('super.admins.destroy', $admin) }}"
+                                            data-confirm-delete
+                                            data-confirm-title="Hapus Akun Pengelola?"
+                                            data-confirm-message="Akun pengelola ini akan dihapus dari sistem. Tindakan ini tidak dapat dibatalkan. Nama: {{ $admin->nama }}"
+                                            data-confirm-submit-label="Ya, Hapus Akun"
+                                            data-confirm-submit-variant="danger">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="menu-submit danger">Hapus Akun</button>
+                                        </form>
                                     </x-dashboard.action-menu>
                                 </td>
                             </tr>

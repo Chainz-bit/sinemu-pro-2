@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('super')->name('super.')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
     Route::post('login', [LoginController::class, 'store'])
-        ->middleware('throttle:8,1')
+        ->middleware('throttle:5,1')
         ->name('login.store');
 
     Route::middleware('super')->group(function () {
@@ -22,7 +22,19 @@ Route::prefix('super')->name('super.')->group(function () {
         Route::get('pengaturan', [SettingsController::class, 'index'])->name('settings');
         Route::put('pengaturan', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('pengaturan/riwayat', [SettingsController::class, 'history'])->name('settings.history');
-        Route::get('admins', [AdminDirectoryController::class, 'index'])->name('admins.index');
+        Route::get('admins', fn () => redirect()->route('super.admins.index'));
+        Route::prefix('pengelola')->name('admins.')->controller(AdminDirectoryController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('{admin}', 'show')->name('show');
+            Route::get('{admin}/edit', 'edit')->name('edit');
+            Route::put('{admin}', 'update')->name('update');
+            Route::delete('{admin}', 'destroy')->name('destroy');
+        });
+        Route::patch('pengelola/{admin}/verify', [AdminVerificationController::class, 'accept'])->name('admins.verify');
+        Route::patch('pengelola/{admin}/reject', [AdminVerificationController::class, 'reject'])->name('admins.reject');
+        Route::patch('pengelola/{admin}/deactivate', [AdminVerificationController::class, 'deactivate'])->name('admins.deactivate');
         Route::get('admin-verifications', [AdminVerificationController::class, 'index'])->name('admin-verifications.index');
         Route::post('admin-verifications/{admin}/accept', [AdminVerificationController::class, 'accept'])->name('admin-verifications.accept');
         Route::post('admin-verifications/{admin}/reject', [AdminVerificationController::class, 'reject'])->name('admin-verifications.reject');

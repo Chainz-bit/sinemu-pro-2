@@ -12,7 +12,7 @@
         {{-- Navbar Start --}}
         {{-- ========================================= --}}
         <nav class="navbar navbar-expand-lg floating-nav fixed-nav px-3 px-lg-4" id="mainNavBar">
-            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold order-1" href="{{ route('home') }}">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold order-1" href="{{ route('home') }}" data-home-link>
                 <img src="{{ asset('img/logo.png') }}" alt="Sinemu" class="brand-logo" width="160" height="50" fetchpriority="high">
             </a>
             <button class="navbar-toggler border-0 shadow-none order-2 ms-auto d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,10 +85,10 @@
                 @endauth
 
                 <ul class="navbar-nav mx-auto mb-0 mb-lg-0 gap-lg-4 nav-centered order-2 order-lg-1">
-                    <li class="nav-item"><a class="nav-link" href="#pencarian">Pencarian</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#hero">Pencarian</a></li>
                     <li class="nav-item"><a class="nav-link" href="#hilang-temuan">Hilang &amp; Temuan</a></li>
                     <li class="nav-item"><a class="nav-link" href="#klaim">Tutorial</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#lokasi-pengambilan">Lokasi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#lokasi">Lokasi</a></li>
                     <li class="nav-item"><a class="nav-link" href="#kontak">Kontak</a></li>
                 </ul>
             </div>
@@ -156,7 +156,7 @@
             @endif
         @endauth
 
-        <section id="pencarian" class="section-space hero-modern-section">
+        <section id="hero" class="section-space hero-modern-section">
             <div class="hero-modern text-center" data-animate="1">
                 <h1 class="hero-modern-title mb-3">Kehilangan atau Menemukan <span>Barang</span> di <span>Indramayu?</span></h1>
                 <p class="hero-modern-subtitle mb-4">SiNemu bantu temukan barang berhargamu. Lapor dengan mudah, cari dengan cepat, dan klaim dengan aman.</p>
@@ -247,6 +247,9 @@
                         <button id="searchButton" class="btn btn-sinemu btn-sinemu-primary w-100 filter-search-btn" type="submit">
                             <i class="fa-solid fa-magnifying-glass me-2"></i>Cari
                         </button>
+                    </div>
+                    <div class="col-12">
+                        <div id="filterFormFeedback" class="filter-form-feedback" role="status" aria-live="polite"></div>
                     </div>
                 </form>
             </div>
@@ -450,7 +453,7 @@
         {{-- ========================================= --}}
         {{-- Lokasi Pengambilan Start --}}
         {{-- ========================================= --}}
-        <section id="lokasi-pengambilan" class="section-space pt-0">
+        <section id="lokasi" class="section-space pt-0">
             <div class="surface-card lokasi-wrap p-3 p-lg-4">
                 <header class="lokasi-header">
                     <h2 class="lokasi-main-title mb-1">Lokasi Pengambilan Sinemu &ndash; Indramayu</h2>

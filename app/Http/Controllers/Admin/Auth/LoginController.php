@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminLoginRequest;
 use App\Models\Admin;
 use App\Support\ManagerPortal;
-use App\Support\RoleLabels;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,10 +35,11 @@ class LoginController extends Controller
 
         $status = (string) ($admin->status_verifikasi ?? 'pending');
         if ($status !== 'active') {
-            $managerRoleLabelLower = RoleLabels::managerLower();
-            $message = $status === 'rejected'
-                ? 'Akun ' . $managerRoleLabelLower . ' ditolak. Perbarui data pendaftaran Anda dan hubungi super admin.'
-                : 'Akun ' . $managerRoleLabelLower . ' belum aktif. Tunggu verifikasi dari super admin.';
+            $message = match ($status) {
+                'rejected' => 'Akun Anda ditolak atau memerlukan perbaikan data.',
+                'inactive' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi super admin.',
+                default => 'Akun Anda masih menunggu verifikasi super admin.',
+            };
 
             return back()
                 ->withInput($request->only('login', 'remember'))

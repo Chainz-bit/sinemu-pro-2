@@ -19,6 +19,7 @@
         ['key' => 'dashboard', 'label' => 'Dashboard', 'url' => route('super.dashboard'), 'icon' => ''],
         ['key' => 'admins', 'label' => 'Daftar ' . $managerRoleLabel, 'url' => route('super.admins.index'), 'icon' => ''],
         ['key' => 'admin-verifications', 'label' => 'Verifikasi ' . $managerRoleLabel, 'url' => route('super.admin-verifications.index'), 'icon' => ''],
+        ['key' => 'admins-create', 'label' => 'Tambah Akun Pengelola', 'url' => route('super.admins.create'), 'icon' => ''],
     ];
 @endphp
 

@@ -10,20 +10,68 @@
 @endphp
 
 @section('page-content')
-    @php
-        $hasPriorityAdmins = ($summary['pending'] ?? 0) > 0 && $priorityAdmins->isNotEmpty();
-    @endphp
     <div class="dashboard-page-content super-page-content">
         <section class="intro">
             <h1>Ringkasan Dashboard Super Admin</h1>
-            <p>Kontrol verifikasi {{ $managerRoleLabelLower }}, pantau pertumbuhan pendaftar, dan fokus ke akun yang perlu ditindak segera.</p>
+            <p>Pantau jumlah akun {{ $managerRoleLabelLower }}, status verifikasi, dan aktivitas terbaru dalam sistem SiNemu.</p>
         </section>
 
         <section class="stats-grid super-stats-grid">
-            <x-dashboard.stat-card class="super-stat-card super-stat-card-primary" :label="'Total ' . $managerRoleLabel . ' Terdaftar'" :value="$summary['total'] ?? 0" icon="mdi:account-group-outline" :description="'Semua akun ' . $managerRoleLabelLower . ' yang pernah terdaftar di sistem.'" />
-            <x-dashboard.stat-card class="super-stat-card super-stat-card-warning" label="Menunggu Verifikasi" :value="$summary['pending'] ?? 0" icon="mdi:clock-alert-outline" description="Pendaftar yang perlu keputusan super admin." />
-            <x-dashboard.stat-card class="super-stat-card super-stat-card-danger" label="Ditolak / Revisi" :value="$summary['rejected'] ?? 0" icon="mdi:close-octagon-outline" description="Akun yang ditolak dan menunggu perbaikan data." />
-            <x-dashboard.stat-card class="super-stat-card super-stat-card-success" :label="$managerRoleLabel . ' Baru 7 Hari'" :value="$summary['newThisWeek'] ?? 0" icon="mdi:chart-timeline-variant" :description="'Pertumbuhan pendaftaran ' . $managerRoleLabelLower . ' selama satu minggu terakhir.'" />
+            <x-dashboard.stat-card class="super-stat-card super-stat-card-primary" :label="'Total ' . $managerRoleLabel" :value="$summary['total'] ?? 0" icon="mdi:account-group-outline" :description="'Jumlah seluruh akun ' . $managerRoleLabelLower . ' yang terdaftar.'" />
+            <x-dashboard.stat-card class="super-stat-card super-stat-card-warning" label="Menunggu Verifikasi" :value="$summary['pending'] ?? 0" icon="mdi:clock-alert-outline" description="Akun yang menunggu keputusan super admin." />
+            <x-dashboard.stat-card class="super-stat-card super-stat-card-danger" label="Ditolak / Revisi" :value="$summary['rejected'] ?? 0" icon="mdi:close-octagon-outline" description="Akun yang ditolak atau perlu perbaikan data." />
+            <x-dashboard.stat-card class="super-stat-card super-stat-card-success" :label="$managerRoleLabel . ' Baru 7 Hari'" :value="$summary['newThisWeek'] ?? 0" icon="mdi:chart-timeline-variant" :description="'Akun ' . $managerRoleLabelLower . ' yang mendaftar dalam 7 hari terakhir.'" />
+        </section>
+
+        <section class="super-dashboard-priority">
+            <article class="report-card super-priority-card">
+                <header>
+                    <div class="report-heading">
+                        <h2>Butuh Tindakan Sekarang</h2>
+                        <p>Prioritaskan akun pengelola yang masih menunggu keputusan verifikasi.</p>
+                    </div>
+                    <div class="report-actions">
+                        <a href="{{ route('super.admin-verifications.index', ['status' => 'pending']) }}#daftar-verifikasi">Lihat Semua Pending</a>
+                    </div>
+                </header>
+
+                <div class="super-priority-list">
+                    @forelse($priorityAdmins as $admin)
+                        <article class="super-priority-item">
+                            <div class="item-avatar avatar-claim">
+                                <span class="item-avatar-fallback">{{ strtoupper(substr((string) $admin->nama, 0, 1)) }}</span>
+                            </div>
+                            <div class="super-priority-meta">
+                                <strong>{{ $admin->nama }}</strong>
+                                <small>{{ $admin->email }} | {{ $admin->instansi ?: 'Instansi belum diisi' }}</small>
+                                <small>Didaftarkan {{ optional($admin->created_at)->format('d M Y H:i') ?? '-' }} WIB</small>
+                            </div>
+                            <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass('pending') }}">Menunggu</span>
+                            <div class="super-priority-actions">
+                                <form method="POST"
+                                    action="{{ route('super.admins.verify', $admin->id) }}"
+                                    data-confirm-delete
+                                    data-confirm-title="Verifikasi Akun Pengelola?"
+                                    data-confirm-message="Akun pengelola ini akan diverifikasi dan dapat mengakses fitur pengelola barang. Nama: {{ $admin->nama }}"
+                                    data-confirm-submit-label="Ya, Verifikasi"
+                                    data-confirm-submit-variant="primary">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="super-inline-btn is-accept">Setujui</button>
+                                </form>
+                                <a href="{{ route('super.admin-verifications.index', ['search' => $admin->nama]) }}" class="super-inline-btn">Tinjau Detail</a>
+                            </div>
+                        </article>
+                    @empty
+                        <x-dashboard.empty-state
+                            class="super-table-empty-state"
+                            icon="mdi:check-circle-outline"
+                            title="Tidak ada tindakan tertunda"
+                            message="Semua akun pengelola sudah ditangani."
+                        />
+                    @endforelse
+                </div>
+            </article>
         </section>
 
         <section class="super-dashboard-focus">
@@ -31,7 +79,7 @@
                 <header>
                     <div class="report-heading">
                         <h2>Aktivitas Verifikasi</h2>
-                        <p>Perubahan status terbaru dari proses approval {{ $managerRoleLabelLower }}.</p>
+                        <p>Riwayat perubahan status terbaru akun pengelola.</p>
                     </div>
                     <div class="report-actions">
                         <a href="{{ route('super.admin-verifications.index', ['status' => 'semua']) }}#daftar-verifikasi">Riwayat Verifikasi</a>
@@ -60,8 +108,8 @@
                     @empty
                         <x-dashboard.empty-state
                             icon="mdi:timeline-clock-outline"
-                            title="Belum ada aktivitas"
-                            message="Riwayat verifikasi akan muncul setelah super admin mulai memproses data."
+                            title="Belum ada aktivitas verifikasi"
+                            message="Perubahan status pengelola akan muncul di sini."
                         />
                     @endforelse
                 </div>
@@ -71,110 +119,59 @@
                 <header>
                     <div class="report-heading">
                         <h2>{{ $managerRoleLabel }} Baru Terdaftar</h2>
-                        <p>Gunakan daftar ini untuk memantau pendaftar terbaru dan membuka data lengkap.</p>
+                        <p>Pantau akun pengelola yang baru bergabung.</p>
                     </div>
                     <div class="report-actions">
                         <a href="{{ route('super.admins.index') }}">Lihat Semua</a>
                     </div>
                 </header>
 
-                <div class="report-table-wrap">
-                    <table class="report-table responsive-card-table">
-                        <thead>
-                            <tr>
-                                <th>Detail {{ $managerRoleLabel }}</th>
-                                <th>Tanggal Daftar</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($newestAdmins as $index => $admin)
-                                @php
-                                    $statusKey = \App\Support\AdminVerificationStatusPresenter::key($admin->status_verifikasi);
-                                @endphp
-                                <tr>
-                                    <td class="card-primary-cell" data-label="Detail Aktivitas">
-                                        <div class="item-cell">
-                                            <div class="item-avatar avatar-claim">
-                                                <span class="item-avatar-fallback">{{ strtoupper(substr((string) $admin->nama, 0, 1)) }}</span>
-                                            </div>
-                                            <div>
-                                                <strong>{{ $admin->nama }}</strong>
-                                                <small>{{ $admin->instansi ?: 'Instansi belum diisi' }} | {{ $admin->kecamatan ?: 'Kecamatan belum diisi' }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="card-date-cell" data-label="Tanggal">
-                                        <div class="date-cell">
-                                            <strong>{{ optional($admin->created_at)->format('d M Y') ?? '-' }}</strong>
-                                            <small>{{ optional($admin->created_at)->format('H:i') ?? '-' }} WIB</small>
-                                        </div>
-                                    </td>
-                                    <td class="card-status-cell" data-label="Status">
-                                        <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass($statusKey) }}">
-                                            {{ \App\Support\AdminVerificationStatusPresenter::label($statusKey) }}
-                                        </span>
-                                    </td>
-                                    <td class="menu-cell card-action-cell" data-label="Aksi">
-                                        <x-dashboard.action-menu id="super-dashboard-menu-{{ $index }}">
-                                            <a href="{{ route('super.admins.index', ['search' => $admin->nama]) }}">Lihat Detail</a>
-                                            <a href="{{ route('super.admin-verifications.index', ['search' => $admin->nama]) }}">Buka Verifikasi</a>
-                                        </x-dashboard.action-menu>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr class="super-table-empty-row">
-                                    <td colspan="4" class="empty-row">
-                                        <x-dashboard.empty-state
-                                            class="super-table-empty-state"
-                                            icon="mdi:account-search-outline"
-                                            :title="'Belum ada ' . $managerRoleLabelLower . ' terdaftar'"
-                                            :message="'Data ' . $managerRoleLabelLower . ' baru akan muncul di sini setelah ada pendaftaran akun ' . $managerRoleLabelLower . '.'"
-                                        />
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="super-newest-list">
+                    @forelse($newestAdmins as $index => $admin)
+                        @php
+                            $statusKey = \App\Support\AdminVerificationStatusPresenter::key($admin->status_verifikasi);
+                        @endphp
+                        <article class="super-newest-item">
+                            <div class="item-avatar avatar-claim">
+                                <span class="item-avatar-fallback">{{ strtoupper(substr((string) $admin->nama, 0, 1)) }}</span>
+                            </div>
+                            <div class="super-newest-meta">
+                                <strong>{{ $admin->nama }}</strong>
+                                <small>{{ $admin->instansi ?: 'Instansi belum diisi' }} | {{ $admin->kecamatan ?: 'Kecamatan belum diisi' }}</small>
+                                <small>{{ optional($admin->created_at)->format('d M Y, H:i') ?? '-' }} WIB</small>
+                            </div>
+                            <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass($statusKey) }}">
+                                {{ \App\Support\AdminVerificationStatusPresenter::label($statusKey) }}
+                            </span>
+                            <div class="menu-cell card-action-cell" data-label="Aksi">
+                                <x-dashboard.action-menu id="super-dashboard-menu-{{ $index }}">
+                                    <a href="{{ route('super.admins.show', $admin) }}">Lihat Detail</a>
+                                    <a href="{{ route('super.admins.edit', $admin) }}">Edit Akun</a>
+                                    <form method="POST"
+                                        action="{{ route('super.admins.destroy', $admin) }}"
+                                        data-confirm-delete
+                                        data-confirm-title="Hapus Akun Pengelola?"
+                                        data-confirm-message="Akun pengelola ini akan dihapus dari sistem. Tindakan ini tidak dapat dibatalkan. Nama: {{ $admin->nama }}"
+                                        data-confirm-submit-label="Ya, Hapus Akun"
+                                        data-confirm-submit-variant="danger">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="menu-submit danger">Hapus Akun</button>
+                                    </form>
+                                </x-dashboard.action-menu>
+                            </div>
+                        </article>
+                    @empty
+                        <x-dashboard.empty-state
+                            class="super-table-empty-state"
+                            icon="mdi:account-search-outline"
+                            :title="'Belum ada ' . $managerRoleLabelLower . ' baru'"
+                            :message="'Akun ' . $managerRoleLabelLower . ' yang baru terdaftar akan tampil di sini.'"
+                        />
+                    @endforelse
                 </div>
             </section>
         </section>
-
-        @if($hasPriorityAdmins)
-            <section class="super-dashboard-grid">
-                <article class="report-card super-priority-card">
-                    <header>
-                        <div class="report-heading">
-                            <h2>Butuh Tindakan Sekarang</h2>
-                            <p>Urutkan penyelesaian berdasarkan antrean pendaftar yang paling baru.</p>
-                        </div>
-                        <div class="report-actions">
-                            <a href="{{ route('super.admin-verifications.index', ['status' => 'pending']) }}#daftar-verifikasi">Lihat Semua Pending</a>
-                        </div>
-                    </header>
-
-                    <div class="super-priority-list">
-                        @foreach($priorityAdmins as $admin)
-                            <article class="super-priority-item">
-                                <div class="super-priority-meta">
-                                    <strong>{{ $admin->nama }}</strong>
-                                    <small>{{ $admin->instansi ?: 'Instansi belum diisi' }} | {{ $admin->kecamatan ?: 'Kecamatan belum diisi' }}</small>
-                                    <small>Didaftarkan {{ optional($admin->created_at)->diffForHumans() ?? '-' }}</small>
-                                </div>
-                                <div class="super-priority-actions">
-                                    <form method="POST" action="{{ route('super.admin-verifications.accept', $admin->id) }}">
-                                        @csrf
-                                        <button type="submit" class="super-inline-btn is-accept">Setujui</button>
-                                    </form>
-                                    <a href="{{ route('super.admin-verifications.index', ['search' => $admin->nama]) }}" class="super-inline-btn">Tinjau Detail</a>
-                                </div>
-                            </article>
-                        @endforeach
-                    </div>
-                </article>
-            </section>
-        @endif
     </div>
 
     <script>

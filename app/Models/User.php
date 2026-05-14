@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Notifications\Notifiable;
 
 /**
@@ -27,9 +25,9 @@ use Illuminate\Notifications\Notifiable;
  * @property-read Collection<int, Klaim> $klaims
  * @property-read Collection<int, UserNotification> $notifications
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
-    use HasFactory, Notifiable, MustVerifyEmailTrait;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name', 'nama', 'username', 'email', 'nomor_telepon', 'password', 'profil',

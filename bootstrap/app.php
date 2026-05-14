@@ -16,17 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
    ->withMiddleware(function (Middleware $middleware) {
-    // Izinkan submit form login tanpa validasi CSRF untuk menghindari 419 pada browser tertentu.
-    $middleware->validateCsrfTokens(except: [
-        'login',
-        'logout',
-        'register',
-        'confirm-password',
-        'forgot-password',
-        'reset-password',
-        'profile',
-    ]);
-
     $middleware->alias([
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'admin.region.barang' => \App\Http\Middleware\EnsureAdminCanAccessBarangRegion::class,

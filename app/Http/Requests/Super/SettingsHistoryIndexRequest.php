@@ -18,7 +18,7 @@ class SettingsHistoryIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['nullable', Rule::in(['pending', 'active', 'rejected'])],
+            'status' => ['nullable', Rule::in(['pending', 'active', 'rejected', 'inactive'])],
             'date' => ['nullable', 'date'],
             'search' => ['nullable', 'string', 'max:255'],
         ];

@@ -16,7 +16,6 @@
     margin-top: 0;
 }
 
-
 .super-status-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -80,3 +79,319 @@
     word-break: break-word;
 }
 
+.super-manager-form {
+    display: grid;
+    gap: 0;
+}
+
+.super-manager-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.super-manager-form-page {
+    width: min(100%, 1100px);
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    align-content: start;
+    gap: 14px;
+    padding: 18px 0 clamp(42px, 8vh, 96px);
+    margin: 0 auto;
+}
+
+.super-manager-form-hero {
+    display: grid;
+    gap: 9px;
+    margin: 0 2px 2px;
+}
+
+.super-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    color: #8a98ad;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.super-breadcrumb a {
+    color: #5d7290;
+    text-decoration: none;
+}
+
+.super-breadcrumb a:hover {
+    color: var(--brand);
+}
+
+.super-breadcrumb strong {
+    color: #334155;
+    font-weight: 700;
+}
+
+.super-manager-form-card {
+    border: 1px solid #dce6f2;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.super-manager-form-page .dashboard-report-card {
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: visible;
+}
+
+.super-manager-form-card > header {
+    border-bottom: 1px solid #e8eef7;
+    background: linear-gradient(180deg, #fbfdff 0%, #f6f9fd 100%);
+}
+
+.super-manager-form-sections {
+    display: grid;
+    gap: 18px;
+    padding: 18px;
+}
+
+.super-form-section {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid #edf2f8;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.super-form-section-head {
+    display: grid;
+    gap: 4px;
+}
+
+.super-form-section-head h3 {
+    margin: 0;
+    color: #102a49;
+    font-size: 15px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+}
+
+.super-form-section-head p {
+    margin: 0;
+    color: #718198;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.super-form-field {
+    display: grid;
+    align-content: start;
+    gap: 7px;
+}
+
+.super-form-field-full {
+    grid-column: 1 / -1;
+}
+
+.super-form-field label {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.super-form-field label span {
+    color: #ef4444;
+}
+
+.super-form-field input,
+.super-form-field select,
+.super-form-field textarea {
+    width: 100%;
+    border: 1px solid #dce6f2;
+    border-radius: 10px;
+    background: #fff;
+    color: #16304d;
+    font: inherit;
+    font-size: 13px;
+    min-height: 42px;
+    padding: 10px 12px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.super-form-field input:focus,
+.super-form-field select:focus,
+.super-form-field textarea:focus {
+    border-color: #93b4e8;
+    box-shadow: 0 0 0 3px rgba(31, 79, 214, 0.12);
+    outline: none;
+}
+
+.super-form-field input::placeholder,
+.super-form-field textarea::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+.super-form-field .is-invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.super-form-field textarea {
+    resize: vertical;
+    min-height: 94px;
+}
+
+.super-password-field {
+    position: relative;
+}
+
+.super-password-field input {
+    padding-right: 44px;
+}
+
+.super-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #73839a;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.super-password-toggle:hover,
+.super-password-toggle:focus-visible {
+    background: #eef5ff;
+    color: var(--brand);
+    outline: none;
+}
+
+.super-password-toggle iconify-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.super-form-help,
+.super-form-error {
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.super-form-help {
+    color: #64748b;
+}
+
+.super-form-error {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.super-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 18px 18px;
+    border-top: 1px solid #edf2f8;
+    background: #fbfdff;
+}
+
+.super-form-actions .is-accept[disabled] {
+    cursor: wait;
+    opacity: 0.78;
+}
+
+.super-manager-detail-layout {
+    padding: 14px;
+}
+
+.super-manager-detail-layout .super-manager-detail-card {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1024px) {
+    .super-manager-form-page {
+        width: 100%;
+        padding-top: 14px;
+    }
+
+    .super-manager-form-grid,
+    .super-manager-detail-layout .super-manager-detail-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-shell:has(.super-manager-form-page),
+    .admin-shell:has(.super-manager-form-page) .main-content,
+    .admin-shell:has(.super-manager-form-page) .main-content-scroll {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+    }
+
+    .admin-shell:has(.super-manager-form-page) .main-content-scroll {
+        padding-bottom: 28px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .super-manager-form-page {
+        padding-bottom: 32px;
+    }
+
+    .super-manager-form-sections {
+        gap: 14px;
+        padding: 14px;
+    }
+
+    .super-form-section {
+        padding: 14px;
+    }
+
+    .super-form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        padding: 14px;
+    }
+
+    .super-form-actions .super-inline-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 520px) {
+    .super-manager-form-page {
+        padding-top: 10px;
+    }
+
+    .super-manager-form-card {
+        border-radius: 10px;
+    }
+
+    .super-manager-form-card > header {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .super-manager-form-sections,
+    .super-form-actions {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .super-form-section {
+        padding: 12px;
+    }
+}

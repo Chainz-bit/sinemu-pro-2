@@ -4,13 +4,15 @@
     grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
     gap: 12px;
     align-items: stretch;
+    margin-bottom: 12px;
 }
 
 .super-focus-card {
     display: flex;
     flex-direction: column;
+    height: clamp(360px, 48vh, 430px);
+    min-height: 0;
     overflow: hidden;
-    min-height: 360px;
 }
 
 .super-dashboard-focus > .report-card > header,
@@ -43,11 +45,18 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
 }
 
 .super-dashboard-focus .super-activity-list {
     justify-content: flex-start;
     padding: 12px;
+}
+
+.super-dashboard-focus .report-table-wrap {
+    position: relative;
 }
 
 .super-dashboard-focus .super-activity-card .super-empty-panel {
@@ -61,6 +70,14 @@
 
 .super-dashboard-focus .dashboard-report-card .report-table {
     min-width: 100%;
+}
+
+.super-dashboard-focus .dashboard-report-card .report-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fbfdff;
+    box-shadow: inset 0 -1px 0 #edf2f8;
 }
 
 .super-dashboard-focus .dashboard-report-card .empty-row {
@@ -87,6 +104,47 @@
 
 .super-dashboard-focus .super-activity-item {
     min-height: 72px;
+}
+
+.super-dashboard-focus .super-activity-item > div {
+    min-width: 0;
+}
+
+.super-dashboard-focus .super-activity-item strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.super-dashboard-focus .super-activity-item small {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.super-dashboard-focus .item-cell > div:last-child,
+.super-dashboard-focus .date-cell {
+    min-width: 0;
+}
+
+.super-dashboard-focus .item-cell strong,
+.super-dashboard-focus .item-cell small {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.super-dashboard-focus .item-cell strong {
+    display: block;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.super-dashboard-focus .item-cell small {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .super-dashboard-focus .report-table tbody {
@@ -136,12 +194,27 @@
     min-height: 100%;
 }
 
+.super-priority-card {
+    display: flex;
+    flex-direction: column;
+    max-height: clamp(280px, 42vh, 420px);
+    overflow: hidden;
+}
+
 .super-priority-list,
 .super-activity-list,
 .super-verification-stack {
     display: grid;
     gap: 10px;
     padding: 12px;
+}
+
+.super-priority-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
 }
 
 .dashboard-report-card .super-verification-stack {
@@ -303,3 +376,153 @@
     border-color: #b8cff0;
 }
 
+/* Override mode dashboard lama: dashboard berfungsi sebagai preview ringkas, bukan daftar penuh. */
+body.super-dashboard-page-mode .super-dashboard-focus .super-focus-card {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+}
+
+body.super-dashboard-page-mode .super-dashboard-focus .super-activity-list,
+body.super-dashboard-page-mode .super-dashboard-focus .dashboard-report-card .report-table-wrap,
+body.super-dashboard-page-mode .super-priority-card .super-priority-list {
+    min-height: 0;
+    overflow: visible;
+}
+
+body.super-dashboard-page-mode .super-dashboard-focus,
+body.super-dashboard-page-mode .super-dashboard-priority {
+    margin-bottom: 12px;
+}
+
+body.super-dashboard-page-mode .super-dashboard-priority .super-priority-card {
+    max-height: none;
+    overflow: visible;
+}
+
+body.super-dashboard-page-mode .super-priority-list,
+body.super-dashboard-page-mode .super-activity-list,
+body.super-dashboard-page-mode .super-newest-list {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+}
+
+body.super-dashboard-page-mode .super-priority-item,
+body.super-dashboard-page-mode .super-newest-item {
+    display: grid;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #e9eff7;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
+}
+
+body.super-dashboard-page-mode .super-priority-item {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    padding: 11px 12px;
+}
+
+body.super-dashboard-page-mode .super-newest-item {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    padding: 11px 12px;
+}
+
+body.super-dashboard-page-mode .super-priority-meta,
+body.super-dashboard-page-mode .super-newest-meta {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+body.super-dashboard-page-mode .super-priority-meta strong,
+body.super-dashboard-page-mode .super-newest-meta strong {
+    display: block;
+    color: #13233f;
+    font-size: 13px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.super-dashboard-page-mode .super-priority-meta small,
+body.super-dashboard-page-mode .super-newest-meta small {
+    display: block;
+    color: #6b7c93;
+    font-size: 11px;
+    line-height: 1.45;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.super-dashboard-page-mode .super-newest-item .menu-cell {
+    width: auto;
+}
+
+body.super-dashboard-page-mode .super-newest-item .row-menu-trigger {
+    width: 34px;
+    height: 34px;
+}
+
+@media (max-width: 1024px) {
+    body.super-dashboard-page-mode .super-dashboard-focus .super-focus-card {
+        height: auto;
+    }
+
+    .super-priority-card {
+        max-height: none;
+    }
+}
+
+@media (max-width: 768px) {
+    body.super-dashboard-page-mode .super-dashboard-focus .super-focus-card {
+        height: auto;
+    }
+
+    body.super-dashboard-page-mode .super-dashboard-focus .dashboard-report-card .report-table-wrap {
+        padding: 12px;
+        background: #f8fbff;
+    }
+
+    .super-dashboard-focus .super-activity-item {
+        min-height: auto;
+    }
+
+    .super-priority-card {
+        max-height: none;
+    }
+
+    body.super-dashboard-page-mode .super-priority-item,
+    body.super-dashboard-page-mode .super-newest-item {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: start;
+    }
+
+    body.super-dashboard-page-mode .super-priority-item > .status-chip,
+    body.super-dashboard-page-mode .super-newest-item > .status-chip {
+        grid-column: 2 / 3;
+        justify-self: start;
+    }
+
+    body.super-dashboard-page-mode .super-priority-actions {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    body.super-dashboard-page-mode .super-priority-actions form,
+    body.super-dashboard-page-mode .super-priority-actions .super-inline-btn {
+        flex: 1 1 150px;
+    }
+
+    body.super-dashboard-page-mode .super-newest-item .card-action-cell {
+        grid-column: 3 / 4;
+        grid-row: 1 / 2;
+    }
+
+    body.super-dashboard-page-mode .super-newest-item .super-newest-meta {
+        padding-right: 4px;
+    }
+}

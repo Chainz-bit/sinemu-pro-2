@@ -54,7 +54,7 @@ class HomeFoundItemService
                         'category' => strtoupper($item->kategori->nama_kategori ?? 'UMUM'),
                         'name' => $item->nama_barang,
                         'location' => $this->normalizeLocationLabel((string) $item->lokasi_ditemukan),
-                        'date' => $item->tanggal_ditemukan ? Carbon::parse((string) $item->tanggal_ditemukan)->format('m/d/Y') : '',
+                        'date' => $item->tanggal_ditemukan ? Carbon::parse((string) $item->tanggal_ditemukan)->toDateString() : '',
                         'date_label' => $item->tanggal_ditemukan ? Carbon::parse((string) $item->tanggal_ditemukan)->translatedFormat('d M Y') : '-',
                         'image_url' => $this->mediaAssetService->resolveItemImageUrl((string) ($item->foto_barang ?? ''), 'barang-temuan'),
                         'detail_url' => route('home.found-detail', $item->id),

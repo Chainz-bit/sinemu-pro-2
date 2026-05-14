@@ -29,11 +29,6 @@
                     </div>
                 </div>
             </div>
-@if(is_null($user?->email_verified_at))
-                <form id="resend-verification-form" method="POST" action="{{ route('verification.send') }}" class="profile-inline-form-hidden">
-                    @csrf
-                </form>
-            @endif
 
             <form method="POST" action="{{ route('profile.update') }}" class="profile-edit-form" enctype="multipart/form-data">
                 @csrf
@@ -70,23 +65,15 @@
                     </div>
 
                     <div class="form-group form-group-with-action form-group-full">
-                        <label class="form-label" for="status_email">Status Email</label>
+                        <label class="form-label" for="status_akun">Status Akun</label>
                         <input
-                            id="status_email"
+                            id="status_akun"
                             type="text"
                             class="form-input status-email-input-half"
-                            value="{{ !is_null($user?->email_verified_at) ? 'Terverifikasi' : 'Belum diverifikasi' }}"
+                            value="Aktif"
                             readonly
                         >
-                        @if(is_null($user?->email_verified_at))
-                            <small class="form-note">Email belum diverifikasi. Verifikasi diperlukan untuk pengajuan klaim.</small>
-                            <div class="profile-inline-action">
-                                <button type="submit" form="resend-verification-form" class="profile-contact-button">
-                                    <iconify-icon icon="mdi:email-fast-outline" aria-hidden="true"></iconify-icon>
-                                    Kirim Ulang
-                                </button>
-                            </div>
-                        @endif
+                        <small class="form-note">Akun pengguna langsung aktif setelah registrasi.</small>
                     </div>
                 </div>
 

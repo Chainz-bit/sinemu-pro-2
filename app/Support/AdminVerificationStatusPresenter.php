@@ -9,6 +9,7 @@ class AdminVerificationStatusPresenter
         return match (trim((string) $status)) {
             'active' => 'active',
             'rejected' => 'rejected',
+            'inactive' => 'inactive',
             default => 'pending',
         };
     }
@@ -18,7 +19,8 @@ class AdminVerificationStatusPresenter
         return match (self::key($status)) {
             'active' => 'Aktif',
             'rejected' => 'Ditolak',
-            default => 'Menunggu Verifikasi',
+            'inactive' => 'Nonaktif',
+            default => 'Menunggu',
         };
     }
 
@@ -27,6 +29,7 @@ class AdminVerificationStatusPresenter
         return match (self::key($status)) {
             'active' => 'status-selesai',
             'rejected' => 'status-ditolak',
+            'inactive' => 'status-dibatalkan',
             default => 'status-diproses',
         };
     }
@@ -36,6 +39,7 @@ class AdminVerificationStatusPresenter
         return match (self::key($status)) {
             'active' => 'stat-card-found',
             'rejected' => 'stat-card-lost',
+            'inactive' => 'stat-card-muted',
             default => 'stat-card-claim',
         };
     }
@@ -45,6 +49,7 @@ class AdminVerificationStatusPresenter
         return match (self::key($status)) {
             'active' => \App\Support\RoleLabels::manager() . ' sudah bisa mengakses dashboard dan mengelola laporan.',
             'rejected' => 'Pendaftaran ditolak dan menunggu perbaikan data oleh pendaftar.',
+            'inactive' => 'Akun dinonaktifkan dan tidak dapat mengakses dashboard pengelola barang.',
             default => \App\Support\RoleLabels::manager() . ' menunggu tinjauan dan keputusan super admin.',
         };
     }

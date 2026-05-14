@@ -125,7 +125,7 @@ body {
     padding: 1.5rem;
     background:
         linear-gradient(rgba(238, 244, 251, 0.92), rgba(228, 238, 249, 0.96)),
-        url("/img/login-form.jpg") center center / cover no-repeat;
+        url("../../../../public/img/login-form.jpg") center center / cover no-repeat;
     overflow-y: auto;
 }
 
@@ -263,9 +263,21 @@ body {
     box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.15);
 }
 
+.input-wrap.is-invalid input {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+}
+
 .input-wrap input::placeholder,
 .input-wrap textarea::placeholder {
     color: #9aa9bf;
+}
+
+.field-error {
+    margin: 0.4rem 0 0;
+    color: #dc2626;
+    font-size: 0.78rem;
+    line-height: 1.4;
 }
 
 .input-icon {
@@ -331,6 +343,12 @@ body {
 
 .btn-submit:hover {
     background: linear-gradient(180deg, #4293f6 0%, #2a76d8 100%);
+}
+
+.btn-submit:disabled,
+.login-form.is-submitting .btn-submit {
+    cursor: wait;
+    opacity: 0.78;
 }
 
 .register-link {

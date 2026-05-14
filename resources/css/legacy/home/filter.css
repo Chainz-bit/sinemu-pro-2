@@ -1,4 +1,4 @@
-.section-space#pencarian {
+.section-space#hero {
     position: relative;
     z-index: 20;
     overflow: visible;
@@ -23,11 +23,11 @@
 }
 
 /* Prioritas layer dropdown di atas section setelah hero/filter. */
-#pencarian .filter-dropdown {
+#hero .filter-dropdown {
     z-index: 40;
 }
 
-#pencarian .filter-dropdown.open {
+#hero .filter-dropdown.open {
     z-index: 50;
 }
 
@@ -340,6 +340,13 @@
     font-weight: 700;
     font-size: 0.9rem;
     letter-spacing: 0.01em;
+}
+
+.filter-form-feedback {
+    min-height: 1.2rem;
+    color: #dc2626;
+    font-size: 0.78rem;
+    font-weight: 700;
 }
 
 @media (min-width: 1200px) {

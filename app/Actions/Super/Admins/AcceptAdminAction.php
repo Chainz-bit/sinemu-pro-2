@@ -20,6 +20,13 @@ class AcceptAdminAction
             ];
         }
 
+        if ($admin->status_verifikasi === 'active') {
+            return [
+                'key' => 'error',
+                'message' => 'Akun ' . $managerRoleLabelLower . ' sudah aktif.',
+            ];
+        }
+
         $admin->update([
             'super_admin_id' => $superAdminId ?? $admin->super_admin_id,
             'status_verifikasi' => 'active',

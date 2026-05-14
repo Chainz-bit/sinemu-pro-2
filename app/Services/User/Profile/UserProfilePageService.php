@@ -38,10 +38,6 @@ class UserProfilePageService
      */
     private function resolveVerificationStatus(User $user): array
     {
-        if (!is_null($user->email_verified_at)) {
-            return ['Terverifikasi', 'is-active'];
-        }
-
-        return ['Belum Verifikasi', 'is-pending'];
+        return ['Aktif', 'is-active'];
     }
 }

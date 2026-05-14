@@ -22,15 +22,6 @@
                         <p class="profile-role">Pengguna SiNemu - Pelapor Barang</p>
                         <div class="profile-account-contact">
                             <span>{{ $user?->email ?? '-' }}</span>
-                            @if(is_null($user?->email_verified_at))
-                                <form method="POST" action="{{ route('verification.send') }}" class="profile-inline-form">
-                                    @csrf
-                                    <button type="submit" class="profile-contact-button">
-                                        <iconify-icon icon="mdi:email-fast-outline" aria-hidden="true"></iconify-icon>
-                                        Kirim Ulang
-                                    </button>
-                                </form>
-                            @endif
                         </div>
                     </div>
                 </div>
@@ -55,8 +46,8 @@
                     <strong class="profile-info-value">{{ $user?->nomor_telepon ?: '-' }}</strong>
                 </article>
                 <article class="profile-info-card">
-                    <span class="profile-info-label">Status Email</span>
-                    <strong class="profile-info-value">{{ !is_null($user?->email_verified_at) ? 'Terverifikasi' : 'Belum diverifikasi (verifikasi untuk klaim)' }}</strong>
+                    <span class="profile-info-label">Status Akun</span>
+                    <strong class="profile-info-value">Aktif</strong>
                 </article>
                 <article class="profile-info-card">
                     <span class="profile-info-label">Bergabung Sejak</span>

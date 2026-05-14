@@ -19,12 +19,10 @@ class UserProfileEditService
      */
     public function buildEditData(User $user): array
     {
-        $isVerified = !is_null($user->email_verified_at);
-
         return [
             'profileAvatar' => $this->avatarService->resolve((string) ($user->profil ?? '')),
-            'verificationLabel' => $isVerified ? 'Terverifikasi' : 'Belum Verifikasi',
-            'verificationClass' => $isVerified ? 'is-active' : 'is-pending',
+            'verificationLabel' => 'Aktif',
+            'verificationClass' => 'is-active',
         ];
     }
 
@@ -37,10 +35,6 @@ class UserProfileEditService
         }
 
         $user->fill($validated);
-
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
 
         $photo = $request->file('profil');
         if ($photo) {

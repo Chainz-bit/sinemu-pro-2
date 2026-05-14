@@ -1,4 +1,6 @@
 /* section: theme */
+@import url('../password-input.css');
+
 :root {
     --bg: #ffffff;
     --surface: #ffffff;

@@ -70,6 +70,31 @@ class HomePageTest extends TestCase
             'tampil_di_home' => false,
         ]);
 
+        LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'nama_barang' => 'Kartu Rahasia',
+            'kategori_barang' => 'Dokumen',
+            'lokasi_hilang' => 'Kecamatan Sindang',
+            'tanggal_hilang' => now()->subDays(4)->toDateString(),
+            'keterangan' => 'Approved tetapi belum dipublikasikan',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Jam Tangan Privat',
+            'deskripsi' => 'Approved tetapi belum dipublikasikan',
+            'lokasi_ditemukan' => 'Kecamatan Sindang',
+            'tanggal_ditemukan' => now()->subDays(2)->toDateString(),
+            'status_barang' => 'tersedia',
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
         $response = $this->get(route('home'));
 
         $response->assertOk();
@@ -85,6 +110,8 @@ class HomePageTest extends TestCase
         $this->assertCount(1, $foundItems);
         $this->assertSame('Laptop Lenovo', $lostItems->first()['name']);
         $this->assertSame('Tas Biru', $foundItems->first()['name']);
+        $this->assertSame(now()->subDays(3)->toDateString(), $lostItems->first()['date']);
+        $this->assertSame(now()->subDay()->toDateString(), $foundItems->first()['date']);
         $this->assertContains('Elektronik', $categories);
         $this->assertContains('Kecamatan Sindang', $regions);
         $this->assertSame(1, $pickupLocations->count());
@@ -154,6 +181,41 @@ class HomePageTest extends TestCase
         $this->assertSame('Lihat Status Klaim', $detail->claim_action_label);
         $this->assertSame(route('user.claim-history'), $detail->claim_action_url);
         $this->assertSame('Sedang Diproses Klaim', $detail->status_label);
+    }
+
+    public function test_unpublished_public_detail_returns_not_found(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $laporan = LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'nama_barang' => 'Laptop Kantor',
+            'kategori_barang' => 'Elektronik',
+            'lokasi_hilang' => 'Kecamatan Sindang',
+            'tanggal_hilang' => now()->subDays(3)->toDateString(),
+            'keterangan' => 'Belum boleh tampil publik',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $barang = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Tablet Privat',
+            'deskripsi' => 'Belum boleh tampil publik',
+            'lokasi_ditemukan' => 'Kecamatan Sindang',
+            'tanggal_ditemukan' => now()->subDay()->toDateString(),
+            'status_barang' => 'tersedia',
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->get(route('home.lost-detail', $laporan))->assertNotFound();
+        $this->get(route('home.found-detail', $barang))->assertNotFound();
     }
 
     private function createUser(

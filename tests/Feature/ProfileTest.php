@@ -98,7 +98,7 @@ class ProfileTest extends TestCase
         $response->assertViewHas('laporanDiajukan', 1);
         $response->assertViewHas('klaimMenunggu', 1);
         $response->assertViewHas('klaimSelesai', 1);
-        $response->assertViewHas('verificationLabel', 'Terverifikasi');
+        $response->assertViewHas('verificationLabel', 'Aktif');
         $response->assertViewHas('recentActivities', function ($activities) {
             return $activities->count() === 3
                 && $activities->contains(fn ($activity) => str_contains((string) $activity->title, 'Laptop Asus'));
@@ -146,10 +146,10 @@ class ProfileTest extends TestCase
 
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertNotNull($user->email_verified_at);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
+    public function test_account_active_status_is_not_tied_to_email_verification_flow(): void
     {
         $user = User::factory()->create();
 

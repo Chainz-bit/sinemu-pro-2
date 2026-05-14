@@ -1,5 +1,7 @@
 (function () {
     const toggleButtons = document.querySelectorAll('[data-toggle-target]');
+    const registerForm = document.querySelector('[data-register-form]');
+    const submitButton = document.querySelector('[data-register-submit]');
 
     toggleButtons.forEach(function (button) {
         button.addEventListener('click', function () {
@@ -14,4 +16,12 @@
             button.setAttribute('aria-label', isPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
         });
     });
+
+    if (registerForm && submitButton) {
+        registerForm.addEventListener('submit', function () {
+            submitButton.disabled = true;
+            submitButton.textContent = submitButton.dataset.loadingLabel || 'Mendaftarkan...';
+            registerForm.classList.add('is-submitting');
+        });
+    }
 })();

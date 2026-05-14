@@ -16,6 +16,7 @@ class AdminVerificationSummaryService
      *   pending:int,
      *   active:int,
      *   rejected:int,
+     *   inactive:int,
      *   newThisWeek:int
      * }
      */
@@ -25,11 +26,10 @@ class AdminVerificationSummaryService
 
         return [
             'total' => (clone $baseQuery)->count(),
-            'pending' => (clone $baseQuery)->where(function (Builder $query) {
-                $query->whereNull('status_verifikasi')->orWhere('status_verifikasi', 'pending');
-            })->count(),
+            'pending' => (clone $baseQuery)->where('status_verifikasi', 'pending')->count(),
             'active' => (clone $baseQuery)->where('status_verifikasi', 'active')->count(),
             'rejected' => (clone $baseQuery)->where('status_verifikasi', 'rejected')->count(),
+            'inactive' => (clone $baseQuery)->where('status_verifikasi', 'inactive')->count(),
             'newThisWeek' => (clone $baseQuery)->where('created_at', '>=', now()->subDays(7))->count(),
         ];
     }

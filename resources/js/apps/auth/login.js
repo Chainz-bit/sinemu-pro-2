@@ -1,7 +1,8 @@
 (function () {
     const passwordInput = document.getElementById('password');
     const toggleButton = document.getElementById('togglePassword');
-    const googleButton = document.getElementById('googleLoginBtn');
+    const loginForm = document.querySelector('[data-login-form]');
+    const submitButton = document.querySelector('[data-login-submit]');
 
     if (toggleButton && passwordInput) {
         toggleButton.addEventListener('click', function () {
@@ -11,9 +12,11 @@
         });
     }
 
-    if (googleButton) {
-        googleButton.addEventListener('click', function () {
-            window.alert('Login Google belum tersedia, fitur ini masih dalam pengembangan.');
+    if (loginForm && submitButton) {
+        loginForm.addEventListener('submit', function () {
+            submitButton.disabled = true;
+            submitButton.textContent = submitButton.dataset.loadingLabel || 'Memproses...';
+            loginForm.classList.add('is-submitting');
         });
     }
 })();

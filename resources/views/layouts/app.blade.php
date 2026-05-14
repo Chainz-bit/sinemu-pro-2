@@ -17,9 +17,7 @@
         if (!empty($statusMessage)) {
             $sinemuFlashMessages[] = [
                 'type' => 'success',
-                'message' => $statusMessage === 'verification-link-sent'
-                    ? 'Link verifikasi baru sudah dikirim ke email Anda.'
-                    : (string) $statusMessage,
+                'message' => (string) $statusMessage,
             ];
         }
         $errorMessage = session('error');

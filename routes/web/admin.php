@@ -21,7 +21,9 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
         Route::post('register', [AdminRegisteredUserController::class, 'store'])->name('register.store');
 
         Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-        Route::post('login', [LoginController::class, 'login'])->name('login.store');
+        Route::post('login', [LoginController::class, 'login'])
+            ->middleware('throttle:5,1')
+            ->name('login.store');
     });
 
     Route::middleware(ManagerPortal::middleware())->group(function () {

@@ -33,6 +33,10 @@
         flex-wrap: wrap;
         row-gap: 8px;
     }
+
+    .super-verification-page .super-status-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
@@ -186,7 +190,7 @@
     }
 
     .super-verification-page .super-status-summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 10px;
         padding: 10px;
     }
@@ -197,7 +201,7 @@
     }
 
     .super-verification-page .super-status-summary .stat-card:last-child {
-        grid-column: 1 / -1;
+        grid-column: auto;
     }
 
     .super-verification-page .super-status-summary .stat-card-head {
@@ -287,7 +291,7 @@
     }
 
     .super-verification-page .super-status-summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 10px;
     }
 
@@ -298,12 +302,465 @@
     }
 
     .super-verification-page .super-status-summary .stat-card:last-child {
-        grid-column: 1 / -1;
+        grid-column: auto;
     }
 
     .super-page-content .super-stats-grid .stat-card strong,
     .super-verification-page .super-status-summary .stat-card strong,
     .super-page-content .super-stats-grid.compact .stat-card strong {
         font-size: 26px;
+    }
+
+    .super-verification-page {
+        padding: 8px 14px 28px;
+    }
+
+    .super-verification-page .report-card > header {
+        display: grid;
+        gap: 6px;
+        padding: 14px 12px;
+    }
+
+    .super-verification-page .dashboard-table-toolbar {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .super-verification-page .dashboard-toolbar-note {
+        width: 100%;
+        text-align: center;
+    }
+
+    .super-verification-page .dashboard-quick-filters {
+        margin: 0 -2px;
+        padding-bottom: 5px;
+    }
+
+    .super-verification-page .super-verification-table-wrap {
+        max-height: min(58vh, 520px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 12px;
+        background: #f8fbff;
+    }
+
+    .super-verifications-table {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        border-collapse: separate;
+    }
+
+    .super-verifications-table thead {
+        display: none;
+    }
+
+    .super-verifications-table tbody {
+        display: grid;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .super-verifications-table tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "identity action"
+            "date status";
+        column-gap: 12px;
+        row-gap: 14px;
+        width: 100%;
+        min-height: 0;
+        padding: 16px;
+        border: 1px solid #e2ebf6;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 8px 18px rgba(33, 66, 112, 0.045);
+    }
+
+    .super-verifications-table td {
+        display: block;
+        width: auto !important;
+        max-width: 100%;
+        min-width: 0;
+        padding: 0;
+        border-bottom: 0;
+        text-align: left !important;
+    }
+
+    .super-verifications-table td[data-label]::before {
+        display: none;
+        content: none;
+    }
+
+    .super-verifications-table .card-primary-cell {
+        grid-area: identity;
+        padding-right: 4px;
+    }
+
+    .super-verifications-table .item-cell {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .super-verifications-table .item-cell > div:last-child {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+
+    .super-verifications-table .item-avatar {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 48px;
+        border-radius: 14px;
+    }
+
+    .super-verifications-table .item-cell strong {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        color: #0f2d54;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .super-verifications-table .item-cell small {
+        display: -webkit-box;
+        max-width: 100%;
+        margin-top: 4px;
+        overflow: hidden;
+        color: #5f718b;
+        font-size: 11.5px;
+        line-height: 1.45;
+        white-space: normal;
+        overflow-wrap: normal;
+        word-break: normal;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .super-verifications-table .card-action-cell {
+        grid-area: action;
+        align-self: start;
+        justify-self: end;
+        width: 40px !important;
+        max-width: 40px;
+        padding: 0;
+    }
+
+    .super-verifications-table .card-date-cell {
+        grid-area: date;
+        align-self: end;
+        display: grid;
+        gap: 3px;
+        min-width: 0;
+    }
+
+    .super-verifications-table .card-date-cell::before {
+        display: block;
+        content: "Tanggal Daftar";
+        color: #94a3b8;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1.1;
+        text-transform: uppercase;
+    }
+
+    .super-verifications-table .date-cell strong {
+        display: inline;
+        color: #173a63;
+        font-size: 12.5px;
+        font-weight: 800;
+    }
+
+    .super-verifications-table .date-cell small {
+        display: inline;
+        margin-left: 4px;
+        color: #687b93;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .super-verifications-table .card-status-cell {
+        grid-area: status;
+        align-self: end;
+        justify-self: end;
+        width: auto !important;
+    }
+
+    .super-verifications-table .empty-row {
+        grid-column: 1 / -1;
+        width: 100% !important;
+    }
+
+    .super-verifications-table .row-menu-trigger {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: #fff;
+        border-color: #dce8f6;
+        color: #57708d;
+        box-shadow: 0 6px 14px rgba(41, 78, 125, 0.05);
+    }
+}
+
+/* Override terakhir untuk menjaga halaman verifikasi tetap ringkas setelah aturan responsive global. */
+.super-verification-page .super-dashboard-grid {
+    margin-bottom: 10px;
+}
+
+.super-verification-page .report-card > header {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.super-verification-page .super-status-summary {
+    gap: 8px;
+    padding: 8px;
+}
+
+.super-verification-page .super-status-summary .stat-card {
+    min-height: 96px;
+    padding: 9px 11px;
+}
+
+.super-verification-page .super-status-summary .stat-card strong {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.super-verification-page .super-status-summary .stat-card small {
+    display: -webkit-box;
+    margin-top: 5px;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+@media (max-width: 1024px) {
+    .super-verification-page .super-status-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .super-verification-page .dashboard-report-card {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .super-verification-page .super-status-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .super-verification-page .super-status-summary .stat-card {
+        min-height: auto;
+    }
+}
+
+/* Mobile Super Admin harus memakai scroll halaman normal, bukan wrapper terkunci viewport. */
+@media (max-width: 768px) {
+    html,
+    body,
+    body.dashboard-fixed-mode,
+    body.super-dashboard-page-mode,
+    body.input-page-mode {
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .admin-shell,
+    body.dashboard-fixed-mode .admin-shell,
+    body.super-dashboard-page-mode .admin-shell,
+    body.input-page-mode .admin-shell {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+    }
+
+    .main-content,
+    body.dashboard-fixed-mode .main-content,
+    body.super-dashboard-page-mode .main-content,
+    body.input-page-mode .main-content {
+        width: 100%;
+        max-width: 100vw;
+        min-width: 0;
+        height: auto;
+        min-height: 100dvh;
+        padding-right: 12px;
+        padding-left: 12px;
+        overflow: visible;
+    }
+
+    .main-content-scroll,
+    body.dashboard-fixed-mode .main-content-scroll,
+    body.super-dashboard-page-mode .main-content-scroll,
+    body.input-page-mode .main-content-scroll {
+        height: auto;
+        width: 100%;
+        max-width: 100%;
+        min-height: 0;
+        overflow: visible;
+        padding-bottom: 32px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dashboard-page-content,
+    .super-page-content,
+    .super-managers-page,
+    .super-verification-page,
+    .super-manager-form-page,
+    .input-page-content {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .topbar {
+        max-width: calc(100% + 24px);
+        margin-right: -12px;
+        margin-left: -12px;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .topbar,
+    .search-form,
+    .top-actions,
+    .report-card,
+    .dashboard-report-card,
+    .dashboard-table-toolbar,
+    .dashboard-quick-filters,
+    .report-table-wrap,
+    .super-stats-grid,
+    .super-stats-grid .stat-card {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .super-page-content .intro {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .super-page-content .intro h1,
+    .super-page-content .intro p {
+        max-width: 100%;
+        overflow-wrap: break-word;
+    }
+
+    .super-page-content .super-stats-grid {
+        width: 100%;
+    }
+
+    .super-page-content .super-stats-grid .stat-card {
+        width: 100%;
+    }
+
+    .super-managers-page .dashboard-report-card > header,
+    .super-managers-page .dashboard-table-toolbar {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .super-managers-page .report-actions,
+    .super-managers-page .dashboard-filter-form,
+    .super-managers-page .dashboard-filter-select {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .super-managers-page .dashboard-quick-filters {
+        padding-right: 10px;
+        padding-left: 0;
+    }
+
+    .super-managers-page .dashboard-toolbar-note {
+        max-width: 100%;
+    }
+
+    .super-verification-page .dashboard-report-card,
+    .super-verification-page .super-verifications-table,
+    .super-verification-page .super-verifications-table tbody {
+        height: auto;
+        max-height: none;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .super-verification-page .super-verification-table-wrap {
+        height: auto;
+        max-height: 920px;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+
+    .super-verification-page .dashboard-report-card {
+        margin-bottom: 28px;
+    }
+
+    .super-verification-page .super-verification-table-wrap {
+        padding: 12px 10px 28px;
+        background: #f8fbff;
+    }
+
+    .super-verification-page .super-verification-table-wrap::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .super-verification-page .super-verification-table-wrap::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .super-verification-page .super-verification-table-wrap::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 999px;
+    }
+
+    .super-verification-page .super-verifications-table tbody {
+        padding-bottom: 10px;
+    }
+
+    .super-verification-page .super-verifications-table tr {
+        max-width: 100%;
+    }
+
+    .super-verification-page .dashboard-report-card.is-empty .super-verification-table-wrap {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .sidebar {
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .sidebar-backdrop {
+        touch-action: none;
     }
 }

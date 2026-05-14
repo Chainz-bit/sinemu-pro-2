@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\SuperAdmin;
 use App\Services\Common\ProfileAvatarService;
 use App\Support\AdminVerificationStatusPresenter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class SuperProfileQueryService
@@ -20,14 +21,14 @@ class SuperProfileQueryService
      */
     public function buildProfileData(SuperAdmin $superAdmin): array
     {
-        $summary = $this->buildSummary();
+        $summary = $this->buildSummary((int) $superAdmin->id);
 
         return [
             'profileAvatar' => $this->avatarService->resolve((string) ($superAdmin->profil ?? '')),
             'totalAdmin' => $summary['total'],
             'pendingAdmin' => $summary['pending'],
             'activeAdmin' => $summary['active'],
-            'recentActivities' => $this->buildRecentActivities(),
+            'recentActivities' => $this->buildRecentActivities((int) $superAdmin->id),
         ];
     }
 
@@ -44,9 +45,9 @@ class SuperProfileQueryService
     /**
      * @return array{total:int,pending:int,active:int}
      */
-    private function buildSummary(): array
+    private function buildSummary(int $superAdminId): array
     {
-        $baseQuery = Admin::query();
+        $baseQuery = $this->scopedAdminQuery($superAdminId);
 
         return [
             'total' => (clone $baseQuery)->count(),
@@ -62,9 +63,9 @@ class SuperProfileQueryService
     /**
      * @return Collection<int,object>
      */
-    private function buildRecentActivities(): Collection
+    private function buildRecentActivities(int $superAdminId): Collection
     {
-        return Admin::query()
+        return $this->scopedAdminQuery($superAdminId)
             ->latest('updated_at')
             ->limit(8)
             ->get(['id', 'nama', 'instansi', 'status_verifikasi', 'verified_at', 'updated_at'])
@@ -96,5 +97,14 @@ class SuperProfileQueryService
             })
             ->values();
     }
-}
 
+    private function scopedAdminQuery(int $superAdminId): Builder
+    {
+        return Admin::query()
+            ->where(function (Builder $builder) use ($superAdminId) {
+                $builder
+                    ->where('super_admin_id', $superAdminId)
+                    ->orWhereNull('super_admin_id');
+            });
+    }
+}

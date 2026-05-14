@@ -61,4 +61,14 @@ class AdminVerificationController extends Controller
 
         return back()->with($flash['key'], $flash['message']);
     }
+
+    public function deactivate(Admin $admin): RedirectResponse
+    {
+        $flash = $this->adminApprovalService->deactivate(
+            admin: $admin,
+            superAdminId: Auth::guard('super_admin')->id()
+        );
+
+        return back()->with($flash['key'], $flash['message']);
+    }
 }

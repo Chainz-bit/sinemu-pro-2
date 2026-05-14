@@ -57,5 +57,16 @@
             </div>
         </main>
     </div>
+
+    <div class="confirm-modal-backdrop" id="confirm-modal-backdrop" hidden>
+        <div class="confirm-modal" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+            <h3 id="confirm-modal-title">Konfirmasi Hapus</h3>
+            <p id="confirm-modal-message">Yakin ingin menghapus data ini?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="confirm-btn-cancel" id="confirm-modal-cancel">Batal</button>
+                <button type="button" class="confirm-btn-danger" id="confirm-modal-submit">Hapus</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

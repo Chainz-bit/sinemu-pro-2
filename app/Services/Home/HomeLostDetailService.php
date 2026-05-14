@@ -26,7 +26,7 @@ class HomeLostDetailService
         ];
         $hasValidStatus = in_array((string) ($laporanBarangHilang->status_laporan ?? ''), $validStatuses, true);
         $isPublished = (bool) ($laporanBarangHilang->tampil_di_home ?? false);
-        abort_unless($hasValidStatus || $isPublished, 404);
+        abort_unless($hasValidStatus && $isPublished, 404);
 
         [$lostStatusLabel, $lostStatusClass] = match ((string) ($laporanBarangHilang->status_laporan ?? WorkflowStatus::REPORT_SUBMITTED)) {
             WorkflowStatus::REPORT_APPROVED => ['Terverifikasi', 'is-in-progress'],

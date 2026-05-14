@@ -127,7 +127,7 @@ body {
     padding: clamp(1.25rem, 2.8vw, 2.5rem);
     background:
         linear-gradient(rgba(248, 250, 255, 0.92), rgba(239, 246, 255, 0.96)),
-        url("/img/login-form.jpg") center center / cover no-repeat;
+        url("../../../../public/img/login-form.jpg") center center / cover no-repeat;
 }
 
 .right-content {
@@ -260,8 +260,20 @@ body {
     box-shadow: 0 0 0 4px rgba(90, 63, 246, 0.14);
 }
 
+.input-wrap.is-invalid input {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+}
+
 .input-wrap input::placeholder {
     color: #9aa9bf;
+}
+
+.field-error {
+    margin: 0.4rem 0 0;
+    color: #dc2626;
+    font-size: 0.78rem;
+    line-height: 1.4;
 }
 
 .input-icon {
@@ -342,6 +354,12 @@ body {
 
 .btn-submit:hover {
     background: linear-gradient(135deg, #705cff 0%, var(--auth-primary-hover) 100%);
+}
+
+.btn-submit:disabled,
+.login-form.is-submitting .btn-submit {
+    cursor: wait;
+    opacity: 0.78;
 }
 
 .divider {

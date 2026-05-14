@@ -36,7 +36,7 @@ class SuperTopbarNotificationTest extends TestCase
         $this->assertSame('Status pengelola barang Aktif', $activityNotification['title']);
         $this->assertStringContainsString($activeAdmin->nama, $activityNotification['message']);
         $this->assertSame('Aktivitas', $activityNotification['tag']);
-        $this->assertStringContainsString('super/admins', $activityNotification['action_url']);
+        $this->assertStringContainsString('super/pengelola', $activityNotification['action_url']);
     }
 
     private function createSuperAdmin(

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -29,6 +30,13 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_auth_routes_are_not_excluded_from_csrf_verification(): void
+    {
+        $csrfMiddleware = $this->app->make(ValidateCsrfToken::class);
+
+        $this->assertSame([], $csrfMiddleware->getExcludedPaths());
     }
 
     public function test_users_can_authenticate_using_username(): void

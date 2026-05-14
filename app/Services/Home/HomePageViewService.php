@@ -253,12 +253,20 @@ class HomePageViewService
             ]);
         }
 
+        if ($tableName === 'laporan_barang_hilangs' && $this->hasDatabaseColumn('laporan_barang_hilangs', 'tampil_di_home')) {
+            $baseQuery->where('tampil_di_home', true);
+        }
+
         if ($tableName === 'barangs' && $this->hasDatabaseColumn('barangs', 'status_laporan')) {
             $baseQuery->whereIn('status_laporan', [
                 WorkflowStatus::REPORT_APPROVED,
                 WorkflowStatus::REPORT_MATCHED,
                 WorkflowStatus::REPORT_CLAIMED,
             ]);
+        }
+
+        if ($tableName === 'barangs' && $this->hasDatabaseColumn('barangs', 'tampil_di_home')) {
+            $baseQuery->where('tampil_di_home', true);
         }
 
         if ($tableName === 'barangs' && $this->hasDatabaseColumn('barangs', 'status_barang')) {

@@ -325,3 +325,545 @@
     line-height: 1.6;
 }
 
+/* Layout baru halaman Verifikasi Pengelola Barang, mengikuti pola /super/pengelola. */
+.super-verification-page {
+    width: min(100%, 1280px);
+    margin: 0 auto;
+    padding: 10px 18px 30px;
+}
+
+.super-verification-page .intro {
+    margin: 6px 2px 14px;
+}
+
+.super-verification-page .intro h1 {
+    color: #0f2745;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.18;
+}
+
+.super-verification-page .intro p {
+    max-width: 760px;
+    margin-top: 6px;
+    color: #5f718b;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.super-verification-page .super-dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.super-verification-page .report-card,
+.super-verification-page .dashboard-report-card {
+    overflow: visible;
+    border: 1px solid #e2ebf6;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.035);
+}
+
+.super-verification-page .report-card > header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 12px;
+    border-bottom: 1px solid #edf2f8;
+    background: linear-gradient(180deg, #fbfdff 0%, #f7faff 100%);
+}
+
+.super-verification-page .report-heading h2,
+.super-verification-page .report-card h2 {
+    color: #12365d;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.super-verification-page .report-heading p {
+    max-width: 740px;
+    margin-top: 4px;
+    color: #5f718b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.super-verification-page .super-status-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 12px;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.super-verification-page .super-status-summary .stat-card {
+    min-height: 136px;
+    padding: 13px 14px;
+    border-radius: 12px;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+}
+
+.super-verification-page .super-status-summary .stat-card:last-child {
+    grid-column: auto;
+}
+
+.super-verification-page .super-status-summary .stat-card-head {
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.super-verification-page .super-status-summary .stat-card span {
+    color: #143b67;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.super-verification-page .super-status-summary .stat-card strong {
+    color: #0f3a68;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.super-verification-page .super-status-summary .stat-card small {
+    margin-top: 8px;
+    color: #5f718b;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.super-verification-page .super-status-summary .stat-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+}
+
+.super-verification-page .super-status-summary .stat-card-icon iconify-icon {
+    width: 15px;
+    height: 15px;
+}
+
+.super-verification-page .dashboard-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 62px;
+    padding: 12px;
+    border-top: 0;
+    border-bottom: 1px solid #edf2f8;
+    background: #f8fbff;
+    position: static;
+}
+
+.super-verification-page .dashboard-quick-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 2px 0 3px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    scrollbar-width: thin;
+}
+
+.super-verification-page .dashboard-filter-chip {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 0 14px;
+    border: 1px solid #dce7f5;
+    border-radius: 999px;
+    background: #fff;
+    color: #46617e;
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.super-verification-page .dashboard-filter-chip:hover {
+    border-color: #bcd4f4;
+    background: #f5f9ff;
+}
+
+.super-verification-page .dashboard-filter-chip.is-active {
+    border-color: #9bc5ff;
+    background: #eaf3ff;
+    color: #1d5da8;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.super-verification-page .dashboard-toolbar-note {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    border: 1px solid #dfe8f5;
+    border-radius: 999px;
+    background: #fff;
+    color: #57708d;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.super-verification-page .super-verification-table-wrap {
+    max-height: min(54vh, 600px);
+    overflow: auto;
+}
+
+.super-verifications-table {
+    min-width: 820px;
+}
+
+.super-verifications-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fbfdff;
+}
+
+.super-verifications-table th:first-child,
+.super-verifications-table td:first-child {
+    width: 58%;
+}
+
+.super-verifications-table th:nth-child(2),
+.super-verifications-table td:nth-child(2) {
+    width: 18%;
+}
+
+.super-verifications-table th:nth-child(3),
+.super-verifications-table td:nth-child(3) {
+    width: 14%;
+}
+
+.super-verifications-table th:nth-child(4),
+.super-verifications-table td:nth-child(4) {
+    width: 10%;
+    text-align: center;
+}
+
+.super-verifications-table tbody tr {
+    transition: background-color 0.18s ease;
+}
+
+.super-verifications-table tbody tr:hover {
+    background: #f9fcff;
+}
+
+.super-verifications-table .item-cell {
+    gap: 12px;
+}
+
+.super-verifications-table .item-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+}
+
+.super-verifications-table .item-cell strong,
+.super-verifications-table .date-cell strong {
+    color: #12365d;
+    font-size: 13px;
+}
+
+.super-verifications-table .item-cell small,
+.super-verifications-table .date-cell small {
+    margin-top: 2px;
+    color: #657891;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.super-verifications-table .status-chip {
+    padding: 6px 11px;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.super-verifications-table .row-menu-trigger {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+}
+
+/* Compact spacing agar daftar verifikasi terlihat lebih cepat seperti halaman daftar pengelola. */
+.super-verification-page {
+    gap: 10px;
+    padding-top: 6px;
+    padding-bottom: 24px;
+}
+
+.super-verification-page .intro {
+    margin: 4px 2px 10px;
+}
+
+.super-verification-page .intro h1 {
+    font-size: 27px;
+}
+
+.super-verification-page .intro p {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.super-verification-page .super-dashboard-grid {
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.super-verification-page .report-card > header {
+    min-height: 0;
+    padding: 8px 12px;
+}
+
+.super-verification-page .report-heading h2,
+.super-verification-page .report-card h2 {
+    font-size: 16px;
+}
+
+.super-verification-page .report-heading p {
+    margin-top: 3px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.super-verification-page .super-status-summary {
+    gap: 8px;
+    padding: 8px;
+}
+
+.super-verification-page .super-status-summary .stat-card {
+    min-height: 96px;
+    padding: 9px 11px;
+    border-radius: 11px;
+}
+
+.super-verification-page .super-status-summary .stat-card-head {
+    margin-bottom: 5px;
+}
+
+.super-verification-page .super-status-summary .stat-card span {
+    font-size: 11.5px;
+}
+
+.super-verification-page .super-status-summary .stat-card strong {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.super-verification-page .super-status-summary .stat-card small {
+    display: -webkit-box;
+    margin-top: 5px;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.super-verification-page .super-status-summary .stat-card-icon {
+    width: 26px;
+    height: 26px;
+}
+
+.super-verification-page .dashboard-report-card {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    max-height: clamp(280px, 52vh, 560px);
+    overflow: hidden;
+}
+
+.super-verification-page .dashboard-report-card > header,
+.super-verification-page .dashboard-report-card .dashboard-table-toolbar,
+.super-verification-page .dashboard-report-card .pagination {
+    flex: 0 0 auto;
+}
+
+.super-verification-page .dashboard-table-toolbar {
+    min-height: 46px;
+    padding: 8px 12px;
+}
+
+.super-verification-page .dashboard-filter-chip {
+    min-height: 28px;
+    padding: 0 12px;
+    font-size: 11px;
+}
+
+.super-verification-page .dashboard-toolbar-note {
+    padding: 7px 11px;
+    font-size: 11px;
+}
+
+.super-verification-page .report-table th,
+.super-verification-page .report-table td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.super-verification-page .super-verification-table-wrap {
+    flex: 1 1 auto;
+    max-height: min(44vh, 460px);
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.super-verification-page .report-table td.empty-row {
+    padding: 0;
+}
+
+.super-verification-page .dashboard-report-card.is-empty .super-verification-table-wrap {
+    flex: 0 0 auto;
+    max-height: none;
+    overflow: visible;
+}
+
+.super-verification-page .super-manager-empty-state {
+    display: grid;
+    justify-items: center;
+    gap: 7px;
+    padding: 14px 14px;
+    text-align: center;
+}
+
+.super-verification-page .super-manager-empty-state strong {
+    color: #12365d;
+    font-size: 14px;
+}
+
+.super-verification-page .super-manager-empty-state span {
+    max-width: 520px;
+    color: #687b93;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.super-verification-page .super-manager-empty-state .super-inline-btn {
+    margin-top: 2px;
+    min-height: 32px;
+    padding: 0 12px;
+}
+
+/* Soft visual treatment agar halaman verifikasi seirama dengan /super/pengelola. */
+.super-verification-page .intro h1 {
+    color: #102a49;
+    font-weight: 700;
+}
+
+.super-verification-page .report-card,
+.super-verification-page .dashboard-report-card {
+    border-color: #dce6f2;
+    background: #ffffff;
+}
+
+.super-verification-page .report-card > header {
+    background: #ffffff;
+}
+
+.super-verification-page .report-heading h2,
+.super-verification-page .report-card h2 {
+    color: #12365d;
+    font-weight: 700;
+}
+
+.super-verification-page .report-heading p {
+    color: #627892;
+    font-weight: 400;
+}
+
+.super-verification-page .super-status-summary {
+    background: #ffffff;
+}
+
+.super-verification-page .super-status-summary .stat-card {
+    background: #ffffff;
+    border-color: #dfe8f5;
+}
+
+.super-verification-page .super-status-summary .stat-card span {
+    color: #173865;
+    font-weight: 600;
+}
+
+.super-verification-page .super-status-summary .stat-card strong {
+    color: #12365d;
+    font-weight: 700;
+}
+
+.super-verification-page .super-status-summary .stat-card small {
+    color: #627892;
+    font-weight: 400;
+}
+
+.super-verification-page .dashboard-table-toolbar {
+    background: #f8fbff;
+}
+
+.super-verification-page .dashboard-filter-chip {
+    background: #ffffff;
+    color: #536b86;
+    border-color: #dce7f5;
+    font-weight: 600;
+    box-shadow: 0 8px 18px rgba(43, 86, 146, 0.05);
+}
+
+.super-verification-page .dashboard-filter-chip:hover {
+    background: #f4f8ff;
+    border-color: #bfd2eb;
+    color: #2d4e77;
+}
+
+.super-verification-page .dashboard-filter-chip.is-active {
+    background: linear-gradient(180deg, #ebf3ff 0%, #dceaff 100%);
+    border-color: #b8cff0;
+    color: #265fa2;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.super-verification-page .dashboard-toolbar-note {
+    color: #5f7894;
+    font-weight: 600;
+}
+
+.super-verifications-table th {
+    color: #7b8ca3;
+    font-weight: 600;
+    background: #fbfdff;
+}
+
+.super-verifications-table tbody tr {
+    background: #ffffff;
+}
+
+.super-verifications-table tbody tr:hover {
+    background: #f9fcff;
+}
+
+.super-verifications-table .item-cell strong,
+.super-verifications-table .date-cell strong {
+    color: #183a64;
+    font-weight: 600;
+}
+
+.super-verifications-table .item-cell small,
+.super-verifications-table .date-cell small {
+    color: #627892;
+    font-weight: 400;
+}
+
+.super-verification-page .super-manager-empty-state strong {
+    color: #12365d;
+    font-weight: 600;
+}
+

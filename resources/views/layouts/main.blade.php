@@ -11,13 +11,8 @@
                     window.history.scrollRestoration = 'manual';
                 }
 
-                var navEntries = window.performance && typeof window.performance.getEntriesByType === 'function'
-                    ? window.performance.getEntriesByType('navigation')
-                    : [];
-                var isReload = navEntries.length > 0 && navEntries[0].type === 'reload';
-
-                if (isReload && window.location.hash && typeof window.history.replaceState === 'function') {
-                    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                if (!window.location.hash) {
+                    window.scrollTo(0, 0);
                 }
             } catch (error) {
                 // ignore
@@ -40,9 +35,7 @@
         if (!empty($statusMessage)) {
             $sinemuFlashMessages[] = [
                 'type' => 'success',
-                'message' => $statusMessage === 'verification-link-sent'
-                    ? 'Link verifikasi baru sudah dikirim ke email Anda.'
-                    : (string) $statusMessage,
+                'message' => (string) $statusMessage,
             ];
         }
         $errorMessage = session('error');

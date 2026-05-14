@@ -86,6 +86,31 @@ class AdminVerificationTest extends TestCase
         $this->assertNotNull($admin->verified_at);
     }
 
+    public function test_super_admin_can_reactivate_inactive_admin_but_cannot_verify_active_admin_again(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $inactiveAdmin = $this->createAdmin($superAdmin, 'Admin Akan Diaktifkan Ulang', 'inactive');
+        $activeAdmin = $this->createAdmin($superAdmin, 'Admin Sudah Aktif', 'active');
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->from(route('super.admin-verifications.index', ['status' => 'inactive']))
+            ->patch(route('super.admins.verify', $inactiveAdmin))
+            ->assertRedirect(route('super.admin-verifications.index', ['status' => 'inactive']))
+            ->assertSessionHas('status', 'Pengelola barang berhasil diverifikasi dan diaktifkan.');
+
+        $inactiveAdmin->refresh();
+        $this->assertSame('active', $inactiveAdmin->status_verifikasi);
+        $this->assertNotNull($inactiveAdmin->verified_at);
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->from(route('super.admin-verifications.index', ['status' => 'active']))
+            ->patch(route('super.admins.verify', $activeAdmin))
+            ->assertRedirect(route('super.admin-verifications.index', ['status' => 'active']))
+            ->assertSessionHas('error', 'Akun pengelola barang sudah aktif.');
+
+        $this->assertSame('active', $activeAdmin->fresh()?->status_verifikasi);
+    }
+
     public function test_super_admin_cannot_reject_admin_outside_scope(): void
     {
         $superAdmin = $this->createSuperAdmin();
@@ -130,6 +155,72 @@ class AdminVerificationTest extends TestCase
         $admin->refresh();
         $this->assertSame('pending', $admin->status_verifikasi);
         $this->assertNull($admin->alasan_penolakan);
+    }
+
+    public function test_super_admin_cannot_reject_or_deactivate_invalid_status_transition(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $activeAdmin = $this->createAdmin($superAdmin, 'Admin Aktif Tidak Ditolak', 'active');
+        $pendingAdmin = $this->createAdmin($superAdmin, 'Admin Pending Tidak Dinonaktifkan', 'pending');
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->from(route('super.admin-verifications.index', ['status' => 'active']))
+            ->patch(route('super.admins.reject', $activeAdmin), [
+                'alasan_penolakan' => 'Tidak boleh menolak akun aktif',
+            ])
+            ->assertRedirect(route('super.admin-verifications.index', ['status' => 'active']))
+            ->assertSessionHas('error', 'Hanya akun pengelola barang yang masih menunggu verifikasi yang dapat ditolak.');
+
+        $this->assertSame('active', $activeAdmin->fresh()?->status_verifikasi);
+        $this->assertNull($activeAdmin->fresh()?->alasan_penolakan);
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->from(route('super.admin-verifications.index', ['status' => 'pending']))
+            ->patch(route('super.admins.deactivate', $pendingAdmin))
+            ->assertRedirect(route('super.admin-verifications.index', ['status' => 'pending']))
+            ->assertSessionHas('error', 'Hanya akun pengelola barang aktif yang dapat dinonaktifkan.');
+
+        $this->assertSame('pending', $pendingAdmin->fresh()?->status_verifikasi);
+    }
+
+    public function test_super_admin_can_deactivate_admin_in_scope(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $admin = $this->createAdmin($superAdmin, 'Admin Akan Dinonaktifkan', 'active');
+
+        $response = $this
+            ->actingAs($superAdmin, 'super_admin')
+            ->from(route('super.admin-verifications.index', ['status' => 'active']))
+            ->patch(route('super.admins.deactivate', $admin));
+
+        $response->assertRedirect(route('super.admin-verifications.index', ['status' => 'active']));
+        $response->assertSessionHas('status', 'Akun pengelola barang berhasil dinonaktifkan.');
+
+        $admin->refresh();
+        $this->assertSame('inactive', $admin->status_verifikasi);
+        $this->assertNull($admin->alasan_penolakan);
+    }
+
+    public function test_super_admin_cannot_deactivate_admin_outside_scope(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $otherSuperAdmin = $this->createSuperAdmin(
+            email: 'other-deactivate-owner@example.com',
+            username: 'other-deactivate-owner'
+        );
+        $admin = $this->createAdmin($otherSuperAdmin, 'Admin Deactivate Luar Scope', 'active');
+
+        $response = $this
+            ->actingAs($superAdmin, 'super_admin')
+            ->from(route('super.admin-verifications.index', ['status' => 'active']))
+            ->patch(route('super.admins.deactivate', $admin));
+
+        $response->assertRedirect(route('super.admin-verifications.index', ['status' => 'active']));
+        $response->assertSessionHas('error', 'Pengelola barang ini tidak berada dalam cakupan akun super admin Anda.');
+
+        $admin->refresh();
+        $this->assertSame('active', $admin->status_verifikasi);
+        $this->assertSame((int) $otherSuperAdmin->id, (int) $admin->super_admin_id);
     }
 
     private function createSuperAdmin(

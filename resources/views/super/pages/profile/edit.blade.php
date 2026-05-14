@@ -56,17 +56,32 @@
 
                     <div class="form-group">
                         <label class="form-label" for="current_password">Password Saat Ini</label>
-                        <input id="current_password" type="password" name="current_password" class="form-input" autocomplete="current-password" placeholder="Wajib diisi jika ubah password">
+                        <div class="super-password-field">
+                            <input id="current_password" type="password" name="current_password" class="form-input" autocomplete="current-password" placeholder="Wajib diisi jika ubah password">
+                            <button type="button" class="super-password-toggle" data-password-toggle="current_password" aria-label="Tampilkan password" aria-pressed="false">
+                                <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="password">Password Baru</label>
-                        <input id="password" type="password" name="password" class="form-input" autocomplete="new-password" placeholder="Kosongkan jika tidak diubah">
+                        <div class="super-password-field">
+                            <input id="password" type="password" name="password" class="form-input" autocomplete="new-password" placeholder="Kosongkan jika tidak diubah">
+                            <button type="button" class="super-password-toggle" data-password-toggle="password" aria-label="Tampilkan password" aria-pressed="false">
+                                <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="password_confirmation">Konfirmasi Password Baru</label>
-                        <input id="password_confirmation" type="password" name="password_confirmation" class="form-input" autocomplete="new-password" placeholder="Ulangi password baru">
+                        <div class="super-password-field">
+                            <input id="password_confirmation" type="password" name="password_confirmation" class="form-input" autocomplete="new-password" placeholder="Ulangi password baru">
+                            <button type="button" class="super-password-toggle" data-password-toggle="password_confirmation" aria-label="Tampilkan password" aria-pressed="false">
+                                <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

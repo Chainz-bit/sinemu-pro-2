@@ -39,8 +39,10 @@ class RegisteredUserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'nomor_telepon' => ['required', 'string', 'max:50'],
+            'nomor_telepon' => ['required', 'string', 'regex:/^(08[0-9]{8,13}|\+628[0-9]{8,13})$/'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'nomor_telepon.regex' => 'Nomor telepon harus menggunakan format 08xxxxxxxxxx atau +628xxxxxxxxxx.',
         ]);
 
         $username = $this->buildUniqueUsername($validated['name'], $validated['email']);
@@ -52,9 +54,12 @@ class RegisteredUserController extends Controller
             'nomor_telepon' => $validated['nomor_telepon'],
             'password' => Hash::make($validated['password']),
         ]);
+
+        // Email verification is not used; accounts are active after registration.
         $user->forceFill(['email_verified_at' => now()])->save();
 
         Auth::login($user);
+        $request->session()->regenerate();
 
         return redirect()->route('dashboard');
     }

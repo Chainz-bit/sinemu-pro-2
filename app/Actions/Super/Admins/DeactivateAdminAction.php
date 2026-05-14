@@ -4,12 +4,12 @@ namespace App\Actions\Super\Admins;
 
 use App\Models\Admin;
 
-class RejectAdminAction
+class DeactivateAdminAction
 {
     /**
      * @return array{key:string,message:string}
      */
-    public function execute(Admin $admin, ?string $reason = null, ?int $superAdminId = null): array
+    public function execute(Admin $admin, ?int $superAdminId = null): array
     {
         $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
 
@@ -20,23 +20,22 @@ class RejectAdminAction
             ];
         }
 
-        if (!in_array($admin->status_verifikasi, [null, 'pending'], true)) {
+        if ($admin->status_verifikasi !== 'active') {
             return [
                 'key' => 'error',
-                'message' => 'Hanya akun ' . $managerRoleLabelLower . ' yang masih menunggu verifikasi yang dapat ditolak.',
+                'message' => 'Hanya akun ' . $managerRoleLabelLower . ' aktif yang dapat dinonaktifkan.',
             ];
         }
 
         $admin->update([
             'super_admin_id' => $superAdminId ?? $admin->super_admin_id,
-            'status_verifikasi' => 'rejected',
-            'alasan_penolakan' => $reason !== null && trim($reason) !== '' ? trim($reason) : null,
-            'verified_at' => now(),
+            'status_verifikasi' => 'inactive',
+            'alasan_penolakan' => null,
         ]);
 
         return [
             'key' => 'status',
-            'message' => 'Pendaftaran ' . $managerRoleLabelLower . ' ditolak.',
+            'message' => 'Akun ' . $managerRoleLabelLower . ' berhasil dinonaktifkan.',
         ];
     }
 

@@ -59,6 +59,7 @@ class Admin extends Authenticatable
 
     protected $casts = [
         'verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
     public function superAdmin()
@@ -79,6 +80,11 @@ class Admin extends Authenticatable
     public function klaims()
     {
         return $this->hasMany(Klaim::class);
+    }
+
+    public function pencocokans()
+    {
+        return $this->hasMany(Pencocokan::class);
     }
 
     public function notifications()

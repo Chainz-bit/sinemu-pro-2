@@ -13,19 +13,31 @@ function normalizeCategory(value) {
     return normalized.toUpperCase();
 }
 
-function toItemDateString(dateValue) {
+function toDateKey(dateValue) {
     const raw = String(dateValue || '').trim();
     if (!raw) {
         return '';
     }
 
     if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-        const parts = raw.split('-');
-        return parts[1] + '/' + parts[2] + '/' + parts[0];
+        return raw;
     }
 
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-        return raw;
+        const parts = raw.split('/');
+        const first = Number.parseInt(parts[0], 10);
+        const second = Number.parseInt(parts[1], 10);
+
+        if (first > 12) {
+            return parts[2] + '-' + parts[1] + '-' + parts[0];
+        }
+
+        if (second > 12) {
+            return parts[2] + '-' + parts[0] + '-' + parts[1];
+        }
+
+        // Placeholder dan flatpickr lokal memakai dd/mm/yyyy.
+        return parts[2] + '-' + parts[1] + '-' + parts[0];
     }
 
     const parsed = new Date(raw);
@@ -36,7 +48,14 @@ function toItemDateString(dateValue) {
     const month = String(parsed.getMonth() + 1).padStart(2, '0');
     const day = String(parsed.getDate()).padStart(2, '0');
     const year = parsed.getFullYear();
-    return month + '/' + day + '/' + year;
+    return year + '-' + month + '-' + day;
+}
+
+function isInvalidDateInput(dateInput) {
+    const visibleDateInput = dateInput?._flatpickr?.altInput || dateInput;
+    const raw = String(visibleDateInput?.value || dateInput?.value || '').trim();
+
+    return raw !== '' && toDateKey(raw) === '';
 }
 
 function updateCountText(groupName, count) {
@@ -180,6 +199,7 @@ export function initFilterAndCounts() {
     const regionSelect = document.getElementById('regionSelect');
     const filterForm = document.getElementById('filterForm');
     const filterWrap = document.querySelector('.filter-wrap');
+    const filterFeedback = document.getElementById('filterFormFeedback');
 
     const groups = {
         lost: Array.from(document.querySelectorAll('[data-list="lost"]')),
@@ -195,7 +215,22 @@ export function initFilterAndCounts() {
 
         const keyword = normalizeText(keywordInput.value);
         const category = normalizeCategory(categorySelect.value);
-        const selectedDate = toItemDateString(dateInput.value);
+        if (isInvalidDateInput(dateInput)) {
+            const visibleDateInput = dateInput?._flatpickr?.altInput || dateInput;
+            visibleDateInput?.classList.add('is-invalid');
+            if (filterFeedback) {
+                filterFeedback.textContent = 'Format tanggal tidak valid. Gunakan format dd/mm/yyyy.';
+            }
+            return;
+        }
+
+        const visibleDateInput = dateInput?._flatpickr?.altInput || dateInput;
+        visibleDateInput?.classList.remove('is-invalid');
+        if (filterFeedback) {
+            filterFeedback.textContent = '';
+        }
+
+        const selectedDate = toDateKey(dateInput.value || visibleDateInput?.value);
         const selectedRegion = normalizeText(regionSelect.value);
 
         Object.entries(groups).forEach(function ([groupName, items]) {
@@ -205,7 +240,7 @@ export function initFilterAndCounts() {
                 const itemName = normalizeText(item.dataset.name);
                 const itemCategory = String(item.dataset.category || '').trim().toUpperCase();
                 const itemRegion = normalizeText(item.dataset.region);
-                const itemDate = toItemDateString(item.dataset.date);
+                const itemDate = toDateKey(item.dataset.date);
 
                 const keywordHaystack = [itemName, itemCategory.toLowerCase(), itemRegion].join(' ');
                 const matchKeyword = !keyword || keywordHaystack.includes(keyword);

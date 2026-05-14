@@ -41,6 +41,7 @@ class AdminVerificationQueryService
      *   pending:int,
      *   active:int,
      *   rejected:int,
+     *   inactive:int,
      *   newThisWeek:int
      * }
      */

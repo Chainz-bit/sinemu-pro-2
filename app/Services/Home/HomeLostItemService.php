@@ -58,7 +58,7 @@ class HomeLostItemService
                         'category' => strtoupper($categoryLabel !== '' ? $categoryLabel : 'UMUM'),
                         'name' => $item->nama_barang,
                         'location' => $this->normalizeLocationLabel((string) $item->lokasi_hilang),
-                        'date' => $item->tanggal_hilang ? Carbon::parse((string) $item->tanggal_hilang)->format('m/d/Y') : '',
+                        'date' => $item->tanggal_hilang ? Carbon::parse((string) $item->tanggal_hilang)->toDateString() : '',
                         'date_label' => $item->tanggal_hilang ? Carbon::parse((string) $item->tanggal_hilang)->translatedFormat('d M Y') : '-',
                         'image_url' => $this->mediaAssetService->resolveItemImageUrl((string) ($item->foto_barang ?? ''), 'barang-hilang'),
                         'detail_url' => route('home.lost-detail', $item->id),

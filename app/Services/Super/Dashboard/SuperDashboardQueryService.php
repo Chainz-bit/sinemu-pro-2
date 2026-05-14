@@ -26,9 +26,9 @@ class SuperDashboardQueryService
     {
         return [
             'summary' => $this->adminVerificationQueryService->buildSummary($superAdminId),
-            'priorityAdmins' => $this->adminVerificationQueryService->buildPendingPreview(4, $superAdminId),
-            'newestAdmins' => $this->newestAdminService->build(5, $superAdminId),
-            'latestActivities' => $this->adminVerificationQueryService->buildLatestActivities(5, $superAdminId),
+            'priorityAdmins' => $this->adminVerificationQueryService->buildPendingPreview(3, $superAdminId),
+            'newestAdmins' => $this->newestAdminService->build(4, $superAdminId),
+            'latestActivities' => $this->adminVerificationQueryService->buildLatestActivities(4, $superAdminId),
         ];
     }
 }

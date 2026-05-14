@@ -560,7 +560,6 @@ export function initMap() {
     renderLocationList();
     updateSelectedInfo();
     setLocateButtonState(false, false);
-    scrollSelectedCardIntoView();
 
     void initMarkers();
 

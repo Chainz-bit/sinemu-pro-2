@@ -20,6 +20,27 @@ class AdminMiddleware
             return redirect()->route(ManagerPortal::loginRoute());
         }
 
+        $admin = ManagerPortal::user();
+        $status = (string) ($admin?->status_verifikasi ?? 'pending');
+
+        if ($status !== 'active') {
+            ManagerPortal::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            $message = match ($status) {
+                'rejected' => 'Akun Anda ditolak atau memerlukan perbaikan data.',
+                'inactive' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi super admin.',
+                default => 'Akun Anda masih menunggu verifikasi super admin.',
+            };
+
+            return redirect()
+                ->route(ManagerPortal::loginRoute())
+                ->withErrors([
+                    'login' => $message,
+                ]);
+        }
+
         return $next($request);
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Services\Super\Admins;
 
 use App\Models\Admin;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class AdminVerificationActivityService
@@ -18,9 +17,7 @@ class AdminVerificationActivityService
     public function buildPendingPreview(int $limit = 5, ?int $superAdminId = null): Collection
     {
         return $this->scopeQueryService->baseQuery($superAdminId)
-            ->where(function (Builder $query) {
-                $query->whereNull('status_verifikasi')->orWhere('status_verifikasi', 'pending');
-            })
+            ->where('status_verifikasi', 'pending')
             ->latest()
             ->limit($limit)
             ->get();
@@ -32,6 +29,7 @@ class AdminVerificationActivityService
     public function buildLatestActivities(int $limit = 6, ?int $superAdminId = null): Collection
     {
         return $this->scopeQueryService->baseQuery($superAdminId)
+            ->whereIn('status_verifikasi', ['active', 'rejected', 'inactive'])
             ->orderByDesc('verified_at')
             ->orderByDesc('updated_at')
             ->limit($limit)
