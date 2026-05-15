@@ -13,6 +13,7 @@ Route::prefix('super')->name('super.')->group(function () {
     Route::post('login', [LoginController::class, 'store'])
         ->middleware('throttle:5,1')
         ->name('login.store');
+    Route::get('logout', [LoginController::class, 'redirectAfterLogoutGet'])->name('logout.get');
 
     Route::middleware('super')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

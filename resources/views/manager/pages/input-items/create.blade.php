@@ -117,7 +117,7 @@
                         <span id="uploadText">Klik untuk mengunggah atau seret foto ke sini</span>
                         <small>Ukuran maks. 3MB (JPG, JPEG, PNG, WEBP)</small>
                     </label>
-                    <input id="foto_barang" type="file" name="foto_barang" accept=".jpg,.jpeg,.png,.webp" class="form-file">
+                    <input id="foto_barang" type="file" name="foto_barang" accept="image/jpeg,image/png,image/webp" class="form-file">
                 </div>
 
                 <div class="form-actions form-col-12">

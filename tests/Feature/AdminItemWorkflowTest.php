@@ -229,6 +229,7 @@ class AdminItemWorkflowTest extends TestCase
     {
         return LaporanBarangHilang::query()->create(array_merge([
             'user_id' => $user->id,
+            'region_id' => Wilayah::query()->value('id'),
             'nama_barang' => 'Jam Tangan',
             'lokasi_hilang' => 'Aula Kampus',
             'tanggal_hilang' => '2026-04-19',

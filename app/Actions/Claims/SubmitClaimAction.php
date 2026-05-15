@@ -9,6 +9,9 @@ use App\Models\Pencocokan;
 use App\Support\WorkflowStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class SubmitClaimAction
 {
@@ -26,9 +29,17 @@ class SubmitClaimAction
             return ['ok' => false, 'message' => 'Anda harus login sebelum mengajukan klaim.'];
         }
 
-        $barang = Barang::query()->select('id', 'admin_id', 'status_barang')->find($validated['barang_id']);
+        $barang = Barang::query()->select('id', 'admin_id', 'status_barang', 'status_laporan')->find($validated['barang_id']);
         if (!$barang) {
             return ['ok' => false, 'message' => 'Barang temuan tidak ditemukan.'];
+        }
+
+        if ((string) $barang->status_barang !== WorkflowStatus::FOUND_AVAILABLE) {
+            return ['ok' => false, 'message' => 'Barang ini sedang tidak tersedia untuk diklaim.'];
+        }
+
+        if (!in_array((string) ($barang->status_laporan ?? ''), [WorkflowStatus::REPORT_APPROVED, WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_CLAIMED], true)) {
+            return ['ok' => false, 'message' => 'Barang temuan harus disetujui ' . $managerRoleLabelLower . ' terlebih dahulu sebelum klaim.'];
         }
 
         $hasDuplicateClaim = Klaim::query()
@@ -84,31 +95,38 @@ class SubmitClaimAction
         }
 
         $buktiFotoPaths = [];
-        foreach ($photos as $photo) {
-            $buktiFotoPaths[] = $photo->store('verifikasi-klaim/' . now()->format('Y/m'), 'public');
-        }
+        try {
+            foreach ($photos as $photo) {
+                $buktiFotoPaths[] = $photo->store('private/verifikasi-klaim/' . now()->format('Y/m'), 'local');
+            }
 
-        Klaim::create([
-            'laporan_hilang_id' => (int) $laporan->id,
-            'barang_id' => (int) $barang->id,
-            'pencocokan_id' => (int) $pencocokan->id,
-            'user_id' => (int) Auth::id(),
-            'admin_id' => (int) $barang->admin_id,
-            'status_klaim' => 'pending',
-            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
-            'catatan' => $validated['catatan'] ?? null,
-            'bukti_foto' => $buktiFotoPaths,
-            'bukti_ciri_khusus' => $validated['bukti_ciri_khusus'],
-            'bukti_detail_isi' => $validated['bukti_detail_isi'] ?? null,
-            'bukti_lokasi_spesifik' => $validated['bukti_lokasi_spesifik'],
-            'bukti_waktu_hilang' => $this->normalizeClaimTime((string) $validated['bukti_waktu_hilang']),
-        ]);
+            DB::transaction(function () use ($barang, $laporan, $pencocokan, $validated, $buktiFotoPaths): void {
+                Klaim::create([
+                    'laporan_hilang_id' => (int) $laporan->id,
+                    'barang_id' => (int) $barang->id,
+                    'pencocokan_id' => (int) $pencocokan->id,
+                    'user_id' => (int) Auth::id(),
+                    'admin_id' => (int) $barang->admin_id,
+                    'status_klaim' => 'pending',
+                    'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+                    'catatan' => $validated['catatan'] ?? null,
+                    'bukti_foto' => $buktiFotoPaths,
+                    'bukti_ciri_khusus' => $validated['bukti_ciri_khusus'],
+                    'bukti_detail_isi' => $validated['bukti_detail_isi'] ?? null,
+                    'bukti_lokasi_spesifik' => $validated['bukti_lokasi_spesifik'],
+                    'bukti_waktu_hilang' => $this->normalizeClaimTime((string) $validated['bukti_waktu_hilang']),
+                ]);
 
-        if ($barang->status_barang === 'tersedia') {
-            $barang->update(['status_barang' => 'dalam_proses_klaim']);
+                if ($barang->status_barang === 'tersedia') {
+                    $barang->update(['status_barang' => 'dalam_proses_klaim']);
+                }
+                $laporan->update(['status_laporan' => WorkflowStatus::REPORT_CLAIMED]);
+                $pencocokan->update(['status_pencocokan' => WorkflowStatus::MATCH_CLAIM_IN_PROGRESS]);
+            });
+        } catch (Throwable $exception) {
+            Storage::disk('local')->delete($buktiFotoPaths);
+            throw $exception;
         }
-        $laporan->update(['status_laporan' => WorkflowStatus::REPORT_CLAIMED]);
-        $pencocokan->update(['status_pencocokan' => WorkflowStatus::MATCH_CLAIM_IN_PROGRESS]);
 
         return ['ok' => true, 'message' => 'Pengajuan klaim berhasil dikirim. Pantau status verifikasi di Riwayat Klaim.'];
     }

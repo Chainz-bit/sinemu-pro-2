@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\User;
 
+use App\Rules\RegionHasActiveAdmin;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SubmitFoundReportRequest extends FormRequest
@@ -18,7 +19,7 @@ class SubmitFoundReportRequest extends FormRequest
     {
         return [
             'nama_barang' => ['required', 'string', 'max:255'],
-            'region_id' => ['required', 'integer', 'exists:wilayahs,id'],
+            'region_id' => ['required', 'integer', 'exists:wilayahs,id', new RegionHasActiveAdmin()],
             'kategori_id' => ['nullable', 'integer', 'exists:kategoris,id'],
             'warna_barang' => ['nullable', 'string', 'max:100'],
             'merek_barang' => ['nullable', 'string', 'max:120'],
@@ -31,7 +32,7 @@ class SubmitFoundReportRequest extends FormRequest
             'detail_lokasi_ditemukan' => ['nullable', 'string', 'max:2000'],
             'tanggal_ditemukan' => ['required', 'date'],
             'waktu_ditemukan' => ['nullable', 'date_format:H:i'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

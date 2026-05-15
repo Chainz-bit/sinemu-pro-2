@@ -20,7 +20,7 @@
             </button>
 
             <div class="collapse navbar-collapse order-4 order-lg-2" id="mainNav">
-                @auth
+                @auth('web')
                     <div class="dropdown profile-dropdown nav-profile order-1 order-lg-2">
                         <button class="user-chip profile-chip profile-toggle d-none d-lg-inline-flex" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="profile-text">
@@ -98,7 +98,7 @@
         {{-- ========================================= --}}
         {{-- Login Portal Modal Start --}}
         {{-- ========================================= --}}
-        @guest
+        @guest('web')
             <div class="modal fade login-portal-modal" id="loginPortalModal" tabindex="-1" aria-labelledby="loginPortalModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -138,7 +138,7 @@
         {{-- ========================================= --}}
         {{-- Hero + Filter Start --}}
         {{-- ========================================= --}}
-        @auth
+        @auth('web')
             @if(session('status'))
                 <div class="container mt-3">
                     <div class="alert alert-success mb-0">{{ session('status') }}</div>
@@ -162,7 +162,7 @@
                 <p class="hero-modern-subtitle mb-4">SiNemu bantu temukan barang berhargamu. Lapor dengan mudah, cari dengan cepat, dan klaim dengan aman.</p>
                 <div class="hero-modern-actions">
                     <a href="#hilang-temuan" class="btn btn-sinemu btn-sinemu-primary">Cari Barang Sekarang</a>
-                    @auth
+                    @auth('web')
                         <a href="{{ route('user.lost-reports.create') }}" class="btn btn-sinemu btn-sinemu-outline">Lapor Kehilangan</a>
                     @else
                         <button type="button" class="btn btn-sinemu btn-sinemu-outline" data-bs-toggle="modal" data-bs-target="#loginPortalModal">Lapor Kehilangan</button>
@@ -351,7 +351,7 @@
                                 <p class="item-meta"><i class="fa-solid fa-location-dot"></i> {{ $item['location'] }}</p>
                                 <p class="item-meta"><i class="fa-regular fa-clock"></i> {{ $item['date_label'] ?? $item['date'] }}</p>
                                 <a href="{{ $item['detail_url'] }}" class="item-detail-link">Lihat Detail Laporan</a>
-                                @auth
+                                @auth('web')
                                     @if($isClaimable)
                                         <a
                                             class="btn item-action-btn"
@@ -642,7 +642,7 @@
         @push('styles')
         @endpush
 
-        @auth
+        @auth('web')
             <div class="modal fade" id="foundReportModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <form method="POST" action="{{ route('user.found-reports.store') }}" class="modal-content">

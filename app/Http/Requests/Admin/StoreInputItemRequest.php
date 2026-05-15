@@ -24,7 +24,7 @@ class StoreInputItemRequest extends FormRequest
             'lokasi' => ['required', 'string', 'max:255'],
             'nama_pelapor' => ['required', 'string', 'max:255'],
             'deskripsi' => ['nullable', 'string'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'lokasi_pengambilan' => ['required_if:jenis_laporan,temuan', 'nullable', 'string', 'max:255'],
             'alamat_pengambilan' => ['required_if:jenis_laporan,temuan', 'nullable', 'string', 'max:255'],
             'penanggung_jawab_pengambilan' => ['required_if:jenis_laporan,temuan', 'nullable', 'string', 'max:255'],

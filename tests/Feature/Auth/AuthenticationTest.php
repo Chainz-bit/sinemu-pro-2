@@ -84,10 +84,33 @@ class AuthenticationTest extends TestCase
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();
+        $token = 'logout-token';
 
-        $response = $this->actingAs($user)->post('/logout');
+        $response = $this
+            ->actingAs($user)
+            ->withSession(['_token' => $token])
+            ->post('/logout', ['_token' => $token]);
 
         $this->assertGuest();
         $response->assertRedirect('/');
+        $this->assertNotSame('/logout', $response->headers->get('Location'));
+    }
+
+    public function test_get_logout_does_not_logout_user(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/logout');
+
+        $response->assertRedirect(route('home', absolute: false));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_get_logout_as_guest_redirects_without_token_mismatch(): void
+    {
+        $this->get('/logout')
+            ->assertRedirect(route('home', absolute: false));
+
+        $this->assertGuest();
     }
 }

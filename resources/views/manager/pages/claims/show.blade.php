@@ -49,27 +49,10 @@
         'kecocokan_data_laporan' => 'Data cocok dengan laporan hilang',
     ];
     $buktiFotoUrls = collect((array) ($klaim->bukti_foto ?? []))
-        ->filter(fn ($path) => is_string($path) && trim($path) !== '')
-        ->map(function ($path) {
-            $cleanPath = str_replace('\\', '/', ltrim((string) $path, '/'));
-            if ($cleanPath === '') {
-                return null;
-            }
-
-            if (\Illuminate\Support\Str::startsWith($cleanPath, ['http://', 'https://'])) {
-                return $cleanPath;
-            }
-
-            if (\Illuminate\Support\Str::startsWith($cleanPath, 'storage/')) {
-                $cleanPath = substr($cleanPath, 8);
-            } elseif (\Illuminate\Support\Str::startsWith($cleanPath, 'public/')) {
-                $cleanPath = substr($cleanPath, 7);
-            }
-
-            [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
-            return in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim', 'profil-admin', 'profil-user'], true) && $subPath !== ''
-                ? route('media.image', ['folder' => $folder, 'path' => $subPath])
-                : asset('storage/' . $cleanPath);
+        ->map(function ($path, $index) use ($klaim) {
+            return is_string($path) && trim($path) !== ''
+                ? route('claims.evidence.show', ['klaim' => $klaim->id, 'index' => $index])
+                : null;
         })
         ->filter()
         ->values();

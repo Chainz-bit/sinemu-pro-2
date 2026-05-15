@@ -9,10 +9,14 @@ use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Wilayah;
 use App\Support\WorkflowStatus;
+use App\Rules\RegionHasActiveAdmin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class FoundReportController extends Controller
 {
@@ -42,11 +46,13 @@ class FoundReportController extends Controller
         $admin = Admin::query()
             ->select(['id', 'region_id'])
             ->where('region_id', $regionId)
-            ->where('status_verifikasi', 'active')
+            ->where('status_verifikasi', Admin::STATUS_ACTIVE)
             ->orderBy('id')
             ->first();
         if (!$admin) {
-            return back()->withInput()->with('error', 'Belum ada ' . \App\Support\RoleLabels::managerLower() . ' aktif pada wilayah yang dipilih.');
+            throw ValidationException::withMessages([
+                'region_id' => RegionHasActiveAdmin::MESSAGE,
+            ]);
         }
 
         $kategoriId = $validated['kategori_id'] ?? Kategori::query()->value('id');
@@ -82,12 +88,22 @@ class FoundReportController extends Controller
             $payload['region_id'] = $regionId;
         }
 
+        $newPhotoPath = null;
         $photo = $request->file('foto_barang');
         if ($photo) {
-            $payload['foto_barang'] = $photo->store('barang-temuan/' . now()->format('Y/m'), 'public');
+            $newPhotoPath = $photo->store('barang-temuan/' . now()->format('Y/m'), 'public');
+            $payload['foto_barang'] = $newPhotoPath;
         }
 
-        Barang::create($payload);
+        try {
+            Barang::create($payload);
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
+            throw $exception;
+        }
 
         return back()->with('status', 'Laporan barang temuan berhasil dikirim.');
     }

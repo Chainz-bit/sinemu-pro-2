@@ -13,6 +13,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class AdminProfilePageService
 {
@@ -84,16 +85,39 @@ class AdminProfilePageService
 
     public function update(Admin $admin, array $validated, ?UploadedFile $photo): void
     {
+        $oldProfilePath = null;
+        $newProfilePath = null;
         if ($photo) {
-            $oldProfilePath = trim((string) ($admin->profil ?? ''));
-            if ($oldProfilePath !== '' && !str_starts_with($oldProfilePath, 'http://') && !str_starts_with($oldProfilePath, 'https://') && !str_starts_with($oldProfilePath, '/')) {
-                Storage::disk('public')->delete($oldProfilePath);
-            }
-
-            $validated['profil'] = $photo->store('profil-admin/' . now()->format('Y/m'), 'public');
+            $oldProfilePath = $this->deletablePublicPath((string) ($admin->profil ?? ''));
+            $newProfilePath = $photo->store('profil-admin/' . now()->format('Y/m'), 'public');
+            $validated['profil'] = $newProfilePath;
         }
 
-        $admin->forceFill($validated)->save();
+        try {
+            $admin->forceFill($validated)->save();
+        } catch (Throwable $exception) {
+            if ($newProfilePath) {
+                Storage::disk('public')->delete($newProfilePath);
+            }
+
+            throw $exception;
+        }
+
+        if ($oldProfilePath) {
+            Storage::disk('public')->delete($oldProfilePath);
+        }
+    }
+
+    private function deletablePublicPath(string $path): ?string
+    {
+        $path = trim($path);
+
+        return $path !== ''
+            && !str_starts_with($path, 'http://')
+            && !str_starts_with($path, 'https://')
+            && !str_starts_with($path, '/')
+            ? $path
+            : null;
     }
 
     private function buildRecentActivities(int $adminId): Collection

@@ -134,7 +134,7 @@
 
                     <div class="form-col-12 form-group">
                         <label class="form-label" for="claimBuktiFoto">Foto Bukti Kepemilikan <span>*</span></label>
-                        <input type="file" name="bukti_foto[]" id="claimBuktiFoto" class="form-input" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple required>
+                        <input type="file" name="bukti_foto[]" id="claimBuktiFoto" class="form-input" accept="image/jpeg,image/png,image/webp" multiple required>
                         <small class="form-note">Unggah 1-3 foto (JPG, PNG, WEBP), maksimal 2MB per file.</small>
                         <div id="claimBuktiPreview" class="claim-create-file-preview" aria-live="polite"></div>
                     </div>

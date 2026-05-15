@@ -16,26 +16,48 @@ class DashboardStatsService
      */
     public function build(): array
     {
+        $admin = \App\Support\ManagerPortal::user();
+        if (!$admin || empty($admin->region_id)) {
+            return [
+                'totalHilang' => 0,
+                'totalTemuan' => 0,
+                'menungguVerifikasi' => 0,
+            ];
+        }
+
         $totalHilangQuery = LaporanBarangHilang::query();
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
             $totalHilangQuery->where('sumber_laporan', 'lapor_hilang');
         }
-        $admin = \App\Support\ManagerPortal::user();
-        if ($admin && $admin->region_id && Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+        if (Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
             $totalHilangQuery->where('region_id', $admin->region_id);
         }
 
         $menungguVerifikasi = Schema::hasColumn('klaims', 'status_verifikasi')
             ? Klaim::query()
+                ->leftJoin('barangs', 'barangs.id', '=', 'klaims.barang_id')
+                ->leftJoin('laporan_barang_hilangs', 'laporan_barang_hilangs.id', '=', 'klaims.laporan_hilang_id')
                 ->whereIn('status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW])
+                ->where(function ($query) use ($admin): void {
+                    $query
+                        ->where('barangs.region_id', $admin->region_id)
+                        ->orWhere('laporan_barang_hilangs.region_id', $admin->region_id);
+                })
                 ->count()
-            : Klaim::where('status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING)->count();
+            : Klaim::query()
+                ->leftJoin('barangs', 'barangs.id', '=', 'klaims.barang_id')
+                ->leftJoin('laporan_barang_hilangs', 'laporan_barang_hilangs.id', '=', 'klaims.laporan_hilang_id')
+                ->where('status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING)
+                ->where(function ($query) use ($admin): void {
+                    $query
+                        ->where('barangs.region_id', $admin->region_id)
+                        ->orWhere('laporan_barang_hilangs.region_id', $admin->region_id);
+                })
+                ->count();
 
         $totalTemuanQuery = Barang::query();
-        if ($admin && $admin->region_id && Schema::hasColumn('barangs', 'region_id')) {
+        if (Schema::hasColumn('barangs', 'region_id')) {
             $totalTemuanQuery->where('region_id', $admin->region_id);
-        } else {
-            $totalTemuanQuery->whereRaw('1 = 0');
         }
 
         return [

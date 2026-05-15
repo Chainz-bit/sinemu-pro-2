@@ -36,7 +36,7 @@ class UpdateFoundItemRequest extends FormRequest
             'kontak_pengambilan' => ['nullable', 'string', 'max:255'],
             'jam_layanan_pengambilan' => ['nullable', 'string', 'max:255'],
             'catatan_pengambilan' => ['nullable', 'string', 'max:2000'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services\Admin\Dashboard;
 
 use App\Models\Klaim;
 use App\Support\ClaimStatusPresenter;
+use App\Support\ManagerPortal;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
@@ -11,17 +12,22 @@ class DashboardClaimFeedService
 {
     public function build(bool $foundHasHomeFlag, bool $lostHasHomeFlag): Collection
     {
+        $admin = ManagerPortal::user();
+        if (!$admin || empty($admin->region_id)) {
+            return collect();
+        }
+
         return Klaim::query()
             ->with([
                 'barang' => function ($query) use ($foundHasHomeFlag) {
-                    $columns = ['id', 'nama_barang', 'lokasi_ditemukan', 'foto_barang'];
+                    $columns = ['id', 'nama_barang', 'lokasi_ditemukan', 'foto_barang', 'region_id', 'status_barang'];
                     if ($foundHasHomeFlag) {
                         $columns[] = 'tampil_di_home';
                     }
                     $query->select($columns);
                 },
                 'laporanHilang' => function ($query) use ($lostHasHomeFlag) {
-                    $columns = ['id', 'nama_barang', 'lokasi_hilang', 'foto_barang'];
+                    $columns = ['id', 'nama_barang', 'lokasi_hilang', 'foto_barang', 'region_id'];
                     if ($lostHasHomeFlag) {
                         $columns[] = 'tampil_di_home';
                     }
@@ -39,9 +45,19 @@ class DashboardClaimFeedService
                 'barang_id',
                 'laporan_hilang_id',
             ])))
+            ->where(function ($query) use ($admin): void {
+                $query
+                    ->whereHas('barang', function ($barangQuery) use ($admin): void {
+                        $barangQuery->where('region_id', $admin->region_id);
+                    })
+                    ->orWhereHas('laporanHilang', function ($lostQuery) use ($admin): void {
+                        $lostQuery->where('region_id', $admin->region_id);
+                    });
+            })
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get()
+            ->toBase()
             ->map(fn ($claim) => $this->presentClaim($claim));
     }
 

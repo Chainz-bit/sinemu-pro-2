@@ -9,10 +9,11 @@ use App\Models\Wilayah;
 use App\Support\IndramayuDistricts;
 use App\Support\ManagerPortal;
 use App\Support\RoleLabels;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -28,46 +29,28 @@ class RegisteredUserController extends Controller
     {
         $validated = $request->validated();
 
-        $username = $this->buildUniqueAdminUsername($validated['username']);
-
-        Admin::query()->create([
-            'super_admin_id' => null,
-            'region_id' => $this->resolveRegionId($validated['kecamatan']),
-            'nama' => $validated['nama'],
-            'email' => $validated['email'],
-            'nomor_telepon' => $validated['nomor_telepon'],
-            'username' => $username,
-            'instansi' => $validated['instansi'],
-            'kecamatan' => $validated['kecamatan'],
-            'alamat_lengkap' => $validated['alamat_lengkap'],
-            'status_verifikasi' => 'pending',
-            'verified_at' => null,
-            'password' => Hash::make($validated['password']),
-        ]);
+        try {
+            Admin::query()->create([
+                'super_admin_id' => null,
+                'region_id' => $this->resolveRegionId($validated['kecamatan']),
+                'nama' => $validated['nama'],
+                'email' => $validated['email'],
+                'nomor_telepon' => $validated['nomor_telepon'],
+                'username' => $validated['username'],
+                'instansi' => $validated['instansi'],
+                'kecamatan' => $validated['kecamatan'],
+                'alamat_lengkap' => $validated['alamat_lengkap'],
+                'status_verifikasi' => Admin::STATUS_PENDING,
+                'verified_at' => null,
+                'password' => Hash::make($validated['password']),
+            ]);
+        } catch (QueryException $exception) {
+            $this->throwValidationExceptionForDuplicateAccount($exception);
+        }
 
         return redirect()
             ->route(ManagerPortal::loginRoute())
             ->with('status', 'Pendaftaran ' . RoleLabels::managerLower() . ' berhasil. Akun Anda akan aktif setelah diverifikasi super admin.');
-    }
-
-    private function buildUniqueAdminUsername(string $usernameInput): string
-    {
-        $base = Str::lower(trim($usernameInput));
-        $base = preg_replace('/[^a-z0-9._-]/', '', $base) ?? '';
-
-        if ($base === '') {
-            $base = 'admin';
-        }
-
-        $username = $base;
-        $counter = 1;
-
-        while (Admin::query()->where('username', $username)->exists()) {
-            $username = $base.$counter;
-            $counter++;
-        }
-
-        return $username;
     }
 
     private function resolveRegionId(string $kecamatan): ?int
@@ -79,5 +62,39 @@ class RegisteredUserController extends Controller
         return (int) Wilayah::query()->firstOrCreate([
             'nama_wilayah' => IndramayuDistricts::wilayahName($kecamatan),
         ])->id;
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function throwValidationExceptionForDuplicateAccount(QueryException $exception): never
+    {
+        if ((string) $exception->getCode() !== '23000') {
+            throw $exception;
+        }
+
+        $message = strtolower($exception->getMessage());
+
+        if (str_contains($message, 'admins_username_unique')) {
+            throw ValidationException::withMessages([
+                'username' => 'Username sudah digunakan.',
+            ]);
+        }
+
+        if (str_contains($message, 'admins_email_unique')) {
+            throw ValidationException::withMessages([
+                'email' => 'Email sudah digunakan sebagai akun pengelola.',
+            ]);
+        }
+
+        if (str_contains($message, 'admins_nomor_telepon_unique')) {
+            throw ValidationException::withMessages([
+                'nomor_telepon' => 'Nomor telepon sudah digunakan.',
+            ]);
+        }
+
+        throw ValidationException::withMessages([
+            'email' => 'Data akun sudah digunakan.',
+        ]);
     }
 }

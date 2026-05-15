@@ -11,6 +11,8 @@ use App\Support\Media\OptimizedImageUploader;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class ReportCommandService
 {
@@ -49,6 +51,7 @@ class ReportCommandService
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $report->sumber_laporan !== 'lapor_hilang') {
             abort(404);
         }
+        $this->ensureAdminCanAccessLostReport($report);
 
         $payload = [
             'nama_barang' => $validated['nama_barang'],
@@ -60,12 +63,22 @@ class ReportCommandService
         ];
 
         $oldPhotoPath = null;
+        $newPhotoPath = null;
         if ($photo) {
             $oldPhotoPath = $report->foto_barang;
-            $payload['foto_barang'] = $imageUploader->upload($photo, 'barang-hilang/' . now()->format('Y/m'));
+            $newPhotoPath = $imageUploader->upload($photo, 'barang-hilang/' . now()->format('Y/m'));
+            $payload['foto_barang'] = $newPhotoPath;
         }
 
-        $report->update($payload);
+        try {
+            $report->update($payload);
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
+            throw $exception;
+        }
 
         if (!empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
@@ -108,12 +121,22 @@ class ReportCommandService
         ];
 
         $oldPhotoPath = null;
+        $newPhotoPath = null;
         if ($photo) {
             $oldPhotoPath = $report->foto_barang;
-            $payload['foto_barang'] = $imageUploader->upload($photo, 'barang-temuan/' . now()->format('Y/m'));
+            $newPhotoPath = $imageUploader->upload($photo, 'barang-temuan/' . now()->format('Y/m'));
+            $payload['foto_barang'] = $newPhotoPath;
         }
 
-        $report->update($payload);
+        try {
+            $report->update($payload);
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
+            throw $exception;
+        }
 
         if (!empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
@@ -125,6 +148,7 @@ class ReportCommandService
     private function updateClaimReport(int $id, array $validated, int $adminId): string
     {
         $report = Klaim::query()->with('barang')->findOrFail($id);
+        $this->ensureAdminCanAccessClaim($report);
 
         $oldStatus = (string) $report->status_klaim;
         $newStatus = (string) $validated['status_klaim'];
@@ -155,6 +179,7 @@ class ReportCommandService
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $report->sumber_laporan !== 'lapor_hilang') {
             abort(404);
         }
+        $this->ensureAdminCanAccessLostReport($report);
 
         if (!Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home')) {
             return ['status' => false, 'message' => 'Kolom tampil_di_home belum tersedia pada laporan barang hilang.'];
@@ -196,6 +221,7 @@ class ReportCommandService
     private function publishClaimToHome(int $id): array
     {
         $claim = Klaim::query()->findOrFail($id);
+        $this->ensureAdminCanAccessClaim($claim);
 
         if (!is_null($claim->barang_id)) {
             $report = Barang::query()->find($claim->barang_id);
@@ -218,6 +244,7 @@ class ReportCommandService
             if (!$report) {
                 return ['status' => false, 'message' => 'Data barang hilang terkait klaim tidak ditemukan.'];
             }
+            $this->ensureAdminCanAccessLostReport($report);
 
             if (!Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home')) {
                 return ['status' => false, 'message' => 'Kolom tampil_di_home belum tersedia pada laporan barang hilang.'];
@@ -240,5 +267,42 @@ class ReportCommandService
 
         abort_if(!$admin || empty($admin->region_id), 403, ucfirst(\App\Support\RoleLabels::managerLower()) . ' belum memiliki wilayah akses.');
         abort_if((int) $barang->region_id !== (int) $admin->region_id, 403, 'Anda tidak memiliki akses ke barang dari wilayah lain.');
+    }
+
+    private function ensureAdminCanAccessLostReport(LaporanBarangHilang $report): void
+    {
+        $admin = \App\Support\ManagerPortal::user();
+        if (!Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+            return;
+        }
+
+        abort_if(!$admin || empty($admin->region_id), 403, ucfirst(\App\Support\RoleLabels::managerLower()) . ' belum memiliki wilayah akses.');
+        abort_if(empty($report->region_id), 403, 'Laporan belum memiliki wilayah yang dapat diproses.');
+        abort_if((int) $report->region_id !== (int) $admin->region_id, 403, 'Anda tidak memiliki akses ke laporan dari wilayah lain.');
+    }
+
+    private function ensureAdminCanAccessClaim(Klaim $claim): void
+    {
+        $admin = \App\Support\ManagerPortal::user();
+        abort_if(!$admin, 403);
+
+        if (!is_null($claim->admin_id)) {
+            abort_if((int) $claim->admin_id !== (int) $admin->id, 403, 'Anda tidak memiliki akses ke klaim ini.');
+            return;
+        }
+
+        $claim->loadMissing(['barang:id,region_id', 'laporanHilang:id,region_id']);
+
+        if ($claim->relationLoaded('barang') && $claim->barang) {
+            $this->ensureAdminCanAccessFoundReport($claim->barang);
+            return;
+        }
+
+        if ($claim->laporanHilang) {
+            $this->ensureAdminCanAccessLostReport($claim->laporanHilang);
+            return;
+        }
+
+        abort(403, 'Anda tidak memiliki akses ke klaim ini.');
     }
 }

@@ -42,12 +42,12 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function updateReport(DashboardUpdateReportRequest $request, int $id): RedirectResponse
+    public function updateReport(DashboardUpdateReportRequest $request, string $type, string|int $id): RedirectResponse
     {
         abort_if(!\App\Support\ManagerPortal::check(), 403);
         $statusMessage = $this->reportCommandService->updateReport(
             type: $request->reportType(),
-            id: $id,
+            id: (int) $id,
             validated: $request->validated(),
             photo: $request->file('foto_barang'),
             imageUploader: $this->imageUploader,
@@ -57,10 +57,10 @@ class DashboardController extends Controller
         return back()->with('status', $statusMessage);
     }
 
-    public function publishToHome(DashboardReportTypeRequest $request, int $id): RedirectResponse
+    public function publishToHome(DashboardReportTypeRequest $request, string $type, string|int $id): RedirectResponse
     {
         abort_if(!\App\Support\ManagerPortal::check(), 403);
-        $result = $this->reportCommandService->publishToHome($request->reportType(), $id);
+        $result = $this->reportCommandService->publishToHome($request->reportType(), (int) $id);
         $flashType = $result['status'] ? 'status' : 'error';
 
         return back()->with($flashType, $result['message']);

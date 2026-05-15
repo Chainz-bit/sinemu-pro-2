@@ -35,7 +35,7 @@
             <form method="POST" action="{{ route('super.profile.update') }}" class="profile-edit-form" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
-                <input id="profil" type="file" name="profil" class="profile-photo-input" accept=".jpg,.jpeg,.png,.webp">
+                <input id="profil" type="file" name="profil" class="profile-photo-input" accept="image/jpeg,image/png,image/webp">
 
                 <div class="profile-edit-grid">
                     <div class="form-group">

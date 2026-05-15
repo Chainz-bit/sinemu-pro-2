@@ -50,6 +50,8 @@ class LostItemQueryService
         $admin = \App\Support\ManagerPortal::user();
         if ($admin && $admin->region_id && Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
             $query->where('laporan_barang_hilangs.region_id', $admin->region_id);
+        } elseif (Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+            $query->whereRaw('1 = 0');
         }
 
         $this->applySearch($query, $request->search());

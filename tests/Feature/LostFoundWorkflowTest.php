@@ -29,6 +29,7 @@ class LostFoundWorkflowTest extends TestCase
 
         $approvedLost = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Laptop Lenovo',
             'lokasi_hilang' => 'Perpustakaan',
             'tanggal_hilang' => now()->toDateString(),
@@ -42,6 +43,7 @@ class LostFoundWorkflowTest extends TestCase
 
         $submittedLost = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Dompet Kulit',
             'lokasi_hilang' => 'Kantin',
             'tanggal_hilang' => now()->toDateString(),
@@ -102,6 +104,7 @@ class LostFoundWorkflowTest extends TestCase
 
         $lostReport = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Tablet Xiaomi',
             'lokasi_hilang' => 'Lab Komputer',
             'tanggal_hilang' => now()->subDay()->toDateString(),
@@ -226,6 +229,7 @@ class LostFoundWorkflowTest extends TestCase
 
         $lostReportA = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Laptop A',
             'lokasi_hilang' => 'Ruang A',
             'tanggal_hilang' => now()->toDateString(),
@@ -238,6 +242,7 @@ class LostFoundWorkflowTest extends TestCase
         ]);
         $lostReportB = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Laptop B',
             'lokasi_hilang' => 'Ruang B',
             'tanggal_hilang' => now()->toDateString(),
@@ -307,6 +312,70 @@ class LostFoundWorkflowTest extends TestCase
         $this->assertSame(1, Pencocokan::query()->count());
     }
 
+    public function test_user_cannot_claim_found_item_that_is_not_available(): void
+    {
+        $user = $this->createUser();
+        $admin = $this->createAdmin();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $lostReport = LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'region_id' => $admin->region_id,
+            'nama_barang' => 'Tablet Tidak Tersedia',
+            'lokasi_hilang' => 'Lab Komputer',
+            'tanggal_hilang' => now()->subDay()->toDateString(),
+            'keterangan' => 'Hilang setelah praktikum',
+            'kontak_pelapor' => '081234567890',
+            'bukti_kepemilikan' => 'Nomor seri perangkat',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'tampil_di_home' => false,
+        ]);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Tablet Tidak Tersedia',
+            'deskripsi' => 'Ditemukan di meja belakang',
+            'lokasi_ditemukan' => 'Lab Komputer',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'tampil_di_home' => false,
+        ]);
+
+        Pencocokan::query()->create([
+            'laporan_hilang_id' => $lostReport->id,
+            'barang_id' => $foundItem->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'matched_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('user.claims.store'), [
+                'barang_id' => $foundItem->id,
+                'laporan_hilang_id' => $lostReport->id,
+                'kontak_pelapor' => '081234567890',
+                'bukti_kepemilikan' => 'Nomor seri perangkat',
+                'bukti_ciri_khusus' => 'Ada stiker kecil',
+                'bukti_detail_isi' => 'Casing abu-abu',
+                'bukti_lokasi_spesifik' => 'Meja belakang dekat colokan listrik',
+                'bukti_waktu_hilang' => '10:30',
+                'bukti_foto' => [UploadedFile::fake()->create('bukti-claim.jpg', 128, 'image/jpeg')],
+                'persetujuan_klaim' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Barang ini sedang tidak tersedia untuk diklaim.');
+
+        $this->assertDatabaseMissing('klaims', [
+            'barang_id' => $foundItem->id,
+            'laporan_hilang_id' => $lostReport->id,
+        ]);
+    }
+
     public function test_admin_can_mark_candidate_as_not_matching_and_candidate_is_not_suggested_again(): void
     {
         $user = $this->createUser();
@@ -315,6 +384,7 @@ class LostFoundWorkflowTest extends TestCase
 
         $lostReport = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Laptop Asus',
             'kategori_barang' => 'Elektronik',
             'warna_barang' => 'Hitam',
@@ -380,6 +450,7 @@ class LostFoundWorkflowTest extends TestCase
 
         $lostReport = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'iPad Air',
             'kategori_barang' => 'Elektronik',
             'warna_barang' => 'Silver',
@@ -438,6 +509,58 @@ class LostFoundWorkflowTest extends TestCase
             'id' => $foundItem->id,
             'status_laporan' => WorkflowStatus::REPORT_MATCHED,
         ]);
+    }
+
+    public function test_admin_cannot_confirm_match_for_reports_outside_region(): void
+    {
+        $user = $this->createUser();
+        $admin = $this->createAdmin();
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Luar',
+            'lat' => -6.4,
+            'lng' => 108.4,
+        ]);
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $lostReport = LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'region_id' => $otherRegion->id,
+            'nama_barang' => 'Laptop Luar Wilayah',
+            'lokasi_hilang' => 'Gedung Lain',
+            'tanggal_hilang' => now()->subDay()->toDateString(),
+            'keterangan' => 'Hilang di luar wilayah admin',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => true,
+            'verified_by_admin_id' => $admin->id,
+            'verified_at' => now(),
+        ]);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $otherRegion->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Laptop Luar Wilayah',
+            'deskripsi' => 'Ditemukan di luar wilayah admin',
+            'lokasi_ditemukan' => 'Gedung Lain',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => true,
+            'verified_by_admin_id' => $admin->id,
+            'verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.matches.store'), [
+                'laporan_hilang_id' => $lostReport->id,
+                'barang_id' => $foundItem->id,
+                'catatan' => 'Harus ditolak karena beda wilayah',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('pencocokans', 0);
     }
 
     private function createUser(): User

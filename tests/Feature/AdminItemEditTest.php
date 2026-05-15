@@ -232,6 +232,7 @@ class AdminItemEditTest extends TestCase
     {
         return LaporanBarangHilang::query()->create(array_merge([
             'user_id' => $user->id,
+            'region_id' => Wilayah::query()->value('id'),
             'nama_barang' => 'Dompet Cokelat',
             'kategori_barang' => 'Aksesoris',
             'warna_barang' => 'Cokelat',

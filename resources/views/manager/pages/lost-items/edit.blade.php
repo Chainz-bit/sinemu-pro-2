@@ -164,7 +164,7 @@
                     <h3>Media</h3>
                     <div class="edit-form-grid">
                         <label class="edit-form-label" for="foto_barang">Foto Barang (Opsional)</label>
-                        <input class="form-input edit-form-input" id="foto_barang" name="foto_barang" type="file" accept=".jpg,.jpeg,.png,.webp">
+                        <input class="form-input edit-form-input" id="foto_barang" name="foto_barang" type="file" accept="image/jpeg,image/png,image/webp">
                         <small class="edit-form-help">Biarkan kosong jika tidak ingin mengganti foto. Foto Saat Ini tetap foto kiriman user sampai perubahan disimpan.</small>
                         <small class="edit-form-file-name" id="foto_barang_filename">Belum ada file dipilih.</small>
                     </div>

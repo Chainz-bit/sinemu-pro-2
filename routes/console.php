@@ -1,5 +1,9 @@
 <?php
 
+use App\Services\Support\ClaimEvidenceAuditService;
+use App\Services\Support\ClaimEvidenceMigrationService;
+use App\Services\Support\LegacyScopeAuditService;
+use App\Services\Support\UploadFileAuditService;
 use App\Models\SuperAdmin;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -103,3 +107,144 @@ Artisan::command('super-admin:create
 
     return self::SUCCESS;
 })->purpose('Create or update super admin account securely (internal use only)');
+
+Artisan::command('sinemu:audit-legacy-scope
+    {--sample=20 : Jumlah contoh ID yang ditampilkan per temuan}', function (LegacyScopeAuditService $auditService) {
+    $sampleLimit = max(1, min((int) $this->option('sample'), 100));
+    $audit = $auditService->audit($sampleLimit);
+
+    $this->info('SINEMU legacy scope audit');
+    $this->line('Mode: read-only, tidak mengubah data.');
+    $this->line('Sample limit: ' . $sampleLimit);
+    $this->newLine();
+
+    foreach ($audit['tables'] as $table => $result) {
+        $this->line('[' . $table . ']');
+
+        if (($result['exists'] ?? false) !== true) {
+            $this->warn('exists: no');
+            $this->newLine();
+            continue;
+        }
+
+        foreach ($result as $key => $value) {
+            if ($key === 'exists') {
+                continue;
+            }
+
+            if (is_array($value)) {
+                $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                continue;
+            }
+
+            $this->line($key . ': ' . ($value === null ? 'n/a' : (string) $value));
+        }
+
+        $this->newLine();
+    }
+
+    $this->line('[mapping_fields]');
+    foreach ($audit['mapping_fields'] as $field) {
+        $this->line('- ' . $field);
+    }
+
+    $this->newLine();
+    $this->line('[recommendations]');
+    foreach ($audit['recommendations'] as $recommendation) {
+        $this->line('- ' . $recommendation);
+    }
+
+    return self::SUCCESS;
+})->purpose('Audit legacy barang/laporan/klaim scope data without changing records');
+
+Artisan::command('sinemu:audit-upload-files
+    {--sample=20 : Jumlah contoh path yang ditampilkan per temuan}', function (UploadFileAuditService $auditService) {
+    $sampleLimit = max(1, min((int) $this->option('sample'), 100));
+    $audit = $auditService->audit($sampleLimit);
+
+    $this->info('SINEMU upload file audit');
+    $this->line('Mode: read-only, tidak mengubah file atau data.');
+    $this->line('Sample limit: ' . $sampleLimit);
+    $this->newLine();
+
+    foreach ($audit as $key => $value) {
+        if (is_array($value)) {
+            $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            continue;
+        }
+
+        $this->line($key . ': ' . (string) $value);
+    }
+
+    return self::SUCCESS;
+})->purpose('Audit uploaded image references and storage files without changing records');
+
+Artisan::command('sinemu:audit-claim-evidence-files
+    {--sample=20 : Jumlah contoh path yang ditampilkan per temuan}', function (ClaimEvidenceAuditService $auditService) {
+    $sampleLimit = max(1, min((int) $this->option('sample'), 100));
+    $audit = $auditService->audit($sampleLimit);
+
+    $this->info('SINEMU claim evidence file audit');
+    $this->line('Mode: read-only, tidak mengubah file atau data.');
+    $this->line('Sample limit: ' . $sampleLimit);
+    $this->newLine();
+
+    foreach ($audit as $key => $value) {
+        if (is_array($value)) {
+            $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            continue;
+        }
+
+        $this->line($key . ': ' . (string) $value);
+    }
+
+    return self::SUCCESS;
+})->purpose('Audit claim evidence file paths without moving or deleting files');
+
+Artisan::command('sinemu:migrate-claim-evidence-to-private
+    {--dry-run : Tampilkan rencana migrasi tanpa mengubah file atau database}
+    {--execute : Copy file legacy public ke private dan update path database}
+    {--limit= : Batasi jumlah klaim yang discan}
+    {--claim-id= : Migrasikan satu klaim tertentu}
+    {--sample=20 : Jumlah contoh path/warning yang ditampilkan}', function (ClaimEvidenceMigrationService $migrationService) {
+    $execute = (bool) $this->option('execute');
+    $dryRun = (bool) $this->option('dry-run') || !$execute;
+    $limitOption = $this->option('limit');
+    $claimIdOption = $this->option('claim-id');
+    $sampleLimit = max(1, min((int) $this->option('sample'), 100));
+
+    $limit = is_null($limitOption) || $limitOption === '' ? null : max(1, (int) $limitOption);
+    $claimId = is_null($claimIdOption) || $claimIdOption === '' ? null : max(1, (int) $claimIdOption);
+
+    $summary = $migrationService->migrate(
+        execute: $execute && !$dryRun,
+        limit: $limit,
+        claimId: $claimId,
+        sampleLimit: $sampleLimit
+    );
+
+    $this->info('SINEMU claim evidence migration to private storage');
+    $this->line(($execute && !$dryRun) ? 'EXECUTE MODE' : 'DRY RUN MODE');
+    $this->line('Legacy public files are not deleted by this command.');
+    $this->newLine();
+
+    foreach ($summary as $key => $value) {
+        if ($key === 'mode') {
+            continue;
+        }
+
+        if (is_array($value)) {
+            $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            continue;
+        }
+
+        $this->line($key . ': ' . (string) $value);
+    }
+
+    if (!$execute || $dryRun) {
+        $this->newLine();
+        $this->warn('Use --execute to apply migration.');
+    }
+
+    return self::SUCCESS;
+})->purpose('Dry-run or migrate legacy claim evidence files from public to private storage');

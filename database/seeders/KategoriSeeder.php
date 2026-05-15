@@ -7,18 +7,23 @@ use App\Models\Kategori;
 
 class KategoriSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $categories = [
             'Elektronik',
             'Dokumen',
+            'Dompet',
+            'Kunci',
+            'Tas',
             'Aksesoris',
             'Kendaraan',
             'Pakaian',
             'Perhiasan',
+            'Uang',
+            'Kartu Identitas',
+            'Buku atau Alat Tulis',
+            'Mainan',
+            'Perlengkapan Pribadi',
             'Lainnya',
         ];
 

@@ -95,7 +95,7 @@
                             <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass($statusKey) }}">
                                 {{ \App\Support\AdminVerificationStatusPresenter::label($statusKey) }}
                             </span>
-                            <div>
+                            <div class="super-activity-meta">
                                 <strong>{{ $admin->nama }}</strong>
                                 <small>
                                     {{ $admin->instansi ?: 'Instansi belum diisi' }}
@@ -107,6 +107,7 @@
                         </article>
                     @empty
                         <x-dashboard.empty-state
+                            class="super-table-empty-state"
                             icon="mdi:timeline-clock-outline"
                             title="Belum ada aktivitas verifikasi"
                             message="Perubahan status pengelola akan muncul di sini."

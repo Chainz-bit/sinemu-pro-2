@@ -9,6 +9,8 @@ use App\Support\WorkflowStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class LostReportCommandService
 {
@@ -96,27 +98,37 @@ class LostReportCommandService
         }
 
         $photo = $request->file('foto_barang');
+        $newPhotoPath = null;
         if ($photo) {
-            $payload['foto_barang'] = $photo->store('barang-hilang/' . now()->format('Y/m'), 'public');
+            $newPhotoPath = $photo->store('barang-hilang/' . now()->format('Y/m'), 'public');
+            $payload['foto_barang'] = $newPhotoPath;
         }
 
-        if ($editingReport) {
-            $oldPhotoPath = $editingReport->foto_barang;
-            if (!$photo) {
-                unset($payload['foto_barang']);
+        try {
+            if ($editingReport) {
+                $oldPhotoPath = $editingReport->foto_barang;
+                if (!$photo) {
+                    unset($payload['foto_barang']);
+                }
+
+                $editingReport->update($payload);
+
+                if ($photo && !empty($oldPhotoPath)) {
+                    ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
+                }
+
+                return ['ok' => true, 'message' => 'Laporan barang hilang berhasil diperbarui.'];
             }
 
-            $editingReport->update($payload);
-
-            if ($photo && !empty($oldPhotoPath)) {
-                ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
+            LaporanBarangHilang::create($payload);
+            return ['ok' => true, 'message' => 'Laporan barang hilang berhasil dikirim.'];
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
             }
 
-            return ['ok' => true, 'message' => 'Laporan barang hilang berhasil diperbarui.'];
+            throw $exception;
         }
-
-        LaporanBarangHilang::create($payload);
-        return ['ok' => true, 'message' => 'Laporan barang hilang berhasil dikirim.'];
     }
 
     /**

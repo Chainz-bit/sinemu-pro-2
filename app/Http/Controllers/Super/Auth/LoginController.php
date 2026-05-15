@@ -71,6 +71,11 @@ class LoginController extends Controller
         return redirect()->route('home');
     }
 
+    public function redirectAfterLogoutGet(Request $request): RedirectResponse
+    {
+        return redirect()->route('home');
+    }
+
     private function isDatabaseResponsive(): bool
     {
         return $this->databaseHealthService->isResponsive();

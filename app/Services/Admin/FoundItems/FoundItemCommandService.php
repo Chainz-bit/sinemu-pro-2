@@ -6,6 +6,8 @@ use App\Models\Barang;
 use App\Services\ReportImageCleaner;
 use App\Support\Media\OptimizedImageUploader;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class FoundItemCommandService
 {
@@ -56,12 +58,22 @@ class FoundItemCommandService
         ];
 
         $oldPhotoPath = null;
+        $newPhotoPath = null;
         if ($photo) {
             $oldPhotoPath = $barang->foto_barang;
-            $payload['foto_barang'] = $uploader->upload($photo, 'barang-temuan/' . now()->format('Y/m'));
+            $newPhotoPath = $uploader->upload($photo, 'barang-temuan/' . now()->format('Y/m'));
+            $payload['foto_barang'] = $newPhotoPath;
         }
 
-        $barang->update($payload);
+        try {
+            $barang->update($payload);
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
+            throw $exception;
+        }
 
         if (!empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);

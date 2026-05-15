@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\SuperAdmin;
 use App\Models\User;
+use App\Models\Wilayah;
 use App\Services\Super\Admins\AdminApprovalService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -131,8 +132,13 @@ class SuperDashboardTest extends TestCase
         ?string $status,
         mixed $createdAt
     ): Admin {
+        $region = Wilayah::query()->firstOrCreate([
+            'nama_wilayah' => 'Wilayah ' . (string) str($name)->slug('-'),
+        ]);
+
         $admin = Admin::query()->create([
             'super_admin_id' => $superAdmin?->id,
+            'region_id' => $region->id,
             'nama' => $name,
             'email' => str($name)->slug('-') . '@example.com',
             'username' => (string) str($name)->slug('-'),

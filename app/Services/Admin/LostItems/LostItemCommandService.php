@@ -10,6 +10,8 @@ use App\Support\Media\OptimizedImageUploader;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class LostItemCommandService
 {
@@ -46,12 +48,22 @@ class LostItemCommandService
         ];
 
         $oldPhotoPath = null;
+        $newPhotoPath = null;
         if ($photo) {
             $oldPhotoPath = $item->foto_barang;
-            $payload['foto_barang'] = $uploader->upload($photo, 'barang-hilang/' . now()->format('Y/m'));
+            $newPhotoPath = $uploader->upload($photo, 'barang-hilang/' . now()->format('Y/m'));
+            $payload['foto_barang'] = $newPhotoPath;
         }
 
-        $item->update($payload);
+        try {
+            $item->update($payload);
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
+            throw $exception;
+        }
 
         if (!empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);

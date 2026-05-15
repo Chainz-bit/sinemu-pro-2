@@ -107,10 +107,21 @@ class ClaimVerificationController extends Controller
     public function destroy(Klaim $klaim): RedirectResponse
     {
         abort_if(!\App\Support\ManagerPortal::check(), 403);
+        $this->ensureClaimOwnedByAdmin($klaim);
 
         foreach ((array) ($klaim->bukti_foto ?? []) as $path) {
             if (is_string($path) && trim($path) !== '') {
-                Storage::disk('public')->delete($path);
+                $normalized = trim(str_replace('\\', '/', $path), '/');
+                if (str_starts_with($normalized, 'storage/')) {
+                    $normalized = substr($normalized, strlen('storage/'));
+                } elseif (str_starts_with($normalized, 'public/')) {
+                    $normalized = substr($normalized, strlen('public/'));
+                }
+                if (str_starts_with($normalized, 'private/verifikasi-klaim/')) {
+                    Storage::disk('local')->delete($normalized);
+                } elseif (str_starts_with($normalized, 'verifikasi-klaim/')) {
+                    Storage::disk('public')->delete($normalized);
+                }
             }
         }
 
@@ -123,6 +134,16 @@ class ClaimVerificationController extends Controller
     {
         $adminId = \App\Support\ManagerPortal::id();
         if (is_null($klaim->admin_id)) {
+            $admin = \App\Support\ManagerPortal::user();
+            $klaim->loadMissing(['barang:id,region_id', 'laporanHilang:id,region_id']);
+
+            $canAccessLegacyClaim = false;
+            if ($admin && $admin->region_id) {
+                $canAccessLegacyClaim = ((int) ($klaim->barang?->region_id ?? 0) === (int) $admin->region_id)
+                    || ((int) ($klaim->laporanHilang?->region_id ?? 0) === (int) $admin->region_id);
+            }
+
+            abort_if(!$canAccessLegacyClaim, 403);
             return;
         }
 

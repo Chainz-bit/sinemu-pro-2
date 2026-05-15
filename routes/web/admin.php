@@ -16,6 +16,8 @@ use App\Support\ManagerPortal;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '.')->group(function () {
+    Route::get('logout', [LoginController::class, 'redirectAfterLogoutGet'])->name('logout.get');
+
     Route::middleware(ManagerPortal::guestMiddleware())->group(function () {
         Route::get('register', [AdminRegisteredUserController::class, 'create'])->name('register');
         Route::post('register', [AdminRegisteredUserController::class, 'store'])->name('register.store');

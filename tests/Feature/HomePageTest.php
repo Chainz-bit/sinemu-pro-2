@@ -19,6 +19,89 @@ class HomePageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_guest_can_open_landing_page_and_sees_guest_actions(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('Kehilangan atau Menemukan', false);
+        $response->assertSee('Masuk', false);
+        $response->assertSee('data-bs-target="#loginPortalModal"', false);
+        $response->assertDontSee(route('user.lost-reports.create'), false);
+    }
+
+    public function test_regular_user_can_open_landing_page_with_user_menu(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Landing User',
+            'email' => 'landing-user@example.com',
+        ]);
+
+        $response = $this->actingAs($user, 'web')->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('Landing User', false);
+        $response->assertSee(route('user.lost-reports.create'), false);
+    }
+
+    public function test_authenticated_admin_is_redirected_from_landing_to_admin_dashboard(): void
+    {
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('home'))
+            ->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_authenticated_super_admin_is_redirected_from_landing_to_super_dashboard(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->get(route('home'))
+            ->assertRedirect(route('super.dashboard'));
+    }
+
+    public function test_admin_logout_redirects_to_landing_as_guest(): void
+    {
+        $admin = $this->createAdmin();
+        $token = 'landing-admin-logout-token';
+
+        $this->actingAs($admin, 'admin')
+            ->withSession(['_token' => $token])
+            ->post(route('admin.logout'), ['_token' => $token])
+            ->assertRedirect(route('home'));
+
+        $this->assertGuest('admin');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Masuk', false);
+    }
+
+    public function test_super_admin_logout_redirects_to_landing_as_guest(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $token = 'landing-super-logout-token';
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->withSession(['_token' => $token])
+            ->post(route('super.logout'), ['_token' => $token])
+            ->assertRedirect(route('home'));
+
+        $this->assertGuest('super_admin');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Masuk', false);
+    }
+
+    public function test_landing_search_query_with_empty_fields_does_not_error(): void
+    {
+        $this->get('/?keyword=&category=&date=&region=')
+            ->assertOk();
+    }
+
     public function test_home_page_builds_public_lists_metadata_and_pickup_locations(): void
     {
         $admin = $this->createAdmin();
@@ -239,12 +322,7 @@ class HomePageTest extends TestCase
 
     private function createAdmin(): Admin
     {
-        $superAdmin = SuperAdmin::query()->create([
-            'nama' => 'Super Admin Home',
-            'email' => 'home-super@example.com',
-            'username' => 'super-home',
-            'password' => Hash::make('password123'),
-        ]);
+        $superAdmin = $this->createSuperAdmin();
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
@@ -258,6 +336,18 @@ class HomePageTest extends TestCase
             'status_verifikasi' => 'active',
             'lat' => -6.322,
             'lng' => 108.324,
+        ]);
+    }
+
+    private function createSuperAdmin(
+        string $email = 'home-super@example.com',
+        string $username = 'super-home'
+    ): SuperAdmin {
+        return SuperAdmin::query()->create([
+            'nama' => 'Super Admin Home',
+            'email' => $email,
+            'username' => $username,
+            'password' => Hash::make('password123'),
         ]);
     }
 }

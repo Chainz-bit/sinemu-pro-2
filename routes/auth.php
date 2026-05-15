@@ -33,6 +33,9 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+Route::get('logout', [AuthenticatedSessionController::class, 'redirectAfterLogoutGet'])
+    ->name('logout.get');
+
 Route::middleware('auth')->group(function () {
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
         ->name('password.confirm');

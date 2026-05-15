@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\User;
 
+use App\Rules\RegionHasActiveAdmin;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SubmitLostReportRequest extends FormRequest
@@ -19,7 +20,7 @@ class SubmitLostReportRequest extends FormRequest
         return [
             'report_id' => ['nullable', 'integer', 'exists:laporan_barang_hilangs,id'],
             'nama_barang' => ['required', 'string', 'max:255'],
-            'region_id' => ['required', 'integer', 'exists:wilayahs,id'],
+            'region_id' => ['required', 'integer', 'exists:wilayahs,id', new RegionHasActiveAdmin()],
             'kategori_barang' => ['nullable', 'string', 'max:100'],
             'warna_barang' => ['nullable', 'string', 'max:100'],
             'merek_barang' => ['nullable', 'string', 'max:120'],
@@ -32,7 +33,7 @@ class SubmitLostReportRequest extends FormRequest
             'ciri_khusus' => ['nullable', 'string', 'max:2000'],
             'kontak_pelapor' => ['required', 'string', 'max:50'],
             'bukti_kepemilikan' => ['nullable', 'string', 'max:2000'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

@@ -313,23 +313,14 @@ class AdminAuthTest extends TestCase
 
     public function test_admin_registration_creates_pending_admin_with_unique_username(): void
     {
-        $this->createAdmin([
-            'username' => 'adminbaru',
-            'email' => 'existing-admin@example.com',
-            'status_verifikasi' => 'active',
-        ]);
-
-        $response = $this->post(route('admin.register'), [
-            'nama' => 'Admin Baru',
-            'email' => 'admin-baru@example.com',
-            'nomor_telepon' => ' 081234567890 ',
-            'username' => 'Admin Baru',
-            'instansi' => 'Kampus SINEMU',
-            'kecamatan' => 'Sindang',
-            'alamat_lengkap' => 'Jl. Admin Baru No. 1',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ]);
+        $response = $this->post(route('admin.register'), array_merge(
+            $this->validAdminRegistrationPayload(),
+            [
+                'status_verifikasi' => 'active',
+                'role' => 'super_admin',
+                'super_admin_id' => 999,
+            ]
+        ));
 
         $response->assertRedirect(route('admin.login'));
         $response->assertSessionHas('status', 'Pendaftaran pengelola barang berhasil. Akun Anda akan aktif setelah diverifikasi super admin.');
@@ -338,9 +329,87 @@ class AdminAuthTest extends TestCase
             'nama' => 'Admin Baru',
             'email' => 'admin-baru@example.com',
             'nomor_telepon' => '081234567890',
-            'username' => 'adminbaru1',
+            'username' => 'admin-baru',
             'status_verifikasi' => 'pending',
+            'super_admin_id' => null,
         ]);
+
+        $admin = Admin::query()->where('username', 'admin-baru')->firstOrFail();
+        $this->assertTrue(Hash::check('password123', (string) $admin->password));
+        $this->assertNotSame('password123', $admin->password);
+        $this->assertArrayNotHasKey('role', $admin->getAttributes());
+    }
+
+    public function test_admin_registration_rejects_duplicate_username_without_server_error(): void
+    {
+        $this->createAdmin([
+            'username' => 'angga',
+            'email' => 'existing-username@example.com',
+            'status_verifikasi' => 'active',
+        ]);
+
+        $response = $this->from(route('admin.register'))
+            ->post(route('admin.register'), array_merge($this->validAdminRegistrationPayload(), [
+                'username' => 'angga',
+                'email' => 'angga-baru@example.com',
+            ]));
+
+        $response->assertStatus(302);
+        $response->assertRedirect(route('admin.register'));
+        $response->assertSessionHasErrors([
+            'username' => 'Username sudah digunakan.',
+        ]);
+        $this->assertDatabaseMissing('admins', ['email' => 'angga-baru@example.com']);
+    }
+
+    public function test_admin_registration_rejects_duplicate_email_without_server_error(): void
+    {
+        $this->createAdmin([
+            'username' => 'existing-email-admin',
+            'email' => 'duplikat-admin@example.com',
+            'status_verifikasi' => 'active',
+        ]);
+
+        $response = $this->from(route('admin.register'))
+            ->post(route('admin.register'), array_merge($this->validAdminRegistrationPayload(), [
+                'username' => 'email-baru',
+                'email' => 'duplikat-admin@example.com',
+            ]));
+
+        $response->assertStatus(302);
+        $response->assertRedirect(route('admin.register'));
+        $response->assertSessionHasErrors([
+            'email' => 'Email sudah digunakan sebagai akun pengelola.',
+        ]);
+        $this->assertDatabaseMissing('admins', ['username' => 'email-baru']);
+    }
+
+    public function test_admin_registration_rejects_invalid_phone_number(): void
+    {
+        $response = $this->from(route('admin.register'))
+            ->post(route('admin.register'), array_merge($this->validAdminRegistrationPayload(), [
+                'nomor_telepon' => 'abc',
+            ]));
+
+        $response->assertStatus(302);
+        $response->assertRedirect(route('admin.register'));
+        $response->assertSessionHasErrors([
+            'nomor_telepon' => 'Nomor telepon harus menggunakan format 08xxxxxxxxxx atau +628xxxxxxxxxx.',
+        ]);
+        $this->assertDatabaseMissing('admins', ['username' => 'admin-baru']);
+    }
+
+    public function test_admin_registration_rejects_password_confirmation_mismatch(): void
+    {
+        $response = $this->from(route('admin.register'))
+            ->post(route('admin.register'), array_merge($this->validAdminRegistrationPayload(), [
+                'password_confirmation' => 'password456',
+            ]));
+
+        $response->assertStatus(302);
+        $response->assertRedirect(route('admin.register'));
+        $response->assertSessionHasErrors('password');
+        $this->assertDatabaseMissing('admins', ['username' => 'admin-baru']);
     }
 
     public function test_admin_login_validates_required_fields(): void
@@ -359,16 +428,41 @@ class AdminAuthTest extends TestCase
             'email' => 'admin-logout@example.com',
             'status_verifikasi' => 'active',
         ]);
+        $token = 'admin-logout-token';
 
         $this->actingAs($admin, 'admin');
 
-        $this->post(route('admin.logout'))
+        $this->withSession(['_token' => $token])
+            ->post(route('admin.logout'), ['_token' => $token])
             ->assertRedirect(route('home'));
 
         $this->assertGuest('admin');
 
         $this->get(route('admin.dashboard'))
             ->assertRedirect(route('admin.login'));
+    }
+
+    public function test_get_admin_logout_does_not_logout_admin(): void
+    {
+        $admin = $this->createAdmin([
+            'username' => 'admin-get-logout',
+            'email' => 'admin-get-logout@example.com',
+            'status_verifikasi' => 'active',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.logout', absolute: false))
+            ->assertRedirect(route('home'));
+
+        $this->assertAuthenticatedAs($admin, 'admin');
+    }
+
+    public function test_get_admin_logout_as_guest_redirects_without_token_mismatch(): void
+    {
+        $this->get(route('admin.logout.get', absolute: false))
+            ->assertRedirect(route('home'));
+
+        $this->assertGuest('admin');
     }
 
     public function test_manager_login_route_uses_throttle_middleware(): void
@@ -395,5 +489,23 @@ class AdminAuthTest extends TestCase
             'alamat_lengkap' => 'Jl. Auth Admin No. 1',
             'status_verifikasi' => 'active',
         ], $overrides));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function validAdminRegistrationPayload(): array
+    {
+        return [
+            'nama' => 'Admin Baru',
+            'email' => 'admin-baru@example.com',
+            'nomor_telepon' => ' 081234567890 ',
+            'username' => 'admin-baru',
+            'instansi' => 'Kampus SINEMU',
+            'kecamatan' => 'Sindang',
+            'alamat_lengkap' => 'Jl. Admin Baru No. 1',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ];
     }
 }

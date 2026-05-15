@@ -25,7 +25,7 @@ class UpdateAdminProfileRequest extends FormRequest
             'instansi' => ['required', 'string', 'max:255'],
             'kecamatan' => ['required', 'string', 'max:100'],
             'alamat_lengkap' => ['required', 'string', 'max:1200'],
-            'profil' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'profil' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

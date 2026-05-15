@@ -61,4 +61,9 @@ class AuthenticatedSessionController extends Controller
 
         return redirect('/');
     }
+
+    public function redirectAfterLogoutGet(Request $request): RedirectResponse
+    {
+        return redirect()->route('home');
+    }
 }

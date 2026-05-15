@@ -40,6 +40,14 @@ class MatchingCandidateQueryService
 
         $query = Barang::query()->with('kategori:id,nama_kategori');
 
+        if (Schema::hasColumn('barangs', 'region_id')) {
+            if (empty($laporan->region_id)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where('region_id', (int) $laporan->region_id);
+            }
+        }
+
         if (Schema::hasColumn('barangs', 'status_laporan')) {
             $query->where('status_laporan', WorkflowStatus::REPORT_APPROVED);
         }
@@ -90,6 +98,14 @@ class MatchingCandidateQueryService
         }
 
         $query = LaporanBarangHilang::query();
+
+        if (Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+            if (empty($barang->region_id)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where('region_id', (int) $barang->region_id);
+            }
+        }
 
         if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
             $query->where('status_laporan', WorkflowStatus::REPORT_APPROVED);

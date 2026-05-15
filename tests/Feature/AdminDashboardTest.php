@@ -9,6 +9,7 @@ use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
 use App\Models\SuperAdmin;
 use App\Models\User;
+use App\Models\Wilayah;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -26,6 +27,7 @@ class AdminDashboardTest extends TestCase
 
         LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Laptop Lenovo',
             'lokasi_hilang' => 'Perpustakaan',
             'tanggal_hilang' => now()->subDays(3)->toDateString(),
@@ -38,6 +40,7 @@ class AdminDashboardTest extends TestCase
 
         $foundItem = Barang::query()->create([
             'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
             'user_id' => $user->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Tas Biru',
@@ -52,6 +55,7 @@ class AdminDashboardTest extends TestCase
 
         $claimLostReport = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'HP Samsung',
             'lokasi_hilang' => 'Kantin',
             'tanggal_hilang' => now()->subDay()->toDateString(),
@@ -64,6 +68,7 @@ class AdminDashboardTest extends TestCase
 
         $claimFoundItem = Barang::query()->create([
             'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
             'user_id' => $user->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'HP Samsung',
@@ -122,6 +127,7 @@ class AdminDashboardTest extends TestCase
 
         LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Dokumen Penting',
             'lokasi_hilang' => 'Ruang Administrasi',
             'tanggal_hilang' => now()->subDays(2)->toDateString(),
@@ -133,6 +139,7 @@ class AdminDashboardTest extends TestCase
 
         Barang::query()->create([
             'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
             'user_id' => $user->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Payung Hitam',
@@ -146,6 +153,7 @@ class AdminDashboardTest extends TestCase
 
         $lostReport = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
+            'region_id' => $admin->region_id,
             'nama_barang' => 'Tablet Xiaomi',
             'lokasi_hilang' => 'Lab Komputer',
             'tanggal_hilang' => now()->subDays(3)->toDateString(),
@@ -157,6 +165,7 @@ class AdminDashboardTest extends TestCase
 
         $foundItem = Barang::query()->create([
             'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
             'user_id' => $user->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Tablet Xiaomi',
@@ -208,6 +217,7 @@ class AdminDashboardTest extends TestCase
 
         $foundItem = Barang::query()->create([
             'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
             'user_id' => $user->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Dompet Kulit',
@@ -239,6 +249,7 @@ class AdminDashboardTest extends TestCase
 
         $foundItem = Barang::query()->create([
             'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
             'user_id' => $user->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Kunci Motor',
@@ -257,6 +268,191 @@ class AdminDashboardTest extends TestCase
         $response->assertRedirect(route('admin.dashboard'));
         $response->assertSessionHasErrors('type');
         $this->assertFalse((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
+    public function test_dashboard_quick_actions_cannot_update_lost_reports_outside_region(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $adminRegion = \App\Models\Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Dashboard Admin',
+            'lat' => -6.32,
+            'lng' => 108.32,
+        ]);
+        $otherRegion = \App\Models\Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Dashboard Lain',
+            'lat' => -6.42,
+            'lng' => 108.42,
+        ]);
+        $admin->forceFill(['region_id' => $adminRegion->id])->save();
+
+        $lostReport = LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'region_id' => $otherRegion->id,
+            'nama_barang' => 'Dokumen Luar Wilayah',
+            'lokasi_hilang' => 'Kantor Lain',
+            'tanggal_hilang' => now()->subDay()->toDateString(),
+            'keterangan' => 'Tidak boleh diubah admin wilayah ini',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->patch(route('admin.dashboard.reports.update', ['type' => 'hilang', 'id' => $lostReport->id]), [
+                'nama_barang' => 'Dokumen Diubah',
+                'lokasi_hilang' => 'Lokasi Diubah',
+                'tanggal_hilang' => now()->toDateString(),
+                'keterangan' => 'Percobaan ubah lintas wilayah',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('Dokumen Luar Wilayah', $lostReport->fresh()?->nama_barang);
+    }
+
+    public function test_active_admin_without_region_sees_empty_dashboard_scope(): void
+    {
+        $admin = $this->createAdmin();
+        $admin->forceFill(['region_id' => null])->save();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $region = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Data Tidak Boleh Terlihat',
+            'lat' => -6.45,
+            'lng' => 108.45,
+        ]);
+        $otherAdmin = $this->createScopedAdmin($region, 'dashboard-other-region');
+
+        $lostReport = LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'region_id' => $region->id,
+            'nama_barang' => 'Laporan Tidak Terlihat',
+            'lokasi_hilang' => 'Wilayah lain',
+            'tanggal_hilang' => now()->toDateString(),
+            'keterangan' => 'Pengelola tanpa wilayah tidak boleh melihat ini',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'tampil_di_home' => false,
+        ]);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $otherAdmin->id,
+            'region_id' => $region->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Barang Tidak Terlihat',
+            'deskripsi' => 'Pengelola tanpa wilayah tidak boleh melihat ini',
+            'lokasi_ditemukan' => 'Wilayah lain',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'tampil_di_home' => false,
+        ]);
+
+        Klaim::query()->create([
+            'laporan_hilang_id' => $lostReport->id,
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => 'pending',
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'bukti_foto' => ['verifikasi-klaim/2026/04/bukti-scope.jpg'],
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertViewHas('totalHilang', 0);
+        $response->assertViewHas('totalTemuan', 0);
+        $response->assertViewHas('menungguVerifikasi', 0);
+        $response->assertDontSee('Laporan Tidak Terlihat');
+        $response->assertDontSee('Barang Tidak Terlihat');
+    }
+
+    public function test_admin_dashboard_statistics_are_scoped_to_region(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Dashboard Statistik Lain',
+            'lat' => -6.47,
+            'lng' => 108.47,
+        ]);
+        $otherAdmin = $this->createScopedAdmin($otherRegion, 'dashboard-stat-other');
+
+        $ownLostReport = LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'region_id' => $admin->region_id,
+            'nama_barang' => 'Laporan Wilayah Sendiri',
+            'lokasi_hilang' => 'Wilayah sendiri',
+            'tanggal_hilang' => now()->toDateString(),
+            'keterangan' => 'Masuk statistik',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'tampil_di_home' => false,
+        ]);
+
+        $ownFoundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Barang Wilayah Sendiri',
+            'deskripsi' => 'Masuk statistik',
+            'lokasi_ditemukan' => 'Wilayah sendiri',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'tampil_di_home' => false,
+        ]);
+
+        LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'region_id' => $otherRegion->id,
+            'nama_barang' => 'Laporan Wilayah Lain',
+            'lokasi_hilang' => 'Wilayah lain',
+            'tanggal_hilang' => now()->toDateString(),
+            'keterangan' => 'Tidak masuk statistik',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'tampil_di_home' => false,
+        ]);
+
+        Barang::query()->create([
+            'admin_id' => $otherAdmin->id,
+            'region_id' => $otherRegion->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Barang Wilayah Lain',
+            'deskripsi' => 'Tidak masuk statistik',
+            'lokasi_ditemukan' => 'Wilayah lain',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'tampil_di_home' => false,
+        ]);
+
+        Klaim::query()->create([
+            'laporan_hilang_id' => $ownLostReport->id,
+            'barang_id' => $ownFoundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => 'pending',
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'bukti_foto' => ['verifikasi-klaim/2026/04/bukti-own.jpg'],
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertViewHas('totalHilang', 1);
+        $response->assertViewHas('totalTemuan', 1);
+        $response->assertViewHas('menungguVerifikasi', 1);
+        $response->assertSee('Laporan Wilayah Sendiri');
+        $response->assertSee('Barang Wilayah Sendiri');
+        $response->assertDontSee('Laporan Wilayah Lain');
+        $response->assertDontSee('Barang Wilayah Lain');
     }
 
     private function extractTableBody(string $content): string
@@ -296,8 +492,15 @@ class AdminDashboardTest extends TestCase
             'password' => Hash::make('password123'),
         ]);
 
+        $region = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Dashboard Default',
+            'lat' => -6.31,
+            'lng' => 108.31,
+        ]);
+
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
+            'region_id' => $region->id,
             'nama' => 'Admin Dashboard',
             'email' => 'dashboard-admin@example.com',
             'username' => 'admin-dashboard',
@@ -305,6 +508,31 @@ class AdminDashboardTest extends TestCase
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
             'alamat_lengkap' => 'Jl. Dashboard No. 1',
+            'status_verifikasi' => 'active',
+        ]);
+    }
+
+    private function createScopedAdmin(Wilayah $region, string $username): Admin
+    {
+        $superAdmin = SuperAdmin::query()->firstOrCreate(
+            ['email' => 'dashboard-scope-super@example.com'],
+            [
+                'nama' => 'Super Admin Scope Dashboard',
+                'username' => 'dashboard-scope-super',
+                'password' => Hash::make('password123'),
+            ]
+        );
+
+        return Admin::query()->create([
+            'super_admin_id' => $superAdmin->id,
+            'region_id' => $region->id,
+            'nama' => 'Admin ' . $username,
+            'email' => $username . '@example.com',
+            'username' => $username,
+            'password' => Hash::make('password123'),
+            'instansi' => 'Kampus SINEMU',
+            'kecamatan' => 'Lohbener',
+            'alamat_lengkap' => 'Jl. Scope Dashboard No. 1',
             'status_verifikasi' => 'active',
         ]);
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\LaporanBarangHilang;
 use App\Services\Home\HomePageViewService;
+use App\Support\ManagerPortal;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
@@ -16,12 +17,16 @@ class HomeController extends Controller
     public function index(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         $databaseResponsive = $this->homePageService->isDatabaseResponsive();
-        if ($databaseResponsive && \App\Support\ManagerPortal::check()) {
-            return redirect()->route(\App\Support\ManagerPortal::dashboardRoute());
+        if ($databaseResponsive && Auth::guard('super_admin')->check()) {
+            return redirect()->route('super.dashboard');
+        }
+
+        if ($databaseResponsive && ManagerPortal::check()) {
+            return redirect()->route(ManagerPortal::dashboardRoute());
         }
 
         $viewData = $this->homePageService->buildHomeViewData(
-            currentUser: $databaseResponsive ? Auth::user() : null,
+            currentUser: $databaseResponsive ? Auth::guard('web')->user() : null,
             includeClaimableReports: false
         );
 

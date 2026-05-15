@@ -6,6 +6,7 @@ use App\Http\Requests\Super\UpdateProfileRequest;
 use App\Models\SuperAdmin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class SuperProfileCommandService
 {
@@ -16,18 +17,12 @@ class SuperProfileCommandService
         unset($validated['current_password'], $validated['password_confirmation']);
 
         $photo = $request->file('profil');
+        $oldProfilePath = null;
+        $newProfilePath = null;
         if ($photo) {
-            $oldProfilePath = trim((string) ($superAdmin->profil ?? ''));
-            if (
-                $oldProfilePath !== ''
-                && !str_starts_with($oldProfilePath, 'http://')
-                && !str_starts_with($oldProfilePath, 'https://')
-                && !str_starts_with($oldProfilePath, '/')
-            ) {
-                Storage::disk('public')->delete($oldProfilePath);
-            }
-
-            $validated['profil'] = $photo->store('profil-super/' . now()->format('Y/m'), 'public');
+            $oldProfilePath = $this->deletablePublicPath((string) ($superAdmin->profil ?? ''));
+            $newProfilePath = $photo->store('profil-super/' . now()->format('Y/m'), 'public');
+            $validated['profil'] = $newProfilePath;
         } else {
             unset($validated['profil']);
         }
@@ -38,6 +33,30 @@ class SuperProfileCommandService
             unset($validated['password']);
         }
 
-        $superAdmin->forceFill($validated)->save();
+        try {
+            $superAdmin->forceFill($validated)->save();
+        } catch (Throwable $exception) {
+            if ($newProfilePath) {
+                Storage::disk('public')->delete($newProfilePath);
+            }
+
+            throw $exception;
+        }
+
+        if ($oldProfilePath) {
+            Storage::disk('public')->delete($oldProfilePath);
+        }
+    }
+
+    private function deletablePublicPath(string $path): ?string
+    {
+        $path = trim($path);
+
+        return $path !== ''
+            && !str_starts_with($path, 'http://')
+            && !str_starts_with($path, 'https://')
+            && !str_starts_with($path, '/')
+            ? $path
+            : null;
     }
 }

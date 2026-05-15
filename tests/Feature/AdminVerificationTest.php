@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\SuperAdmin;
+use App\Models\Wilayah;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
@@ -84,6 +85,31 @@ class AdminVerificationTest extends TestCase
         $this->assertNull($admin->alasan_penolakan);
         $this->assertSame((int) $superAdmin->id, (int) $admin->super_admin_id);
         $this->assertNotNull($admin->verified_at);
+    }
+
+    public function test_super_admin_cannot_accept_admin_without_region(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $admin = Admin::query()->create([
+            'super_admin_id' => $superAdmin->id,
+            'region_id' => null,
+            'nama' => 'Admin Tanpa Wilayah',
+            'email' => 'admin-tanpa-wilayah@example.com',
+            'username' => 'admin-tanpa-wilayah',
+            'password' => Hash::make('password123'),
+            'instansi' => 'Instansi Tanpa Wilayah',
+            'kecamatan' => 'Lohbener',
+            'alamat_lengkap' => 'Jl. Tanpa Wilayah No. 1',
+            'status_verifikasi' => 'pending',
+        ]);
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->from(route('super.admin-verifications.index'))
+            ->post(route('super.admin-verifications.accept', $admin))
+            ->assertRedirect(route('super.admin-verifications.index'))
+            ->assertSessionHas('error', 'Pengelola barang harus memiliki wilayah sebelum diverifikasi.');
+
+        $this->assertSame('pending', $admin->fresh()?->status_verifikasi);
     }
 
     public function test_super_admin_can_reactivate_inactive_admin_but_cannot_verify_active_admin_again(): void
@@ -237,8 +263,13 @@ class AdminVerificationTest extends TestCase
 
     private function createAdmin(?SuperAdmin $superAdmin, string $name, ?string $status): Admin
     {
+        $region = Wilayah::query()->firstOrCreate([
+            'nama_wilayah' => 'Wilayah ' . (str_contains($name, 'Sindang') ? 'Sindang' : 'Lohbener'),
+        ]);
+
         return Admin::query()->create([
             'super_admin_id' => $superAdmin?->id,
+            'region_id' => $region->id,
             'nama' => $name,
             'email' => str($name)->slug('-') . '@example.com',
             'username' => (string) str($name)->slug('-'),

@@ -408,8 +408,14 @@ body.super-dashboard-page-mode .super-newest-list {
     padding: 12px;
 }
 
+body.super-dashboard-page-mode .super-activity-list {
+    align-content: start;
+    grid-auto-rows: minmax(72px, auto);
+}
+
 body.super-dashboard-page-mode .super-priority-item,
-body.super-dashboard-page-mode .super-newest-item {
+body.super-dashboard-page-mode .super-newest-item,
+body.super-dashboard-page-mode .super-activity-item {
     display: grid;
     align-items: center;
     gap: 12px;
@@ -429,15 +435,23 @@ body.super-dashboard-page-mode .super-newest-item {
     padding: 11px 12px;
 }
 
+body.super-dashboard-page-mode .super-activity-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    min-height: 72px;
+    padding: 11px 12px;
+}
+
 body.super-dashboard-page-mode .super-priority-meta,
-body.super-dashboard-page-mode .super-newest-meta {
+body.super-dashboard-page-mode .super-newest-meta,
+body.super-dashboard-page-mode .super-activity-meta {
     min-width: 0;
     display: grid;
     gap: 3px;
 }
 
 body.super-dashboard-page-mode .super-priority-meta strong,
-body.super-dashboard-page-mode .super-newest-meta strong {
+body.super-dashboard-page-mode .super-newest-meta strong,
+body.super-dashboard-page-mode .super-activity-meta strong {
     display: block;
     color: #13233f;
     font-size: 13px;
@@ -448,7 +462,8 @@ body.super-dashboard-page-mode .super-newest-meta strong {
 }
 
 body.super-dashboard-page-mode .super-priority-meta small,
-body.super-dashboard-page-mode .super-newest-meta small {
+body.super-dashboard-page-mode .super-newest-meta small,
+body.super-dashboard-page-mode .super-activity-meta small {
     display: block;
     color: #6b7c93;
     font-size: 11px;
@@ -456,6 +471,11 @@ body.super-dashboard-page-mode .super-newest-meta small {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+body.super-dashboard-page-mode .super-activity-item > .status-chip,
+body.super-dashboard-page-mode .super-activity-link {
+    flex-shrink: 0;
 }
 
 body.super-dashboard-page-mode .super-newest-item .menu-cell {
@@ -496,7 +516,8 @@ body.super-dashboard-page-mode .super-newest-item .row-menu-trigger {
     }
 
     body.super-dashboard-page-mode .super-priority-item,
-    body.super-dashboard-page-mode .super-newest-item {
+    body.super-dashboard-page-mode .super-newest-item,
+    body.super-dashboard-page-mode .super-activity-item {
         grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: start;
     }
@@ -505,6 +526,10 @@ body.super-dashboard-page-mode .super-newest-item .row-menu-trigger {
     body.super-dashboard-page-mode .super-newest-item > .status-chip {
         grid-column: 2 / 3;
         justify-self: start;
+    }
+
+    body.super-dashboard-page-mode .super-activity-item > .status-chip {
+        align-self: start;
     }
 
     body.super-dashboard-page-mode .super-priority-actions {

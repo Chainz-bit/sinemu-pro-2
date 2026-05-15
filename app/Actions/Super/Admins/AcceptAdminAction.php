@@ -27,6 +27,13 @@ class AcceptAdminAction
             ];
         }
 
+        if (empty($admin->region_id)) {
+            return [
+                'key' => 'error',
+                'message' => ucfirst($managerRoleLabelLower) . ' harus memiliki wilayah sebelum diverifikasi.',
+            ];
+        }
+
         $admin->update([
             'super_admin_id' => $superAdminId ?? $admin->super_admin_id,
             'status_verifikasi' => 'active',

@@ -31,6 +31,8 @@ class MatchingCommandService
             $laporan = LaporanBarangHilang::query()->whereKey($laporanId)->lockForUpdate()->firstOrFail();
             $barang = Barang::query()->whereKey($barangId)->lockForUpdate()->firstOrFail();
 
+            $this->ensureAdminCanAccessPair($laporan, $barang);
+
             if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan') && (string) $laporan->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
                 return ['ok' => false, 'message' => 'Laporan barang hilang harus disetujui sebelum dicocokkan.'];
             }
@@ -154,6 +156,8 @@ class MatchingCommandService
             $laporan = LaporanBarangHilang::query()->whereKey($laporanId)->lockForUpdate()->firstOrFail();
             $barang = Barang::query()->whereKey($barangId)->lockForUpdate()->firstOrFail();
 
+            $this->ensureAdminCanAccessPair($laporan, $barang);
+
             if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan') && (string) $laporan->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
                 return ['ok' => false, 'message' => 'Laporan barang hilang harus disetujui sebelum proses pencocokan.'];
             }
@@ -202,5 +206,19 @@ class MatchingCommandService
         }
 
         return ['ok' => true, 'message' => 'Kandidat ditandai tidak cocok dan tidak akan ditampilkan lagi.'];
+    }
+
+    private function ensureAdminCanAccessPair(LaporanBarangHilang $laporan, Barang $barang): void
+    {
+        $admin = \App\Support\ManagerPortal::user();
+        abort_if(!$admin || empty($admin->region_id), 403, ucfirst(\App\Support\RoleLabels::managerLower()) . ' belum memiliki wilayah akses.');
+
+        if (Schema::hasColumn('laporan_barang_hilangs', 'region_id') && $laporan->region_id) {
+            abort_if((int) $laporan->region_id !== (int) $admin->region_id, 403, 'Anda tidak memiliki akses ke laporan dari wilayah lain.');
+        }
+
+        if (Schema::hasColumn('barangs', 'region_id') && $barang->region_id) {
+            abort_if((int) $barang->region_id !== (int) $admin->region_id, 403, 'Anda tidak memiliki akses ke barang dari wilayah lain.');
+        }
     }
 }

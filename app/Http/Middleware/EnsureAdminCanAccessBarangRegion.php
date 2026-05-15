@@ -22,12 +22,16 @@ class EnsureAdminCanAccessBarangRegion
         abort_if(!$admin, 403);
 
         $barang = $this->resolveBarangFromRoute($request);
-        if ($barang && $barang->region_id && $admin->region_id) {
+        if ($barang) {
+            abort_if(empty($admin->region_id), 403, ucfirst(\App\Support\RoleLabels::managerLower()) . ' belum memiliki wilayah akses.');
+            abort_if(empty($barang->region_id), 403, 'Barang belum memiliki wilayah yang dapat diproses.');
             abort_if((int) $barang->region_id !== (int) $admin->region_id, 403, 'Anda tidak memiliki akses ke barang dari wilayah lain.');
         }
 
         $laporan = $this->resolveLostReportFromRoute($request);
-        if ($laporan && $laporan->region_id && $admin->region_id) {
+        if ($laporan) {
+            abort_if(empty($admin->region_id), 403, ucfirst(\App\Support\RoleLabels::managerLower()) . ' belum memiliki wilayah akses.');
+            abort_if(empty($laporan->region_id), 403, 'Laporan belum memiliki wilayah yang dapat diproses.');
             abort_if((int) $laporan->region_id !== (int) $admin->region_id, 403, 'Anda tidak memiliki akses ke laporan dari wilayah lain.');
         }
 

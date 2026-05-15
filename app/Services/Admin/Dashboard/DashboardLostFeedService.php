@@ -53,6 +53,8 @@ class DashboardLostFeedService
         $admin = \App\Support\ManagerPortal::user();
         if ($admin && $admin->region_id && Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
             $lostReportsQuery->where('region_id', $admin->region_id);
+        } elseif (Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+            $lostReportsQuery->whereRaw('1 = 0');
         }
 
         return $lostReportsQuery

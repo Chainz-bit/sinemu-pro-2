@@ -160,14 +160,35 @@ class SuperAuthTest extends TestCase
     public function test_super_logout_invalidates_super_session(): void
     {
         $superAdmin = $this->createSuperAdmin();
+        $token = 'super-logout-token';
 
         $this->actingAs($superAdmin, 'super_admin')
-            ->post(route('super.logout'))
+            ->withSession(['_token' => $token])
+            ->post(route('super.logout'), ['_token' => $token])
             ->assertRedirect(route('home'));
 
         $this->assertGuest('super_admin');
         $this->get(route('super.dashboard'))
             ->assertRedirect(route('super.login'));
+    }
+
+    public function test_get_super_logout_does_not_logout_super_admin(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->get(route('super.logout', absolute: false))
+            ->assertRedirect(route('home'));
+
+        $this->assertAuthenticatedAs($superAdmin, 'super_admin');
+    }
+
+    public function test_get_super_logout_as_guest_redirects_without_token_mismatch(): void
+    {
+        $this->get(route('super.logout.get', absolute: false))
+            ->assertRedirect(route('home'));
+
+        $this->assertGuest('super_admin');
     }
 
     public function test_super_login_is_throttled_after_repeated_failures(): void

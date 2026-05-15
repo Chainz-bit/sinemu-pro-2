@@ -30,7 +30,7 @@ class UpdateLostItemRequest extends FormRequest
             'ciri_khusus' => ['nullable', 'string', 'max:2000'],
             'kontak_pelapor' => ['nullable', 'string', 'max:50'],
             'bukti_kepemilikan' => ['nullable', 'string', 'max:2000'],
-            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'foto_barang' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

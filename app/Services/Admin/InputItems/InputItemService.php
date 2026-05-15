@@ -12,7 +12,9 @@ use App\Support\WorkflowStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class InputItemService
 {
@@ -57,7 +59,15 @@ class InputItemService
             $payload['verified_at'] = now();
         }
 
-        LaporanBarangHilang::create($payload);
+        try {
+            LaporanBarangHilang::create($payload);
+        } catch (Throwable $exception) {
+            if ($fotoPath) {
+                Storage::disk('public')->delete($fotoPath);
+            }
+
+            throw $exception;
+        }
 
         return true;
     }
@@ -114,7 +124,15 @@ class InputItemService
             $payload['verified_at'] = now();
         }
 
-        Barang::create($payload);
+        try {
+            Barang::create($payload);
+        } catch (Throwable $exception) {
+            if ($fotoPath) {
+                Storage::disk('public')->delete($fotoPath);
+            }
+
+            throw $exception;
+        }
     }
 
     private function resolveReporter(string $reporterName): ?User

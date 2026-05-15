@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Common\ProfileAvatarService;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class UserProfileEditService
 {
@@ -37,20 +38,38 @@ class UserProfileEditService
         $user->fill($validated);
 
         $photo = $request->file('profil');
+        $oldProfilePath = null;
+        $newProfilePath = null;
         if ($photo) {
-            $oldProfilePath = trim((string) ($user->profil ?? ''));
-            if (
-                $oldProfilePath !== ''
-                && !str_starts_with($oldProfilePath, 'http://')
-                && !str_starts_with($oldProfilePath, 'https://')
-                && !str_starts_with($oldProfilePath, '/')
-            ) {
-                Storage::disk('public')->delete($oldProfilePath);
-            }
-
-            $user->profil = $photo->store('profil-user/' . now()->format('Y/m'), 'public');
+            $oldProfilePath = $this->deletablePublicPath((string) ($user->profil ?? ''));
+            $newProfilePath = $photo->store('profil-user/' . now()->format('Y/m'), 'public');
+            $user->profil = $newProfilePath;
         }
 
-        $user->save();
+        try {
+            $user->save();
+        } catch (Throwable $exception) {
+            if ($newProfilePath) {
+                Storage::disk('public')->delete($newProfilePath);
+            }
+
+            throw $exception;
+        }
+
+        if ($oldProfilePath) {
+            Storage::disk('public')->delete($oldProfilePath);
+        }
+    }
+
+    private function deletablePublicPath(string $path): ?string
+    {
+        $path = trim($path);
+
+        return $path !== ''
+            && !str_starts_with($path, 'http://')
+            && !str_starts_with($path, 'https://')
+            && !str_starts_with($path, '/')
+            ? $path
+            : null;
     }
 }

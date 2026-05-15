@@ -33,7 +33,7 @@
             <form method="POST" action="{{ route('profile.update') }}" class="profile-edit-form" enctype="multipart/form-data">
                 @csrf
                 @method('PATCH')
-                <input id="profil" type="file" name="profil" class="profile-photo-input" accept=".jpg,.jpeg,.png,.webp">
+                <input id="profil" type="file" name="profil" class="profile-photo-input" accept="image/jpeg,image/png,image/webp">
 
                 <div class="profile-edit-grid">
                     <div class="form-group">

@@ -179,6 +179,34 @@ class ClaimVerificationListingTest extends TestCase
         $response->assertViewHas('sort', 'terbaru');
     }
 
+    public function test_claim_verification_index_and_delete_are_scoped_to_current_admin(): void
+    {
+        $admin = $this->createAdmin();
+        $otherAdmin = $this->createAdmin('claim-other-admin@example.com', 'claim-other-admin');
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $ownClaim = $this->createClaimForAdmin($admin, $user, $kategori, 'Laptop Milik Admin Ini');
+        $otherClaim = $this->createClaimForAdmin($otherAdmin, $user, $kategori, 'Laptop Admin Lain');
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.claim-verifications'));
+
+        $response->assertOk();
+        $content = $response->getContent();
+        $this->assertNotFalse($content);
+        $tableBody = $this->extractTableBody($content);
+
+        $this->assertStringContainsString('Laptop Milik Admin Ini', $tableBody);
+        $this->assertStringNotContainsString('Laptop Admin Lain', $tableBody);
+
+        $this->actingAs($admin, 'admin')
+            ->delete(route('admin.claim-verifications.destroy', $otherClaim))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('klaims', ['id' => $ownClaim->id]);
+        $this->assertDatabaseHas('klaims', ['id' => $otherClaim->id]);
+    }
+
     private function extractTableBody(string $content): string
     {
         $start = strpos($content, '<tbody>');
@@ -207,20 +235,57 @@ class ClaimVerificationListingTest extends TestCase
         return $user;
     }
 
-    private function createAdmin(): Admin
+    private function createClaimForAdmin(Admin $admin, User $user, Kategori $kategori, string $itemName): Klaim
+    {
+        $lostReport = LaporanBarangHilang::query()->create([
+            'user_id' => $user->id,
+            'nama_barang' => $itemName,
+            'lokasi_hilang' => 'Perpustakaan',
+            'tanggal_hilang' => now()->subDay()->toDateString(),
+            'keterangan' => 'Hilang di area kampus',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'tampil_di_home' => false,
+        ]);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => $itemName,
+            'deskripsi' => 'Ditemukan di area kampus',
+            'lokasi_ditemukan' => 'Perpustakaan',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'tampil_di_home' => false,
+        ]);
+
+        return Klaim::query()->create([
+            'laporan_hilang_id' => $lostReport->id,
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'catatan' => 'Menunggu verifikasi',
+        ]);
+    }
+
+    private function createAdmin(string $email = 'claim-admin@example.com', string $username = 'claim-admin'): Admin
     {
         $superAdmin = SuperAdmin::query()->create([
             'nama' => 'Super Admin Claim',
-            'email' => 'claim-super@example.com',
-            'username' => 'claim-super',
+            'email' => 'super-' . $email,
+            'username' => 'super-' . $username,
             'password' => Hash::make('password123'),
         ]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'nama' => 'Admin Claim',
-            'email' => 'claim-admin@example.com',
-            'username' => 'claim-admin',
+            'email' => $email,
+            'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',

@@ -107,7 +107,7 @@
 
                 <div class="form-col-12 form-group">
                     <label class="form-label" for="foto_barang">Foto Barang (Opsional)</label>
-                    <input id="foto_barang" name="foto_barang" type="file" class="form-input" accept=".jpg,.jpeg,.png,.webp">
+                    <input id="foto_barang" name="foto_barang" type="file" class="form-input" accept="image/jpeg,image/png,image/webp">
                     <small class="form-note">Format: JPG, JPEG, PNG, WEBP. Maksimal 3MB.</small>
                 </div>
 
