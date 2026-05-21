@@ -281,6 +281,10 @@
         const { button, label } = createButton(select);
         const menu = createMenu(select);
 
+        if (select.closest('#filterForm')) {
+            menu.classList.add('sinemu-select__menu--quick-filter');
+        }
+
         wrapper.className = 'sinemu-select';
         select.parentNode.insertBefore(wrapper, select);
         wrapper.appendChild(select);

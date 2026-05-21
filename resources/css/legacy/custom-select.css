@@ -153,6 +153,12 @@
     overflow-wrap: anywhere;
 }
 
+.sinemu-select__menu--quick-filter .sinemu-select__option {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    font-weight: 400;
+}
+
 .sinemu-select__option:hover,
 .sinemu-select__option:focus,
 .sinemu-select__option.is-active {

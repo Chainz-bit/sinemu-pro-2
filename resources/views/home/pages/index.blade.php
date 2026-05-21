@@ -194,25 +194,11 @@
                     </div>
                     <div class="col-md-6 col-xl">
                         <label for="categorySelect" class="form-label ps-2 py-2">KATEGORI</label>
-                        <div class="filter-dropdown" data-filter-dropdown>
-                            <select id="categorySelect" class="native-filter-select-hidden" tabindex="-1" aria-hidden="true">
-                                @foreach ($categories as $category)
-                                    <option value="{{ $category }}">{{ $category }}</option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="form-select filter-select filter-dropdown-toggle" data-filter-dropdown-toggle>
-                                <span data-filter-dropdown-label>{{ $categories[0] ?? 'Semua Kategori' }}</span>
-                            </button>
-                            <ul class="filter-dropdown-menu" data-filter-dropdown-menu>
-                                @foreach ($categories as $category)
-                                    <li>
-                                        <button type="button" class="filter-option {{ $loop->first ? 'is-active' : '' }}" data-filter-value="{{ $category }}">
-                                            {{ $category }}
-                                        </button>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
+                        <select id="categorySelect" class="form-select filter-select" data-custom-select>
+                            @foreach ($categories as $category)
+                                <option value="{{ $loop->first ? '' : $category }}">{{ $category }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-md-6 col-xl">
                         <label for="dateInput" class="form-label ps-2 py-2">WAKTU PENEMUAN</label>
@@ -223,25 +209,11 @@
                     </div>
                     <div class="col-md-6 col-xl">
                         <label for="regionSelect" class="form-label ps-2 py-2">WILAYAH</label>
-                        <div class="filter-dropdown" data-filter-dropdown>
-                            <select id="regionSelect" class="native-filter-select-hidden" tabindex="-1" aria-hidden="true">
-                                @foreach ($regions as $region)
-                                    <option value="{{ $region }}">{{ $region }}</option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="form-select filter-select filter-dropdown-toggle" data-filter-dropdown-toggle>
-                                <span data-filter-dropdown-label>{{ $regions[0] ?? 'Seluruh Wilayah' }}</span>
-                            </button>
-                            <ul class="filter-dropdown-menu" data-filter-dropdown-menu>
-                                @foreach ($regions as $region)
-                                    <li>
-                                        <button type="button" class="filter-option {{ $loop->first ? 'is-active' : '' }}" data-filter-value="{{ $region }}">
-                                            {{ $region }}
-                                        </button>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
+                        <select id="regionSelect" class="form-select filter-select" data-custom-select>
+                            @foreach ($regions as $region)
+                                <option value="{{ $loop->first ? '' : $region }}">{{ $region }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-md-6 col-xl-2 d-flex">
                         <button id="searchButton" class="btn btn-sinemu btn-sinemu-primary w-100 filter-search-btn" type="submit">
@@ -442,7 +414,7 @@
                     Klaim dapat <strong>disetujui</strong> atau <strong>ditolak</strong> jika bukti kepemilikan belum memadai.
                 </div>
                 <div class="claim-help mt-4 text-center">
-                    <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" class="claim-help-link">
+                    <a href="https://wa.me/6285174386642" target="_blank" rel="noopener noreferrer" class="claim-help-link">
                         <i class="fa-brands fa-whatsapp me-2" aria-hidden="true"></i>Hubungi Support Center Kami
                     </a>
                 </div>
@@ -488,7 +460,7 @@
                         </div>
 
                         <div class="lokasi-actions mb-3">
-                            <a id="selectedOpenMaps" class="lokasi-action-btn lokasi-action-primary" href="#" target="_blank" rel="noopener">
+                            <a id="selectedOpenMaps" class="lokasi-action-btn lokasi-action-primary" href="#" target="_blank" rel="noopener noreferrer">
                                 <i class="fa-regular fa-map me-2"></i>Buka di Maps
                             </a>
                             <button id="selectedGetRoute" type="button" class="lokasi-action-btn lokasi-action-secondary mt-2">
@@ -499,9 +471,9 @@
                             </button>
                             <a
                                 class="lokasi-action-btn lokasi-action-support mt-2"
-                                href="https://wa.me/6281234567890?text=Halo%20Sinemu%20Support%20Indramayu%2C%20saya%20butuh%20bantuan%20proses%20klaim."
+                                href="https://wa.me/6285174386642?text=Halo%20Sinemu%20Support%20Indramayu%2C%20saya%20butuh%20bantuan%20proses%20klaim."
                                 target="_blank"
-                                rel="noopener"
+                                rel="noopener noreferrer"
                             >
                                 <i class="fa-brands fa-whatsapp me-2"></i>Hubungi Support Center (0851-7438-6642)
                             </a>
@@ -594,7 +566,7 @@
                                         </div>
                                     </div>
                                     <div class="contact-support-actions">
-                                        <a href="https://wa.me/6285174386642?text=Halo%20Sinemu%20Support%2C%20saya%20butuh%20bantuan." target="_blank" rel="noopener" class="contact-support-btn contact-support-primary">
+                                        <a href="https://wa.me/6285174386642?text=Halo%20Sinemu%20Support%2C%20saya%20butuh%20bantuan." target="_blank" rel="noopener noreferrer" class="contact-support-btn contact-support-primary">
                                             <i class="fa-brands fa-whatsapp"></i>WhatsApp
                                         </a>
                                         <a href="mailto:support@sinemu.id" class="contact-support-btn contact-support-secondary">
@@ -688,7 +660,7 @@
                             </div>
                             <div class="mt-3">
                                 <label class="form-label">No. WA Penemu</label>
-                                <input type="text" name="kontak_penemu" class="form-control" placeholder="Contoh: 081234567890" required>
+                                <input type="text" name="kontak_penemu" class="form-control" placeholder="Contoh: 085174386642" required>
                             </div>
                         </div>
                         <div class="modal-footer">

@@ -1,6 +1,5 @@
 const DEFAULT_PHONE = '0851-7438-6642';
 const DEFAULT_HOURS = '08.00-20.00 WIB';
-const GEOCODE_CACHE_KEY = 'sinemu_pickup_geocode_cache_v1';
 const DEFAULT_MANAGER_LABEL = String(window.__SINEMU_ROLE_LABELS?.managerDisplayName || window.__SINEMU_ROLE_LABELS?.adminDisplayName || 'Pengelola Barang');
 
 function parsePickupLocations() {
@@ -24,8 +23,8 @@ function parsePickupLocations() {
                 kecamatan: String(item.kecamatan || ''),
                 phone: String(item.phone || DEFAULT_PHONE),
                 hours: String(item.hours || DEFAULT_HOURS),
-                lat: typeof item.lat === 'number' ? item.lat : null,
-                lng: typeof item.lng === 'number' ? item.lng : null,
+                lat: parseCoordinate(item.lat),
+                lng: parseCoordinate(item.lng),
             };
         });
     } catch (error) {
@@ -33,14 +32,31 @@ function parsePickupLocations() {
     }
 }
 
+function parseCoordinate(value) {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function hasValidCoordinates(location) {
+    return Number.isFinite(location?.lat) && Number.isFinite(location?.lng);
+}
+
 function buildMapsLink(location) {
-    const query = encodeURIComponent([location.name, location.address, location.kecamatan, 'Indramayu'].filter(Boolean).join(', '));
+    if (!hasValidCoordinates(location)) {
+        return '';
+    }
+
+    const query = encodeURIComponent(location.lat + ',' + location.lng);
     return 'https://www.google.com/maps/search/?api=1&query=' + query;
 }
 
 function buildRouteLink(location, userCoords) {
-    if (!(Number.isFinite(location.lat) && Number.isFinite(location.lng))) {
-        return buildMapsLink(location);
+    if (!hasValidCoordinates(location)) {
+        return '';
     }
 
     const destination = encodeURIComponent(location.lat + ',' + location.lng);
@@ -92,71 +108,6 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-}
-
-function loadGeocodeCache() {
-    try {
-        return JSON.parse(localStorage.getItem(GEOCODE_CACHE_KEY) || '{}');
-    } catch (error) {
-        return {};
-    }
-}
-
-function saveGeocodeCache(cache) {
-    try {
-        localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(cache));
-    } catch (error) {
-        // ignore
-    }
-}
-
-function cacheKeyForLocation(location) {
-    return [location.address, location.kecamatan, 'Indramayu'].filter(Boolean).join(' | ').toLowerCase();
-}
-
-async function geocodeLocation(location) {
-    const cache = loadGeocodeCache();
-    const key = cacheKeyForLocation(location);
-
-    if (cache[key]) {
-        return cache[key];
-    }
-
-    const query = encodeURIComponent([location.address, location.kecamatan, 'Indramayu', 'Jawa Barat', 'Indonesia'].filter(Boolean).join(', '));
-    const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + query;
-
-    try {
-        const response = await fetch(url, {
-            headers: {
-                Accept: 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            return null;
-        }
-
-        const result = await response.json();
-        if (!Array.isArray(result) || result.length === 0) {
-            return null;
-        }
-
-        const coords = {
-            lat: Number(result[0].lat),
-            lng: Number(result[0].lon)
-        };
-
-        if (!Number.isFinite(coords.lat) || !Number.isFinite(coords.lng)) {
-            return null;
-        }
-
-        cache[key] = coords;
-        saveGeocodeCache(cache);
-
-        return coords;
-    } catch (error) {
-        return null;
-    }
 }
 
 export function initMap() {
@@ -254,9 +205,10 @@ export function initMap() {
     }
 
     function buildPopupHtml(location) {
-        const routeUrl = Number.isFinite(location.lat) && Number.isFinite(location.lng)
-            ? buildRouteLink(location, userCoords)
-            : buildMapsLink(location);
+        const routeUrl = buildRouteLink(location, userCoords);
+        const routeLink = routeUrl
+            ? '<a class="pickup-popup-link" target="_blank" rel="noopener noreferrer" href="' + routeUrl + '">Petunjuk Arah</a>'
+            : '<span class="pickup-popup-link" aria-disabled="true">Koordinat belum tersedia</span>';
 
         return [
             '<div class="pickup-popup">',
@@ -264,7 +216,7 @@ export function initMap() {
             '<span>' + escapeHtml(location.address) + '</span><br>',
             '<span>Kecamatan: ' + escapeHtml(location.kecamatan || '-') + '</span><br>',
             '<span>Jam: ' + escapeHtml(location.hours) + '</span><br>',
-            '<a class="pickup-popup-link" target="_blank" rel="noopener" href="' + routeUrl + '">Petunjuk Arah</a>',
+            routeLink,
             '</div>'
         ].join('');
     }
@@ -293,6 +245,10 @@ export function initMap() {
     }
 
     function getDistanceText(location) {
+        if (!hasValidCoordinates(location)) {
+            return 'Koordinat lokasi belum tersedia.';
+        }
+
         if (!userCoords) {
             return 'Aktifkan Lokasi Saya untuk estimasi jarak.';
         }
@@ -310,6 +266,10 @@ export function initMap() {
     }
 
     function focusOnLocation(location, zoom) {
+        if (!hasValidCoordinates(location)) {
+            return;
+        }
+
         map.setView([location.lat, location.lng], zoom || 14, {
             animate: true,
             duration: 0.4
@@ -331,14 +291,29 @@ export function initMap() {
         if (selectedDistance) selectedDistance.textContent = 'Jarak: ' + getDistanceText(location);
 
         if (selectedOpenMaps) {
-            selectedOpenMaps.href = buildMapsLink(location);
-            selectedOpenMaps.removeAttribute('aria-disabled');
+            const mapsUrl = buildMapsLink(location);
+            if (mapsUrl) {
+                selectedOpenMaps.href = mapsUrl;
+                selectedOpenMaps.removeAttribute('aria-disabled');
+            } else {
+                selectedOpenMaps.removeAttribute('href');
+                selectedOpenMaps.setAttribute('aria-disabled', 'true');
+            }
         }
 
         if (selectedGetRoute) {
-            selectedGetRoute.dataset.locationId = String(location.id);
-            selectedGetRoute.removeAttribute('disabled');
+            if (hasValidCoordinates(location)) {
+                selectedGetRoute.dataset.locationId = String(location.id);
+                selectedGetRoute.removeAttribute('disabled');
+            } else {
+                selectedGetRoute.removeAttribute('data-location-id');
+                selectedGetRoute.setAttribute('disabled', 'disabled');
+            }
         }
+    }
+
+    function buildDisabledAction(label, iconClass, variant, action) {
+        return '<a href="#" aria-disabled="true" tabindex="-1" class="lokasi-mini-btn ' + variant + '" data-action="' + action + '"><i class="' + iconClass + '"></i>' + label + '</a>';
     }
 
     function renderLocationList() {
@@ -348,10 +323,14 @@ export function initMap() {
         listElement.innerHTML = locations.map(function (location) {
             const isActive = location.id === selectedLocationId;
             const mapLink = buildMapsLink(location);
-            const routeLink = Number.isFinite(location.lat) && Number.isFinite(location.lng)
-                ? buildRouteLink(location, userCoords)
-                : mapLink;
+            const routeLink = buildRouteLink(location, userCoords);
             const addressLabel = [location.address, location.kecamatan].filter(Boolean).join(', ');
+            const mapsAction = mapLink
+                ? '<a href="' + mapLink + '" target="_blank" rel="noopener noreferrer" class="lokasi-mini-btn lokasi-mini-btn-primary" data-action="open-maps"><i class="fa-regular fa-map"></i>Buka di Maps</a>'
+                : buildDisabledAction('Buka di Maps', 'fa-regular fa-map', 'lokasi-mini-btn-primary', 'open-maps');
+            const routeAction = routeLink
+                ? '<a href="' + routeLink + '" target="_blank" rel="noopener noreferrer" class="lokasi-mini-btn lokasi-mini-btn-secondary" data-action="get-route"><i class="fa-solid fa-route"></i>Dapatkan Route</a>'
+                : buildDisabledAction('Dapatkan Route', 'fa-solid fa-route', 'lokasi-mini-btn-secondary', 'get-route');
 
             return [
                 '<article class="lokasi-item' + (isActive ? ' is-active' : '') + '" data-location-id="' + location.id + '">',
@@ -368,8 +347,8 @@ export function initMap() {
                 '<span><i class="fa-solid fa-phone"></i><strong>' + escapeHtml(location.phone) + '</strong></span>',
                 '</div>',
                 '<div class="lokasi-item-actions">',
-                '<a href="' + mapLink + '" target="_blank" rel="noopener" class="lokasi-mini-btn lokasi-mini-btn-primary" data-action="open-maps"><i class="fa-regular fa-map"></i>Buka di Maps</a>',
-                '<a href="' + routeLink + '" target="_blank" rel="noopener" class="lokasi-mini-btn lokasi-mini-btn-secondary" data-action="get-route"><i class="fa-solid fa-route"></i>Dapatkan Route</a>',
+                mapsAction,
+                routeAction,
                 '</div>',
                 '</article>'
             ].join('');
@@ -471,15 +450,7 @@ export function initMap() {
 
     async function initMarkers() {
         for (const location of locations) {
-            if (!(Number.isFinite(location.lat) && Number.isFinite(location.lng))) {
-                const geocoded = await geocodeLocation(location);
-                if (geocoded) {
-                    location.lat = geocoded.lat;
-                    location.lng = geocoded.lng;
-                }
-            }
-
-            if (!(Number.isFinite(location.lat) && Number.isFinite(location.lng))) {
+            if (!hasValidCoordinates(location)) {
                 continue;
             }
 
@@ -498,12 +469,18 @@ export function initMap() {
         }
 
         const locationWithCoords = getSelectedLocation();
-        if (Number.isFinite(locationWithCoords.lat) && Number.isFinite(locationWithCoords.lng)) {
+        if (hasValidCoordinates(locationWithCoords)) {
             focusOnLocation(locationWithCoords, 12);
         }
     }
 
     listElement.addEventListener('click', function (event) {
+        const disabledAction = event.target.closest('a[aria-disabled="true"]');
+        if (disabledAction) {
+            event.preventDefault();
+            return;
+        }
+
         const card = event.target.closest('[data-location-id]');
         if (!card) {
             return;
@@ -523,7 +500,7 @@ export function initMap() {
         renderLocationList();
         scrollSelectedCardIntoView();
 
-        if (Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
+        if (hasValidCoordinates(location)) {
             focusOnLocation(location, 14);
         }
     });
@@ -543,12 +520,12 @@ export function initMap() {
     if (selectedGetRoute) {
         selectedGetRoute.addEventListener('click', function () {
             const location = getSelectedLocation();
-            if (!(Number.isFinite(location.lat) && Number.isFinite(location.lng))) {
-                window.open(buildMapsLink(location), '_blank', 'noopener');
+            const routeUrl = buildRouteLink(location, userCoords);
+            if (!routeUrl) {
+                if (selectedDistance) selectedDistance.textContent = 'Jarak: Koordinat lokasi belum tersedia.';
                 return;
             }
 
-            const routeUrl = buildRouteLink(location, userCoords);
             window.open(routeUrl, '_blank', 'noopener');
         });
     }

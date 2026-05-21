@@ -182,8 +182,11 @@ class AdminDirectoryController extends Controller
             return null;
         }
 
-        return (int) Wilayah::query()->firstOrCreate([
-            'nama_wilayah' => IndramayuDistricts::wilayahName($kecamatan),
-        ])->id;
+        $wilayah = IndramayuDistricts::wilayahItem($kecamatan);
+
+        return (int) Wilayah::query()->firstOrCreate(
+            ['nama_wilayah' => $wilayah['nama_wilayah']],
+            ['lat' => $wilayah['lat'], 'lng' => $wilayah['lng']]
+        )->id;
     }
 }

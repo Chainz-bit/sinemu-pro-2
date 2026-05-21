@@ -136,62 +136,6 @@ function initFilterPanelToggle(filterWrap, filterForm) {
     });
 }
 
-function initCustomFilterDropdowns() {
-    const dropdowns = Array.from(document.querySelectorAll('[data-filter-dropdown]'));
-    if (dropdowns.length === 0) return;
-
-    function closeDropdown(dropdown) {
-        dropdown.classList.remove('open');
-        const toggle = dropdown.querySelector('[data-filter-dropdown-toggle]');
-        if (toggle) toggle.setAttribute('aria-expanded', 'false');
-    }
-
-    function closeOthers(activeDropdown) {
-        dropdowns.forEach(function (dropdown) {
-            if (dropdown !== activeDropdown) closeDropdown(dropdown);
-        });
-    }
-
-    dropdowns.forEach(function (dropdown) {
-        const select = dropdown.querySelector('select');
-        const toggle = dropdown.querySelector('[data-filter-dropdown-toggle]');
-        const label = dropdown.querySelector('[data-filter-dropdown-label]');
-        const options = Array.from(dropdown.querySelectorAll('[data-filter-value]'));
-
-        if (!select || !toggle || !label) return;
-
-        toggle.setAttribute('aria-haspopup', 'listbox');
-        toggle.setAttribute('aria-expanded', 'false');
-
-        toggle.addEventListener('click', function () {
-            const isOpen = dropdown.classList.contains('open');
-            closeOthers(dropdown);
-            dropdown.classList.toggle('open', !isOpen);
-            toggle.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
-        });
-
-        options.forEach(function (option) {
-            option.addEventListener('click', function () {
-                const value = option.dataset.filterValue || '';
-                select.value = value;
-                label.textContent = option.textContent.trim();
-                options.forEach((item) => item.classList.toggle('is-active', item === option));
-                closeDropdown(dropdown);
-            });
-        });
-    });
-
-    document.addEventListener('click', function (event) {
-        if (event.target.closest('[data-filter-dropdown]')) return;
-        dropdowns.forEach(closeDropdown);
-    });
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key !== 'Escape') return;
-        dropdowns.forEach(closeDropdown);
-    });
-}
-
 export function initFilterAndCounts() {
     const keywordInput = document.getElementById('keywordInput');
     const categorySelect = document.getElementById('categorySelect');
@@ -208,7 +152,6 @@ export function initFilterAndCounts() {
 
     initModernDatepicker(dateInput);
     initFilterPanelToggle(filterWrap, filterForm);
-    initCustomFilterDropdowns();
 
     function applyFilters() {
         if (!keywordInput || !categorySelect || !dateInput || !regionSelect) return;

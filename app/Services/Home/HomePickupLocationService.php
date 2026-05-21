@@ -15,34 +15,40 @@ class HomePickupLocationService
         if ($hasAdminTable) {
             $pickupLocations = $safeDatabaseCall(function () use ($hasDatabaseColumn) {
                 $hasStatusVerifikasi = $hasDatabaseColumn('admins', 'status_verifikasi');
+                $hasRegionId = $hasDatabaseColumn('admins', 'region_id');
                 $hasKecamatan = $hasDatabaseColumn('admins', 'kecamatan');
                 $hasAlamatLengkap = $hasDatabaseColumn('admins', 'alamat_lengkap');
-                $hasLat = $hasDatabaseColumn('admins', 'lat');
-                $hasLng = $hasDatabaseColumn('admins', 'lng');
 
-                $selectColumns = ['id', 'instansi'];
+                if (! $hasStatusVerifikasi || ! $hasRegionId) {
+                    return [];
+                }
+
+                $selectColumns = ['id', 'instansi', 'region_id'];
                 if ($hasKecamatan) {
                     $selectColumns[] = 'kecamatan';
                 }
                 if ($hasAlamatLengkap) {
                     $selectColumns[] = 'alamat_lengkap';
                 }
-                if ($hasLat) {
-                    $selectColumns[] = 'lat';
-                }
-                if ($hasLng) {
-                    $selectColumns[] = 'lng';
-                }
 
-                $pickupQuery = Admin::query()->orderBy('instansi');
-
-                if ($hasStatusVerifikasi) {
-                    $pickupQuery->where('status_verifikasi', 'active');
-                }
+                $pickupQuery = Admin::query()
+                    ->with(['region:id,nama_wilayah,lat,lng'])
+                    ->where('status_verifikasi', Admin::STATUS_ACTIVE)
+                    ->whereNotNull('region_id')
+                    ->whereHas('region', function ($query) {
+                        $query->whereNotNull('lat')
+                            ->whereNotNull('lng');
+                    })
+                    ->orderBy('instansi');
 
                 return $pickupQuery
                     ->get($selectColumns)
-                    ->map(function (Admin $admin) use ($hasKecamatan, $hasAlamatLengkap, $hasLat, $hasLng) {
+                    ->filter(function (Admin $admin) {
+                        return $admin->region
+                            && is_numeric($admin->region->lat)
+                            && is_numeric($admin->region->lng);
+                    })
+                    ->map(function (Admin $admin) use ($hasKecamatan, $hasAlamatLengkap) {
                         $instansi = trim((string) ($admin->instansi ?? ''));
                         $kecamatan = $hasKecamatan ? trim((string) ($admin->kecamatan ?? '')) : '';
                         $alamatLengkap = $hasAlamatLengkap ? trim((string) ($admin->alamat_lengkap ?? '')) : '';
@@ -56,8 +62,8 @@ class HomePickupLocationService
                             'manager_label' => \App\Support\RoleLabels::manager(),
                             'address' => $address,
                             'kecamatan' => $kecamatan,
-                            'lat' => $hasLat && $admin->lat !== null ? (float) $admin->lat : null,
-                            'lng' => $hasLng && $admin->lng !== null ? (float) $admin->lng : null,
+                            'lat' => (float) $admin->region->lat,
+                            'lng' => (float) $admin->region->lng,
                             'phone' => '0851-7438-6642',
                             'hours' => '08.00-20.00 WIB',
                         ];

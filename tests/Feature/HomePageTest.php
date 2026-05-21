@@ -9,6 +9,7 @@ use App\Models\LaporanBarangHilang;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Models\Wilayah;
+use App\Support\IndramayuDistricts;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
@@ -104,15 +105,15 @@ class HomePageTest extends TestCase
 
     public function test_home_page_builds_public_lists_metadata_and_pickup_locations(): void
     {
-        $admin = $this->createAdmin();
-        $user = $this->createUser();
-        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
-
-        Wilayah::query()->create([
+        $wilayah = Wilayah::query()->create([
             'nama_wilayah' => 'Kecamatan Sindang',
             'lat' => -6.322,
             'lng' => 108.324,
         ]);
+
+        $admin = $this->createAdmin($wilayah->id);
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
 
         LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
@@ -202,6 +203,101 @@ class HomePageTest extends TestCase
         $this->assertTrue($mapRegions->contains(function (array $region) {
             return $region['name'] === 'Kecamatan Sindang' && $region['active_points'] >= 2;
         }));
+    }
+
+    public function test_pending_manager_created_by_super_admin_is_not_pickup_location(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $wilayah = $this->createDistrictRegion('Lohbener', -6.321, 108.321);
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->post(route('super.admins.store'), $this->superAdminManagerPayload([
+                'username' => 'pending-location-admin',
+                'email' => 'pending-location-admin@example.com',
+                'kecamatan' => 'Lohbener',
+                'status_verifikasi' => Admin::STATUS_PENDING,
+            ]))
+            ->assertRedirect();
+
+        $admin = Admin::query()->where('username', 'pending-location-admin')->firstOrFail();
+
+        $this->assertSame($wilayah->id, $admin->region_id);
+        $this->assertSame(Admin::STATUS_PENDING, $admin->status_verifikasi);
+
+        $this->app['auth']->guard('super_admin')->logout();
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $this->assertSame([], $response->viewData('pickupLocations'));
+    }
+
+    public function test_active_manager_created_by_super_admin_with_region_coordinates_is_pickup_location(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $expectedRegion = IndramayuDistricts::wilayahItem('Lohbener');
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->post(route('super.admins.store'), $this->superAdminManagerPayload([
+                'username' => 'active-location-admin',
+                'email' => 'active-location-admin@example.com',
+                'kecamatan' => 'Lohbener',
+                'instansi' => 'Balai Desa Lohbener',
+                'status_verifikasi' => Admin::STATUS_ACTIVE,
+                'lat' => -7.111,
+                'lng' => 109.111,
+            ]))
+            ->assertRedirect();
+
+        $this->app['auth']->guard('super_admin')->logout();
+
+        $createdRegion = Wilayah::query()
+            ->where('nama_wilayah', $expectedRegion['nama_wilayah'])
+            ->firstOrFail();
+
+        $this->assertSame($expectedRegion['lat'], (float) $createdRegion->lat);
+        $this->assertSame($expectedRegion['lng'], (float) $createdRegion->lng);
+
+        $response = $this->get(route('home'));
+        $pickupLocations = $response->viewData('pickupLocations');
+
+        $response->assertOk();
+        $this->assertCount(1, $pickupLocations);
+        $this->assertSame('Balai Desa Lohbener', $pickupLocations[0]['name']);
+        $this->assertSame($expectedRegion['lat'], $pickupLocations[0]['lat']);
+        $this->assertSame($expectedRegion['lng'], $pickupLocations[0]['lng']);
+    }
+
+    public function test_active_manager_created_by_super_admin_with_region_without_coordinates_is_not_pickup_location(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $this->createDistrictRegion('Lohbener', null, null);
+
+        $this->actingAs($superAdmin, 'super_admin')
+            ->post(route('super.admins.store'), $this->superAdminManagerPayload([
+                'username' => 'active-null-location-admin',
+                'email' => 'active-null-location-admin@example.com',
+                'kecamatan' => 'Lohbener',
+                'status_verifikasi' => Admin::STATUS_ACTIVE,
+            ]))
+            ->assertRedirect();
+
+        $this->app['auth']->guard('super_admin')->logout();
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $this->assertSame([], $response->viewData('pickupLocations'));
+    }
+
+    public function test_active_manager_without_region_is_not_pickup_location(): void
+    {
+        $this->createAdmin();
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $this->assertSame([], $response->viewData('pickupLocations'));
     }
 
     public function test_found_detail_marks_available_item_as_claimable(): void
@@ -320,7 +416,7 @@ class HomePageTest extends TestCase
         return $user;
     }
 
-    private function createAdmin(): Admin
+    private function createAdmin(?int $regionId = null): Admin
     {
         $superAdmin = $this->createSuperAdmin();
 
@@ -333,9 +429,39 @@ class HomePageTest extends TestCase
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
             'alamat_lengkap' => 'Jl. Home No. 1',
-            'status_verifikasi' => 'active',
+            'status_verifikasi' => Admin::STATUS_ACTIVE,
+            'region_id' => $regionId,
             'lat' => -6.322,
             'lng' => 108.324,
+        ]);
+    }
+
+    /**
+     * @param array<string,mixed> $overrides
+     * @return array<string,mixed>
+     */
+    private function superAdminManagerPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'nama' => 'Admin Lokasi Super',
+            'email' => 'admin-lokasi-super@example.com',
+            'nomor_telepon' => '085174386642',
+            'username' => 'admin-lokasi-super',
+            'instansi' => 'Balai Desa Lokasi',
+            'kecamatan' => 'Lohbener',
+            'alamat_lengkap' => 'Jl. Lokasi Super No. 1',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'status_verifikasi' => Admin::STATUS_PENDING,
+        ], $overrides);
+    }
+
+    private function createDistrictRegion(string $district, ?float $lat, ?float $lng): Wilayah
+    {
+        return Wilayah::query()->create([
+            'nama_wilayah' => IndramayuDistricts::wilayahName($district),
+            'lat' => $lat,
+            'lng' => $lng,
         ]);
     }
 
