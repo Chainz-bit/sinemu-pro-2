@@ -5,19 +5,25 @@ namespace App\Services\Admin\FoundItems;
 use App\Models\Barang;
 use App\Services\UserNotificationService;
 use App\Support\WorkflowStatus;
-use Illuminate\Support\Facades\Auth;
 
 class FoundItemVerificationService
 {
-    public function verify(Barang $barang, array $validated): void
+    /**
+     * @return array{ok:bool,message:string}
+     */
+    public function verify(Barang $barang, array $validated): array
     {
         $newStatus = $validated['status_laporan'] === 'approved'
             ? WorkflowStatus::REPORT_APPROVED
             : WorkflowStatus::REPORT_REJECTED;
         $oldStatus = (string) ($barang->status_laporan ?? '');
 
+        if (!$barang->canBeVerifiedByAdmin()) {
+            return ['ok' => false, 'message' => 'Barang temuan ini tidak dapat diverifikasi ulang karena sudah diproses.'];
+        }
+
         if ($oldStatus === $newStatus) {
-            return;
+            return ['ok' => true, 'message' => 'Status laporan tidak berubah.'];
         }
 
         $barang->update([
@@ -38,5 +44,7 @@ class FoundItemVerificationService
                 meta: ['barang_id' => $barang->id]
             );
         }
+
+        return ['ok' => true, 'message' => 'Verifikasi laporan barang temuan berhasil diperbarui.'];
     }
 }

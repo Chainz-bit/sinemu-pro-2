@@ -11,8 +11,15 @@ use Throwable;
 
 class FoundItemCommandService
 {
-    public function update(Barang $barang, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): void
+    /**
+     * @return array{ok:bool,message:string}
+     */
+    public function update(Barang $barang, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): array
     {
+        if (!$barang->canBeEditedByAdmin()) {
+            return ['ok' => false, 'message' => 'Barang temuan ini tidak dapat diedit karena sudah diproses.'];
+        }
+
         $payload = [
             'nama_barang' => $validated['nama_barang'],
             'kategori_id' => $validated['kategori_id'] ?? $barang->kategori_id,
@@ -78,5 +85,7 @@ class FoundItemCommandService
         if (!empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
         }
+
+        return ['ok' => true, 'message' => 'Data barang temuan berhasil diperbarui.'];
     }
 }

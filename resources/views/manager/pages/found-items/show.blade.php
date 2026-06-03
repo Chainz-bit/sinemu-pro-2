@@ -66,6 +66,9 @@
     $reportStatus = \App\Support\ReportStatusPresenter::key($barang->status_laporan ?? null);
     $reportStatusLabel = \App\Support\ReportStatusPresenter::label($reportStatus);
     $reportStatusClass = \App\Support\ReportStatusPresenter::cssClass($reportStatus);
+    $canVerifyReport = $barang->canBeVerifiedByAdmin();
+    $canUpdateItemStatus = $barang->canHaveStatusUpdatedByAdmin();
+    $manualStatusTargets = \App\Models\Barang::allowedManualStatusTargets();
     [$statusLabel, $statusClass] = $statusMap[$barang->status_barang] ?? ['UNKNOWN', 'status-diproses'];
     $petugasName = $barang->admin?->nama ?? $managerRoleLabel;
     $petugasEmail = $barang->admin?->email ?? 'Email tidak tersedia';
@@ -205,40 +208,56 @@
                     <div class="found-detail-panel-body">
                         <span class="status-chip {{ $reportStatusClass }}">{{ $reportStatusLabel }}</span>
 
-                        <div class="found-verify-box">
-                            <small>Verifikasi Laporan</small>
-                            <p>Tentukan apakah laporan ini layak ditampilkan di halaman publik.</p>
-                            <div class="found-verify-actions">
-                                <form method="POST" action="{{ manager_route('found-items.verify', $barang->id) }}" data-confirm-delete data-confirm-title="Setujui Laporan" data-confirm-message="Setujui laporan ini? Laporan akan bisa dipublikasikan ke Home." data-confirm-submit-label="Setujui" data-confirm-submit-variant="primary">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status_laporan" value="approved">
-                                    <button type="submit" class="filter-btn found-action-btn found-action-btn-primary">Setujui Laporan</button>
-                                </form>
-                                <form method="POST" action="{{ manager_route('found-items.verify', $barang->id) }}" data-confirm-delete data-confirm-title="Tolak Laporan" data-confirm-message="Tolak laporan ini? Laporan tidak akan tampil di Home." data-confirm-submit-label="Tolak" data-confirm-submit-variant="danger">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status_laporan" value="rejected">
-                                    <button type="submit" class="filter-btn found-action-btn found-action-btn-ghost">Tolak Laporan</button>
-                                </form>
+                        @if($canVerifyReport)
+                            <div class="found-verify-box">
+                                <small>Verifikasi Laporan</small>
+                                <p>Tentukan apakah laporan ini layak ditampilkan di halaman publik.</p>
+                                <div class="found-verify-actions">
+                                    <form method="POST" action="{{ manager_route('found-items.verify', $barang->id) }}" data-confirm-delete data-confirm-title="Setujui Laporan" data-confirm-message="Setujui laporan ini? Laporan akan bisa dipublikasikan ke Home." data-confirm-submit-label="Setujui" data-confirm-submit-variant="primary">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status_laporan" value="approved">
+                                        <button type="submit" class="filter-btn found-action-btn found-action-btn-primary">Setujui Laporan</button>
+                                    </form>
+                                    <form method="POST" action="{{ manager_route('found-items.verify', $barang->id) }}" data-confirm-delete data-confirm-title="Tolak Laporan" data-confirm-message="Tolak laporan ini? Laporan tidak akan tampil di Home." data-confirm-submit-label="Tolak" data-confirm-submit-variant="danger">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status_laporan" value="rejected">
+                                        <button type="submit" class="filter-btn found-action-btn found-action-btn-ghost">Tolak Laporan</button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="found-verify-box">
+                                <small>Verifikasi Laporan</small>
+                                <p>Barang temuan ini sudah diproses dan tidak dapat diverifikasi ulang.</p>
+                            </div>
+                        @endif
 
                         <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
 
-                        <form method="POST" action="{{ manager_route('found-items.update-status', $barang->id) }}" class="status-edit-form" id="status-update-form" data-confirm-delete data-confirm-title="Konfirmasi Perbarui Status" data-confirm-submit-label="Perbarui" data-confirm-submit-variant="primary" data-confirm-message="Perbarui status barang temuan ini? Pastikan data sudah sesuai sebelum menyimpan.">
-                            @csrf
-                            @method('PATCH')
-                            <label for="status_barang" class="status-form-label">Status Baru</label>
-                            <select name="status_barang" id="status_barang" class="form-input status-form-input" data-custom-select>
-                                @foreach($statusOptionLabels as $statusValue => $statusText)
-                                    <option value="{{ $statusValue }}" @selected(old('status_barang', $barang->status_barang) === $statusValue)>{{ $statusText }}</option>
-                                @endforeach
-                            </select>
+                        @if($canUpdateItemStatus)
+                            <form method="POST" action="{{ manager_route('found-items.update-status', $barang->id) }}" class="status-edit-form" id="status-update-form" data-confirm-delete data-confirm-title="Konfirmasi Perbarui Status" data-confirm-submit-label="Perbarui" data-confirm-submit-variant="primary" data-confirm-message="Perbarui status barang temuan ini? Pastikan data sudah sesuai sebelum menyimpan.">
+                                @csrf
+                                @method('PATCH')
+                                <label for="status_barang" class="status-form-label">Status Baru</label>
+                                <select name="status_barang" id="status_barang" class="form-input status-form-input" data-custom-select>
+                                    @foreach($statusOptionLabels as $statusValue => $statusText)
+                                        @if(in_array($statusValue, $manualStatusTargets, true))
+                                            <option value="{{ $statusValue }}" @selected(old('status_barang', $barang->status_barang) === $statusValue)>{{ $statusText }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
 
-                            <label for="catatan_status" class="status-form-label">Catatan (Opsional)</label>
-                            <textarea name="catatan_status" id="catatan_status" class="form-input form-textarea-sm status-form-input" placeholder="Contoh: Barang sudah diserahkan ke pemilik.">{{ old('catatan_status') }}</textarea>
-                        </form>
+                                <label for="catatan_status" class="status-form-label">Catatan (Opsional)</label>
+                                <textarea name="catatan_status" id="catatan_status" class="form-input form-textarea-sm status-form-input" placeholder="Contoh: Barang dicek dan tetap tersedia.">{{ old('catatan_status') }}</textarea>
+                            </form>
+                        @else
+                            <div class="found-verify-box">
+                                <small>Update Status Barang</small>
+                                <p>Status barang tidak dapat diubah karena sudah masuk proses klaim atau belum siap diproses.</p>
+                            </div>
+                        @endif
                     </div>
                 </article>
 
@@ -424,9 +443,11 @@
             @endif
         </article>
 
-        <div class="found-detail-bottom-actions">
-            <button type="submit" form="status-update-form" class="filter-btn found-action-btn found-action-btn-primary" disabled>Perbarui Status</button>
-        </div>
+        @if($canUpdateItemStatus)
+            <div class="found-detail-bottom-actions">
+                <button type="submit" form="status-update-form" class="filter-btn found-action-btn found-action-btn-primary" disabled>Perbarui Status</button>
+            </div>
+        @endif
     </section>
 
     <script>

@@ -154,20 +154,24 @@
                                 </button>
                                 <div class="row-menu" id="menu-found-{{ $index }}">
                                     <a href="{{ manager_route('found-items.show', $item->id) }}">Lihat Detail</a>
-                                    <a href="{{ manager_route('found-items.edit', $item->id) }}">Edit Data</a>
-                                    @if(!($item->tampil_di_home ?? false))
+                                    @if($item->canBeEditedByAdmin())
+                                        <a href="{{ manager_route('found-items.edit', $item->id) }}">Edit Data</a>
+                                    @endif
+                                    @if($item->canBePublishedToHomeByAdmin())
                                         <form method="POST" action="{{ manager_route('dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $item->id]) }}">
                                             @csrf
-                                            <button type="submit" class="menu-submit">Upload</button>
+                                            <button type="submit" class="menu-submit">Tampilkan di Home</button>
                                         </form>
-                                    @else
-                                        <span class="row-menu-note">Sudah di-upload</span>
+                                    @elseif($item->tampil_di_home ?? false)
+                                        <span class="row-menu-note">Sudah tampil di Home</span>
                                     @endif
-                                    <form method="POST" action="{{ manager_route('found-items.destroy', $item->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus laporan ini?">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="menu-submit danger">Hapus</button>
-                                    </form>
+                                    @if($item->canBeDeletedByAdmin())
+                                        <form method="POST" action="{{ manager_route('found-items.destroy', $item->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus laporan ini?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="menu-submit danger">Hapus</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -7,12 +7,14 @@ use App\Models\Barang;
 use App\Models\Klaim;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
+use App\Models\Pencocokan;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Models\Wilayah;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminDashboardTest extends TestCase
@@ -270,6 +272,130 @@ class AdminDashboardTest extends TestCase
         $this->assertFalse((bool) $foundItem->fresh()?->tampil_di_home);
     }
 
+    public function test_dashboard_can_publish_eligible_found_item_to_home(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+        $foundItem = $this->createFoundItemForPublish($admin, $user, $kategori);
+
+        $response = $this->from(route('admin.found-items'))
+            ->actingAs($admin, 'admin')
+            ->post(route('admin.dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $foundItem->id]));
+
+        $response->assertRedirect(route('admin.found-items'));
+        $response->assertSessionHas('status', 'Laporan barang temuan berhasil ditampilkan di Home.');
+        $this->assertTrue((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
+    public function test_dashboard_can_publish_approved_found_item_with_empty_item_status_to_home(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+        $foundItem = $this->createFoundItemForPublish($admin, $user, $kategori, [
+            'status_barang' => '',
+        ]);
+
+        $this->from(route('admin.found-items'))
+            ->actingAs($admin, 'admin')
+            ->post(route('admin.dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $foundItem->id]))
+            ->assertRedirect(route('admin.found-items'))
+            ->assertSessionHas('status', 'Laporan barang temuan berhasil ditampilkan di Home.');
+
+        $this->assertTrue((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
+    #[DataProvider('blockedFoundItemPublishStates')]
+    public function test_dashboard_cannot_publish_locked_found_item_to_home(array $overrides): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+        $foundItem = $this->createFoundItemForPublish($admin, $user, $kategori, $overrides);
+
+        $response = $this->from(route('admin.found-items'))
+            ->actingAs($admin, 'admin')
+            ->post(route('admin.dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $foundItem->id]));
+
+        $response->assertRedirect(route('admin.found-items'));
+        $response->assertSessionHas('error', 'Barang temuan ini tidak dapat ditampilkan di Home karena sudah diproses atau tidak tersedia.');
+        $this->assertFalse((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
+    public function test_dashboard_cannot_publish_found_item_with_claim_to_home(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+        $lostReport = $this->createLostReportForPublish($admin, $user);
+        $foundItem = $this->createFoundItemForPublish($admin, $user, $kategori);
+
+        Klaim::query()->create([
+            'laporan_hilang_id' => $lostReport->id,
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'bukti_foto' => ['verifikasi-klaim/2026/04/bukti-publish.jpg'],
+        ]);
+
+        $this->from(route('admin.found-items'))
+            ->actingAs($admin, 'admin')
+            ->post(route('admin.dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $foundItem->id]))
+            ->assertRedirect(route('admin.found-items'))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat ditampilkan di Home karena sudah diproses atau tidak tersedia.');
+
+        $this->assertFalse((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
+    public function test_dashboard_cannot_publish_found_item_with_matching_to_home(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+        $lostReport = $this->createLostReportForPublish($admin, $user);
+        $foundItem = $this->createFoundItemForPublish($admin, $user, $kategori);
+
+        Pencocokan::query()->create([
+            'laporan_hilang_id' => $lostReport->id,
+            'barang_id' => $foundItem->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'catatan' => 'Barang temuan sudah masuk pencocokan.',
+            'matched_at' => now(),
+        ]);
+
+        $this->from(route('admin.found-items'))
+            ->actingAs($admin, 'admin')
+            ->post(route('admin.dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $foundItem->id]))
+            ->assertRedirect(route('admin.found-items'))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat ditampilkan di Home karena sudah diproses atau tidak tersedia.');
+
+        $this->assertFalse((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
+    public function test_dashboard_cannot_publish_found_item_outside_admin_region(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Publish Lain',
+            'lat' => -6.52,
+            'lng' => 108.52,
+        ]);
+        $otherAdmin = $this->createScopedAdmin($otherRegion, 'publish-other');
+        $foundItem = $this->createFoundItemForPublish($otherAdmin, $user, $kategori);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.dashboard.reports.publish-home', ['type' => 'temuan', 'id' => $foundItem->id]))
+            ->assertForbidden();
+
+        $this->assertFalse((bool) $foundItem->fresh()?->tampil_di_home);
+    }
+
     public function test_dashboard_quick_actions_cannot_update_lost_reports_outside_region(): void
     {
         $admin = $this->createAdmin();
@@ -455,6 +581,51 @@ class AdminDashboardTest extends TestCase
         $response->assertDontSee('Barang Wilayah Lain');
     }
 
+    /**
+     * @return array<string,array{0:array<string,mixed>}>
+     */
+    public static function blockedFoundItemPublishStates(): array
+    {
+        return [
+            'pending report' => [[
+                'status_laporan' => 'pending',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ]],
+            'submitted report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ]],
+            'menunggu report' => [[
+                'status_laporan' => 'menunggu',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ]],
+            'rejected report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_REJECTED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ]],
+            'matched report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ]],
+            'claim in progress item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            ]],
+            'claimed item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            ]],
+            'returned item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_RETURNED,
+            ]],
+            'completed report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_COMPLETED,
+                'status_barang' => WorkflowStatus::FOUND_RETURNED,
+            ]],
+        ];
+    }
+
     private function extractTableBody(string $content): string
     {
         $start = strpos($content, '<tbody>');
@@ -465,6 +636,44 @@ class AdminDashboardTest extends TestCase
         }
 
         return substr($content, $start, $end - $start);
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function createFoundItemForPublish(Admin $admin, User $user, Kategori $kategori, array $overrides = []): Barang
+    {
+        return Barang::query()->create(array_merge([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Kunci Publish',
+            'deskripsi' => 'Ditemukan di pos keamanan.',
+            'lokasi_ditemukan' => 'Pos Keamanan',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ], $overrides));
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function createLostReportForPublish(Admin $admin, User $user, array $overrides = []): LaporanBarangHilang
+    {
+        return LaporanBarangHilang::query()->create(array_merge([
+            'user_id' => $user->id,
+            'region_id' => $admin->region_id,
+            'nama_barang' => 'Kunci Hilang Publish',
+            'lokasi_hilang' => 'Pos Keamanan',
+            'tanggal_hilang' => now()->subDay()->toDateString(),
+            'keterangan' => 'Laporan pendamping untuk pengujian publish.',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ], $overrides));
     }
 
     private function createUser(): User

@@ -205,14 +205,13 @@ class ReportCommandService
         if (!Schema::hasColumn('barangs', 'tampil_di_home')) {
             return ['status' => false, 'message' => 'Kolom tampil_di_home belum tersedia pada barang temuan.'];
         }
-        if (Schema::hasColumn('barangs', 'status_laporan')
-            && (string) $report->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
-            return ['status' => false, 'message' => 'Laporan harus disetujui ' . \App\Support\RoleLabels::managerLower() . ' sebelum tampil di Home.'];
+        if (!$report->canBePublishedToHomeByAdmin()) {
+            return ['status' => false, 'message' => 'Barang temuan ini tidak dapat ditampilkan di Home karena sudah diproses atau tidak tersedia.'];
         }
 
         $report->update(['tampil_di_home' => true]);
 
-        return ['status' => true, 'message' => 'Laporan barang temuan berhasil diupload ke Home.'];
+        return ['status' => true, 'message' => 'Laporan barang temuan berhasil ditampilkan di Home.'];
     }
 
     /**

@@ -59,6 +59,27 @@ class AdminItemEditTest extends TestCase
         $this->assertSame('2026-04-20', $barang?->tanggal_ditemukan);
     }
 
+    #[DataProvider('editableFoundReportStatuses')]
+    public function test_admin_can_update_editable_found_item_statuses(string $status): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => $status,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update', $barang), $this->validFoundItemPayload($kategori))
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('status', 'Data barang temuan berhasil diperbarui.');
+
+        $this->assertSame('Laptop ASUS', $barang->fresh()?->nama_barang);
+    }
+
     public function test_found_item_update_validates_required_fields(): void
     {
         $admin = $this->createAdmin();
@@ -80,6 +101,164 @@ class AdminItemEditTest extends TestCase
             'lokasi_ditemukan',
             'tanggal_ditemukan',
         ]);
+
+        $this->assertSame('Tas Abu-abu', $barang->fresh()?->nama_barang);
+    }
+
+    #[DataProvider('lockedFoundItemStates')]
+    public function test_locked_found_item_edit_page_is_rejected(array $overrides): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, $overrides);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items.edit', $barang))
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
+    }
+
+    #[DataProvider('lockedFoundItemStates')]
+    public function test_locked_found_item_update_is_rejected_without_changing_fields(array $overrides): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, $overrides);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update', $barang), $this->validFoundItemPayload($kategori))
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
+
+        $barang = $barang->fresh();
+
+        $this->assertSame('Tas Abu-abu', $barang?->nama_barang);
+        $this->assertSame('Koridor Kampus', $barang?->lokasi_ditemukan);
+        $this->assertSame('2026-04-17', $barang?->tanggal_ditemukan);
+        $this->assertSame('Ditemukan di lorong kampus.', $barang?->deskripsi);
+    }
+
+    public function test_locked_found_item_update_does_not_replace_or_delete_photo(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $originalPhoto = 'barang-temuan/2026/04/original.jpg';
+        Storage::disk('public')->put($originalPhoto, 'foto asli');
+
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'foto_barang' => $originalPhoto,
+            'tampil_di_home' => false,
+        ]);
+
+        $payload = array_merge($this->validFoundItemPayload($kategori), [
+            'foto_barang' => UploadedFile::fake()->createWithContent(
+                'pengganti.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+            ),
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update', $barang), $payload)
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
+
+        $barang = $barang->fresh();
+        $files = Storage::disk('public')->allFiles('barang-temuan');
+        sort($files);
+
+        $this->assertSame($originalPhoto, $barang?->foto_barang);
+        Storage::disk('public')->assertExists($originalPhoto);
+        $this->assertSame([$originalPhoto], $files);
+    }
+
+    public function test_approved_found_item_with_claim_cannot_be_edited(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->createClaim($admin, $user, $laporanBarangHilang, $barang);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update', $barang), $this->validFoundItemPayload($kategori))
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
+
+        $this->assertSame('Tas Abu-abu', $barang->fresh()?->nama_barang);
+    }
+
+    public function test_approved_found_item_with_matching_cannot_be_edited(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        Pencocokan::query()->create([
+            'laporan_hilang_id' => $laporanBarangHilang->id,
+            'barang_id' => $barang->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'catatan' => 'Barang temuan terkait pencocokan.',
+            'matched_at' => now(),
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update', $barang), $this->validFoundItemPayload($kategori))
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
+
+        $this->assertSame('Tas Abu-abu', $barang->fresh()?->nama_barang);
+    }
+
+    public function test_found_item_visible_on_home_cannot_be_edited(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items.edit', $barang))
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update', $barang), $this->validFoundItemPayload($kategori))
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
 
         $this->assertSame('Tas Abu-abu', $barang->fresh()?->nama_barang);
     }
@@ -324,6 +503,103 @@ class AdminItemEditTest extends TestCase
             ->assertDontSee('Edit Data');
     }
 
+    public function test_found_item_index_hides_edit_data_menu_for_locked_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items'))
+            ->assertOk()
+            ->assertSee('Lihat Detail')
+            ->assertDontSee('Edit Data');
+    }
+
+    public function test_found_item_index_shows_edit_data_menu_for_editable_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items'))
+            ->assertOk()
+            ->assertSee('Lihat Detail')
+            ->assertSee('Edit Data');
+    }
+
+    public function test_found_item_index_shows_publish_home_menu_for_eligible_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items'))
+            ->assertOk()
+            ->assertSee('Tampilkan di Home')
+            ->assertDontSee('Upload');
+    }
+
+    public function test_found_item_index_hides_publish_home_menu_for_locked_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items'))
+            ->assertOk()
+            ->assertSee('Lihat Detail')
+            ->assertDontSee('Tampilkan di Home')
+            ->assertDontSee('Upload');
+    }
+
+    public function test_found_item_index_shows_home_note_without_publish_action_for_published_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items'))
+            ->assertOk()
+            ->assertSee('Sudah tampil di Home')
+            ->assertDontSee('Tampilkan di Home')
+            ->assertDontSee('Upload');
+    }
+
     #[DataProvider('lostItemIndexActionMenuProvider')]
     public function test_lost_item_index_action_menu_visibility_matches_report_status(
         string $status,
@@ -383,6 +659,35 @@ class AdminItemEditTest extends TestCase
         $this->assertSame('Dompet Cokelat', $laporanBarangHilang->fresh()?->nama_barang);
     }
 
+    public function test_admin_from_other_region_cannot_edit_found_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Edit Temuan Lain',
+            'lat' => -6.41,
+            'lng' => 108.41,
+        ]);
+        $otherAdmin = $this->createAdminForRegion($otherRegion, 'found-other-region');
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->get(route('admin.found-items.edit', $barang))
+            ->assertForbidden();
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->patch(route('admin.found-items.update', $barang), $this->validFoundItemPayload($kategori))
+            ->assertForbidden();
+
+        $this->assertSame($admin->region_id, $barang->fresh()?->region_id);
+        $this->assertSame('Tas Abu-abu', $barang->fresh()?->nama_barang);
+    }
+
     /**
      * @return array<string,array{0:string}>
      */
@@ -393,6 +698,63 @@ class AdminItemEditTest extends TestCase
             'claimed' => [WorkflowStatus::REPORT_CLAIMED],
             'completed' => [WorkflowStatus::REPORT_COMPLETED],
             'rejected' => [WorkflowStatus::REPORT_REJECTED],
+        ];
+    }
+
+    /**
+     * @return array<string,array{0:string}>
+     */
+    public static function editableFoundReportStatuses(): array
+    {
+        return [
+            'pending' => ['pending'],
+            'submitted' => [WorkflowStatus::REPORT_SUBMITTED],
+            'menunggu' => ['menunggu'],
+            'approved tersedia' => [WorkflowStatus::REPORT_APPROVED],
+        ];
+    }
+
+    /**
+     * @return array<string,array{0:array<string,mixed>}>
+     */
+    public static function lockedFoundItemStates(): array
+    {
+        return [
+            'matched report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+            'dalam proses klaim' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+                'tampil_di_home' => false,
+            ]],
+            'sudah diklaim' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+                'tampil_di_home' => false,
+            ]],
+            'completed report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_COMPLETED,
+                'status_barang' => WorkflowStatus::FOUND_RETURNED,
+                'tampil_di_home' => false,
+            ]],
+            'selesai legacy item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => 'selesai',
+                'tampil_di_home' => false,
+            ]],
+            'rejected report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_REJECTED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+            'unknown report status' => [[
+                'status_laporan' => 'arsip',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
         ];
     }
 
@@ -462,9 +824,12 @@ class AdminItemEditTest extends TestCase
         ];
     }
 
-    private function createFoundItem(Admin $admin, User $user, Kategori $kategori): Barang
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function createFoundItem(Admin $admin, User $user, Kategori $kategori, array $overrides = []): Barang
     {
-        return Barang::query()->create([
+        return Barang::query()->create(array_merge([
             'admin_id' => $admin->id,
             'region_id' => $admin->region_id,
             'user_id' => $user->id,
@@ -483,8 +848,8 @@ class AdminItemEditTest extends TestCase
             'waktu_ditemukan' => '08:00',
             'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
             'status_laporan' => WorkflowStatus::REPORT_APPROVED,
-            'tampil_di_home' => true,
-        ]);
+            'tampil_di_home' => false,
+        ], $overrides));
     }
 
     private function createClaim(Admin $admin, User $user, LaporanBarangHilang $laporanBarangHilang, Barang $barang): Klaim

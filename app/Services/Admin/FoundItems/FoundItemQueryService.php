@@ -17,7 +17,8 @@ class FoundItemQueryService
     public function buildIndexQuery(FoundItemIndexRequest $request): array
     {
         $query = Barang::query()
-            ->with(['kategori', 'admin:id,nama']);
+            ->with(['kategori', 'admin:id,nama'])
+            ->withCount(['klaims', 'pencocokans']);
 
         $this->applyAdminRegion($query);
 

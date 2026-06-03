@@ -8,6 +8,7 @@ use App\Models\BarangStatusHistory;
 use App\Models\Kategori;
 use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
+use App\Models\Pencocokan;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Models\UserNotification;
@@ -45,6 +46,68 @@ class AdminItemWorkflowTest extends TestCase
 
         $this->assertSame(WorkflowStatus::REPORT_APPROVED, $barang?->status_laporan);
         $this->assertTrue((bool) $barang?->tampil_di_home);
+        $this->assertSame($admin->id, $barang?->verified_by_admin_id);
+        $this->assertNotNull($barang?->verified_at);
+    }
+
+    #[DataProvider('verifiableFoundReportStatuses')]
+    public function test_admin_can_approve_verifiable_found_item_report_statuses(string $currentStatus): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => $currentStatus,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'verified_by_admin_id' => null,
+            'verified_at' => null,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.verify', $barang), [
+                'status_laporan' => 'approved',
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('status', 'Verifikasi laporan barang temuan berhasil diperbarui.');
+
+        $barang = $barang->fresh();
+
+        $this->assertSame(WorkflowStatus::REPORT_APPROVED, $barang?->status_laporan);
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang?->status_barang);
+        $this->assertTrue((bool) $barang?->tampil_di_home);
+        $this->assertSame($admin->id, $barang?->verified_by_admin_id);
+        $this->assertNotNull($barang?->verified_at);
+    }
+
+    #[DataProvider('verifiableFoundReportStatuses')]
+    public function test_admin_can_reject_verifiable_found_item_report_statuses(string $currentStatus): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => $currentStatus,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'verified_by_admin_id' => null,
+            'verified_at' => null,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.verify', $barang), [
+                'status_laporan' => 'rejected',
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('status', 'Verifikasi laporan barang temuan berhasil diperbarui.');
+
+        $barang = $barang->fresh();
+
+        $this->assertSame(WorkflowStatus::REPORT_REJECTED, $barang?->status_laporan);
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang?->status_barang);
+        $this->assertFalse((bool) $barang?->tampil_di_home);
         $this->assertSame($admin->id, $barang?->verified_by_admin_id);
         $this->assertNotNull($barang?->verified_at);
     }
@@ -99,31 +162,217 @@ class AdminItemWorkflowTest extends TestCase
         $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang->fresh()?->verified_at)->toDateTimeString());
     }
 
-    public function test_admin_can_update_found_item_status_and_record_history(): void
+    #[DataProvider('processedFoundItemVerificationStates')]
+    public function test_processed_found_item_report_cannot_be_verified_again(array $overrides, string $targetStatus): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $verifiedAt = now()->subDay()->startOfSecond();
+        $barang = $this->createFoundItem($admin, $user, $kategori, array_merge([
+            'verified_by_admin_id' => $admin->id,
+            'verified_at' => $verifiedAt,
+            'tampil_di_home' => true,
+        ], $overrides));
+        $originalReportStatus = (string) $barang->status_laporan;
+        $originalItemStatus = (string) $barang->status_barang;
+        $originalHomeStatus = (bool) $barang->tampil_di_home;
+
+        UserNotification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'verifikasi_laporan_temuan',
+            'title' => 'Verifikasi Laporan Temuan',
+            'message' => 'Notifikasi verifikasi awal.',
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.verify', $barang), [
+                'status_laporan' => $targetStatus,
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diverifikasi ulang karena sudah diproses.');
+
+        $barang = $barang->fresh();
+
+        $this->assertSame($originalReportStatus, $barang?->status_laporan);
+        $this->assertSame($originalItemStatus, $barang?->status_barang);
+        $this->assertSame($admin->id, $barang?->verified_by_admin_id);
+        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang?->verified_at)->toDateTimeString());
+        $this->assertSame($originalHomeStatus, (bool) $barang?->tampil_di_home);
+        $this->assertSame(1, UserNotification::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_found_item_with_claim_cannot_be_verified_again(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $verifiedAt = now()->subDay()->startOfSecond();
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'verified_by_admin_id' => $admin->id,
+            'verified_at' => $verifiedAt,
+            'tampil_di_home' => false,
+        ]);
+
+        Klaim::query()->create([
+            'laporan_hilang_id' => $laporanBarangHilang->id,
+            'barang_id' => $barang->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'bukti_foto' => ['verifikasi-klaim/2026/04/bukti-found-verify.jpg'],
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.verify', $barang), [
+                'status_laporan' => 'approved',
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diverifikasi ulang karena sudah diproses.');
+
+        $barang = $barang->fresh();
+
+        $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $barang?->status_laporan);
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang?->status_barang);
+        $this->assertSame($admin->id, $barang?->verified_by_admin_id);
+        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang?->verified_at)->toDateTimeString());
+        $this->assertFalse((bool) $barang?->tampil_di_home);
+        $this->assertSame(0, UserNotification::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_found_item_with_matching_cannot_be_verified_again(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $verifiedAt = now()->subDay()->startOfSecond();
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'verified_by_admin_id' => $admin->id,
+            'verified_at' => $verifiedAt,
+            'tampil_di_home' => false,
+        ]);
+
+        Pencocokan::query()->create([
+            'laporan_hilang_id' => $laporanBarangHilang->id,
+            'barang_id' => $barang->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'catatan' => 'Barang temuan sudah punya pencocokan.',
+            'matched_at' => now(),
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.verify', $barang), [
+                'status_laporan' => 'approved',
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Barang temuan ini tidak dapat diverifikasi ulang karena sudah diproses.');
+
+        $barang = $barang->fresh();
+
+        $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $barang?->status_laporan);
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang?->status_barang);
+        $this->assertSame($admin->id, $barang?->verified_by_admin_id);
+        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang?->verified_at)->toDateTimeString());
+        $this->assertFalse((bool) $barang?->tampil_di_home);
+        $this->assertSame(0, UserNotification::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_found_item_detail_hides_verification_buttons_after_report_processed(): void
     {
         $admin = $this->createAdmin();
         $user = $this->createUser();
         $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
         $barang = $this->createFoundItem($admin, $user, $kategori, [
-            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'verified_by_admin_id' => $admin->id,
+            'verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items.show', $barang))
+            ->assertOk()
+            ->assertSee('Barang temuan ini sudah diproses dan tidak dapat diverifikasi ulang.')
+            ->assertDontSee('Setujui Laporan')
+            ->assertDontSee('Tolak Laporan');
+    }
+
+    public function test_admin_from_other_region_cannot_verify_found_report(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'verified_by_admin_id' => null,
+            'verified_at' => null,
+            'tampil_di_home' => false,
+        ]);
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Lain Temuan Workflow',
+            'lat' => -6.42,
+            'lng' => 108.42,
+        ]);
+        $otherAdmin = $this->createAdminForRegion($otherRegion, 'found-other-region');
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->patch(route('admin.found-items.verify', $barang), [
+                'status_laporan' => 'approved',
+            ])
+            ->assertForbidden();
+
+        $barang = $barang->fresh();
+
+        $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $barang?->status_laporan);
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang?->status_barang);
+        $this->assertNull($barang?->verified_by_admin_id);
+        $this->assertNull($barang?->verified_at);
+        $this->assertFalse((bool) $barang?->tampil_di_home);
+    }
+
+    public function test_admin_can_update_eligible_found_item_status_to_allowed_manual_target(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => '',
+            'tampil_di_home' => false,
         ]);
 
         $response = $this->actingAs($admin, 'admin')
             ->patch(route('admin.found-items.update-status', $barang), [
-                'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
-                'catatan_status' => 'Sedang menunggu proses klaim pengguna.',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'catatan_status' => 'Barang dicek dan tetap tersedia.',
             ]);
 
         $response->assertRedirect(route('admin.found-items.show', $barang));
         $response->assertSessionHas('status', 'Perubahan status berhasil disimpan.');
 
-        $this->assertSame(WorkflowStatus::FOUND_CLAIM_IN_PROGRESS, $barang->fresh()?->status_barang);
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang->fresh()?->status_barang);
         $this->assertDatabaseHas((new BarangStatusHistory())->getTable(), [
             'barang_id' => $barang->id,
             'admin_id' => $admin->id,
-            'status_lama' => WorkflowStatus::FOUND_AVAILABLE,
-            'status_baru' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
-            'catatan' => 'Sedang menunggu proses klaim pengguna.',
+            'status_lama' => '',
+            'status_baru' => WorkflowStatus::FOUND_AVAILABLE,
+            'catatan' => 'Barang dicek dan tetap tersedia.',
         ]);
     }
 
@@ -143,6 +392,204 @@ class AdminItemWorkflowTest extends TestCase
         $response->assertRedirect(route('admin.found-items.show', $barang));
         $response->assertSessionHasErrors('status_barang');
         $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang->fresh()?->status_barang);
+    }
+
+    #[DataProvider('lockedFoundItemStatusUpdateStates')]
+    public function test_locked_found_item_status_update_is_rejected(array $overrides): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, $overrides);
+        $originalStatus = (string) $barang->status_barang;
+
+        UserNotification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'status_barang_temuan',
+            'title' => 'Status Barang Temuan Diperbarui',
+            'message' => 'Notifikasi lama.',
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update-status', $barang), [
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'catatan_status' => 'Percobaan regresi status.',
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Status barang tidak dapat diubah karena sudah masuk proses klaim atau belum siap diproses.');
+
+        $this->assertSame($originalStatus, $barang->fresh()?->status_barang);
+        $this->assertSame(0, BarangStatusHistory::query()->where('barang_id', $barang->id)->count());
+        $this->assertSame(1, UserNotification::query()->where('user_id', $user->id)->count());
+    }
+
+    #[DataProvider('manualFoundItemWorkflowTargets')]
+    public function test_claim_workflow_status_targets_cannot_be_set_manually(string $targetStatus): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update-status', $barang), [
+                'status_barang' => $targetStatus,
+                'catatan_status' => 'Percobaan status workflow klaim.',
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Status barang tidak dapat diubah karena sudah masuk proses klaim atau belum siap diproses.');
+
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang->fresh()?->status_barang);
+        $this->assertSame(0, BarangStatusHistory::query()->where('barang_id', $barang->id)->count());
+        $this->assertSame(0, UserNotification::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_found_item_with_claim_cannot_update_status_manually(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        Klaim::query()->create([
+            'laporan_hilang_id' => $laporanBarangHilang->id,
+            'barang_id' => $barang->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'bukti_foto' => ['verifikasi-klaim/2026/04/bukti-status.jpg'],
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update-status', $barang), [
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Status barang tidak dapat diubah karena sudah masuk proses klaim atau belum siap diproses.');
+
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang->fresh()?->status_barang);
+        $this->assertSame(0, BarangStatusHistory::query()->where('barang_id', $barang->id)->count());
+        $this->assertSame(0, UserNotification::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_found_item_with_matching_cannot_update_status_manually(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        Pencocokan::query()->create([
+            'laporan_hilang_id' => $laporanBarangHilang->id,
+            'barang_id' => $barang->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'catatan' => 'Pencocokan aktif.',
+            'matched_at' => now(),
+        ]);
+
+        $this->from(route('admin.found-items.show', $barang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.found-items.update-status', $barang), [
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ])
+            ->assertRedirect(route('admin.found-items.show', $barang))
+            ->assertSessionHas('error', 'Status barang tidak dapat diubah karena sudah masuk proses klaim atau belum siap diproses.');
+
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang->fresh()?->status_barang);
+        $this->assertSame(0, BarangStatusHistory::query()->where('barang_id', $barang->id)->count());
+        $this->assertSame(0, UserNotification::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_found_item_detail_hides_status_form_for_locked_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items.show', $barang))
+            ->assertOk()
+            ->assertSee('Status barang tidak dapat diubah karena sudah masuk proses klaim atau belum siap diproses.')
+            ->assertDontSee('Status Baru')
+            ->assertDontSee('Perbarui Status');
+    }
+
+    public function test_found_item_detail_shows_only_allowed_manual_status_targets_for_eligible_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.found-items.show', $barang))
+            ->assertOk()
+            ->assertSee('Status Baru')
+            ->assertSee('Tersedia')
+            ->assertDontSee('Dalam Proses Klaim')
+            ->assertDontSee('Sudah Diklaim')
+            ->assertDontSee('Sudah Dikembalikan');
+    }
+
+    public function test_admin_from_other_region_cannot_update_found_item_status(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $barang = $this->createFoundItem($admin, $user, $kategori, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            'tampil_di_home' => false,
+        ]);
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Status Temuan Lain',
+            'lat' => -6.43,
+            'lng' => 108.43,
+        ]);
+        $otherAdmin = $this->createAdminForRegion($otherRegion, 'found-status-other');
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->patch(route('admin.found-items.update-status', $barang), [
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ])
+            ->assertForbidden();
+
+        $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang->fresh()?->status_barang);
+        $this->assertSame(0, BarangStatusHistory::query()->where('barang_id', $barang->id)->count());
     }
 
     public function test_lost_item_update_status_returns_error_when_no_claim_exists(): void
@@ -341,6 +788,131 @@ class AdminItemWorkflowTest extends TestCase
         $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $laporanBarangHilang?->status_laporan);
         $this->assertNull($laporanBarangHilang?->verified_by_admin_id);
         $this->assertNull($laporanBarangHilang?->verified_at);
+    }
+
+    /**
+     * @return array<string,array{0:string}>
+     */
+    public static function verifiableFoundReportStatuses(): array
+    {
+        return [
+            'legacy empty' => [''],
+            'pending' => ['pending'],
+            'submitted' => [WorkflowStatus::REPORT_SUBMITTED],
+            'menunggu' => ['menunggu'],
+        ];
+    }
+
+    /**
+     * @return array<string,array{0:array<string,mixed>,1:string}>
+     */
+    public static function processedFoundItemVerificationStates(): array
+    {
+        return [
+            'approved' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ], 'rejected'],
+            'rejected' => [[
+                'status_laporan' => WorkflowStatus::REPORT_REJECTED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ], 'approved'],
+            'matched report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ], 'rejected'],
+            'claimed report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_CLAIMED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            ], 'rejected'],
+            'completed report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_COMPLETED,
+                'status_barang' => WorkflowStatus::FOUND_RETURNED,
+            ], 'rejected'],
+            'claim in progress item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            ], 'approved'],
+            'claimed item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            ], 'approved'],
+            'returned item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+                'status_barang' => WorkflowStatus::FOUND_RETURNED,
+            ], 'approved'],
+            'unknown report status' => [[
+                'status_laporan' => 'arsip',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+            ], 'approved'],
+        ];
+    }
+
+    /**
+     * @return array<string,array{0:string}>
+     */
+    public static function manualFoundItemWorkflowTargets(): array
+    {
+        return [
+            'claim in progress' => [WorkflowStatus::FOUND_CLAIM_IN_PROGRESS],
+            'claimed' => [WorkflowStatus::FOUND_CLAIMED],
+            'returned' => [WorkflowStatus::FOUND_RETURNED],
+        ];
+    }
+
+    /**
+     * @return array<string,array{0:array<string,mixed>}>
+     */
+    public static function lockedFoundItemStatusUpdateStates(): array
+    {
+        return [
+            'pending report' => [[
+                'status_laporan' => 'pending',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+            'submitted report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+            'menunggu report' => [[
+                'status_laporan' => 'menunggu',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+            'rejected report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_REJECTED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+            'matched report' => [[
+                'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+            'claim in progress item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+                'tampil_di_home' => false,
+            ]],
+            'claimed item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+                'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+                'tampil_di_home' => false,
+            ]],
+            'returned item' => [[
+                'status_laporan' => WorkflowStatus::REPORT_COMPLETED,
+                'status_barang' => WorkflowStatus::FOUND_RETURNED,
+                'tampil_di_home' => false,
+            ]],
+            'unknown report status' => [[
+                'status_laporan' => 'arsip',
+                'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+                'tampil_di_home' => false,
+            ]],
+        ];
     }
 
     /**

@@ -20,6 +20,7 @@ class DashboardFoundFeedService
             'lokasi_ditemukan',
             'tanggal_ditemukan',
             'status_barang',
+            'status_laporan',
             'lokasi_pengambilan',
             'alamat_pengambilan',
             'penanggung_jawab_pengambilan',
@@ -40,6 +41,7 @@ class DashboardFoundFeedService
         $query = Barang::query()
             ->with('admin:id,nama')
             ->select($foundSelectColumns)
+            ->withCount(['klaims', 'pencocokans'])
             ->orderByDesc('updated_at');
 
         $admin = \App\Support\ManagerPortal::user();
@@ -59,6 +61,7 @@ class DashboardFoundFeedService
         $statusPayload = $this->buildStatusPayload((string) $report->status_barang);
         $pelapor = $report->admin?->nama ?? \App\Support\RoleLabels::manager();
         $activityAt = strtotime((string) ($report->updated_at ?? $report->created_at));
+        $canPublishHome = $report->canBePublishedToHomeByAdmin();
 
         return (object) [
             'id' => (int) $report->id,
@@ -90,7 +93,9 @@ class DashboardFoundFeedService
             'edit_jam_layanan_pengambilan' => $report->jam_layanan_pengambilan,
             'edit_catatan_pengambilan' => $report->catatan_pengambilan,
             'update_url' => route(\App\Support\ManagerPortal::routeName('dashboard.reports.update'), ['type' => 'temuan', 'id' => $report->id]),
-            'upload_home_url' => route(\App\Support\ManagerPortal::routeName('dashboard.reports.publish-home'), ['type' => 'temuan', 'id' => $report->id]),
+            'upload_home_url' => $canPublishHome
+                ? route(\App\Support\ManagerPortal::routeName('dashboard.reports.publish-home'), ['type' => 'temuan', 'id' => $report->id])
+                : null,
             'home_published' => (bool) ($report->tampil_di_home ?? false),
             'target_url' => route(\App\Support\ManagerPortal::routeName('found-items.show'), $report->id),
             'target_label' => 'Buka Barang Temuan',

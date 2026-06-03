@@ -75,8 +75,14 @@ class FoundItemController extends Controller
         return view('manager::pages.found-items.show', compact('barang', 'admin', 'matchingCandidates'));
     }
 
-    public function edit(Barang $barang): View
+    public function edit(Barang $barang): View|RedirectResponse
     {
+        if (!$barang->canBeEditedByAdmin()) {
+            return redirect()
+                ->route(\App\Support\ManagerPortal::routeName('found-items.show'), $barang->id)
+                ->with('error', 'Barang temuan ini tidak dapat diedit karena sudah diproses.');
+        }
+
         /** @var \App\Models\Admin $admin */
         $admin = \App\Support\ManagerPortal::user();
         $kategoriOptions = Kategori::query()
@@ -88,11 +94,12 @@ class FoundItemController extends Controller
 
     public function update(UpdateFoundItemRequest $request, Barang $barang): RedirectResponse
     {
-        $this->commandService->update($barang, $request->validated(), $request->file('foto_barang'), $this->imageUploader);
+        $result = $this->commandService->update($barang, $request->validated(), $request->file('foto_barang'), $this->imageUploader);
+        $flashType = $result['ok'] ? 'status' : 'error';
 
         return redirect()
             ->route(\App\Support\ManagerPortal::routeName('found-items.show'), $barang->id)
-            ->with('status', 'Data barang temuan berhasil diperbarui.');
+            ->with($flashType, $result['message']);
     }
 
     public function updateStatus(UpdateFoundItemStatusRequest $request, Barang $barang): RedirectResponse
@@ -107,9 +114,10 @@ class FoundItemController extends Controller
 
     public function verify(VerifyFoundItemReportRequest $request, Barang $barang): RedirectResponse
     {
-        $this->verificationService->verify($barang, $request->validated());
+        $result = $this->verificationService->verify($barang, $request->validated());
+        $flashType = $result['ok'] ? 'status' : 'error';
 
-        return back()->with('status', 'Verifikasi laporan barang temuan berhasil diperbarui.');
+        return back()->with($flashType, $result['message']);
     }
 
     public function export(Barang $barang): Response
@@ -119,8 +127,9 @@ class FoundItemController extends Controller
 
     public function destroy(Barang $barang): RedirectResponse
     {
-        $this->deletionService->destroy($barang);
+        $result = $this->deletionService->destroy($barang);
+        $flashType = $result['ok'] ? 'status' : 'error';
 
-        return redirect()->back()->with('status', 'Laporan barang temuan berhasil dihapus.');
+        return redirect()->back()->with($flashType, $result['message']);
     }
 }

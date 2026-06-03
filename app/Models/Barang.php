@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\WorkflowStatus;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -76,6 +77,254 @@ class Barang extends Model
         'jam_layanan_pengambilan',
         'catatan_pengambilan',
     ];
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminDeletableReportStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_REJECTED,
+            'ditolak',
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminDeletableItemStatuses(): array
+    {
+        return [
+            '',
+            WorkflowStatus::FOUND_AVAILABLE,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminEditableReportStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_SUBMITTED,
+            WorkflowStatus::REPORT_APPROVED,
+            'pending',
+            'menunggu',
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminEditableItemStatuses(): array
+    {
+        return [
+            '',
+            WorkflowStatus::FOUND_AVAILABLE,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminVerifiableReportStatuses(): array
+    {
+        return [
+            '',
+            WorkflowStatus::REPORT_SUBMITTED,
+            'pending',
+            'menunggu',
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminVerifiableItemStatuses(): array
+    {
+        return [
+            '',
+            WorkflowStatus::FOUND_AVAILABLE,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminManualStatusReportStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_APPROVED,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminManualStatusCurrentStatuses(): array
+    {
+        return [
+            '',
+            WorkflowStatus::FOUND_AVAILABLE,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function allowedManualStatusTargets(): array
+    {
+        return [
+            WorkflowStatus::FOUND_AVAILABLE,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminPublishableReportStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_APPROVED,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminPublishableItemStatuses(): array
+    {
+        return [
+            '',
+            WorkflowStatus::FOUND_AVAILABLE,
+        ];
+    }
+
+    public function canBeDeletedByAdmin(): bool
+    {
+        return $this->hasAdminDeletableReportStatus()
+            && !$this->hasAdminDeletionWorkflowBlocker();
+    }
+
+    public function canBeEditedByAdmin(): bool
+    {
+        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminEditableReportStatuses(), true)) {
+            return false;
+        }
+
+        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminEditableItemStatuses(), true)) {
+            return false;
+        }
+
+        if ((bool) ($this->tampil_di_home ?? false)) {
+            return false;
+        }
+
+        return !$this->relationHasRecords('klaims')
+            && !$this->relationHasRecords('pencocokans');
+    }
+
+    public function canBeVerifiedByAdmin(): bool
+    {
+        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminVerifiableReportStatuses(), true)) {
+            return false;
+        }
+
+        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminVerifiableItemStatuses(), true)) {
+            return false;
+        }
+
+        return !$this->relationHasRecords('klaims')
+            && !$this->relationHasRecords('pencocokans');
+    }
+
+    public function canBePublishedToHomeByAdmin(): bool
+    {
+        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminPublishableReportStatuses(), true)) {
+            return false;
+        }
+
+        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminPublishableItemStatuses(), true)) {
+            return false;
+        }
+
+        if ((bool) ($this->tampil_di_home ?? false)) {
+            return false;
+        }
+
+        return !$this->relationHasRecords('klaims')
+            && !$this->relationHasRecords('pencocokans');
+    }
+
+    public function canHaveStatusUpdatedByAdmin(): bool
+    {
+        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminManualStatusReportStatuses(), true)) {
+            return false;
+        }
+
+        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminManualStatusCurrentStatuses(), true)) {
+            return false;
+        }
+
+        return !$this->relationHasRecords('klaims')
+            && !$this->relationHasRecords('pencocokans');
+    }
+
+    public function isAllowedManualStatusTarget(string $status): bool
+    {
+        return in_array(
+            strtolower(trim($status)),
+            self::allowedManualStatusTargets(),
+            true
+        );
+    }
+
+    public function hasAdminDeletableReportStatus(): bool
+    {
+        return in_array(
+            $this->normalizedReportStatusForWorkflow(),
+            self::adminDeletableReportStatuses(),
+            true
+        );
+    }
+
+    public function hasAdminDeletionWorkflowBlocker(): bool
+    {
+        if ((bool) ($this->tampil_di_home ?? false)) {
+            return true;
+        }
+
+        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminDeletableItemStatuses(), true)) {
+            return true;
+        }
+
+        return $this->relationHasRecords('klaims')
+            || $this->relationHasRecords('pencocokans');
+    }
+
+    private function normalizedReportStatusForWorkflow(): string
+    {
+        return strtolower(trim((string) ($this->status_laporan ?? '')));
+    }
+
+    private function normalizedItemStatusForWorkflow(): string
+    {
+        return strtolower(trim((string) ($this->status_barang ?? '')));
+    }
+
+    private function relationHasRecords(string $relation): bool
+    {
+        $countKey = $relation . '_count';
+        if (array_key_exists($countKey, $this->attributes)) {
+            return (int) $this->attributes[$countKey] > 0;
+        }
+
+        if ($this->relationLoaded($relation)) {
+            return $this->getRelation($relation)->isNotEmpty();
+        }
+
+        return $this->{$relation}()->exists();
+    }
 
     public function admin()
     {

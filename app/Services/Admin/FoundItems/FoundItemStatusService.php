@@ -6,11 +6,11 @@ use App\Models\Barang;
 use App\Models\BarangStatusHistory;
 use App\Services\UserNotificationService;
 use App\Support\WorkflowStatus;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 
 class FoundItemStatusService
 {
+    private const LOCKED_STATUS_MESSAGE = 'Status barang tidak dapat diubah karena sudah masuk proses klaim atau belum siap diproses.';
+
     /**
      * @return array{ok:bool,message:string}
      */
@@ -19,20 +19,11 @@ class FoundItemStatusService
         /** @var \App\Models\Admin|null $admin */
         $admin = \App\Support\ManagerPortal::user();
 
-        $oldStatus = (string) $barang->status_barang;
-        $newStatus = (string) $validated['status_barang'];
-        $latestClaim = $barang->klaims()->latest('updated_at')->first();
-        $latestClaimVerificationStatus = Schema::hasColumn('klaims', 'status_verifikasi')
-            ? (string) ($latestClaim?->status_verifikasi ?? '')
-            : '';
-        $latestClaimLegacyStatus = (string) ($latestClaim?->status_klaim ?? '');
+        $oldStatus = strtolower(trim((string) $barang->status_barang));
+        $newStatus = strtolower(trim((string) $validated['status_barang']));
 
-        if ($newStatus === WorkflowStatus::FOUND_CLAIMED && !$this->canMarkClaimed($latestClaimVerificationStatus, $latestClaimLegacyStatus)) {
-            return ['ok' => false, 'message' => 'Status "Sudah Diklaim" hanya bisa dipilih setelah klaim disetujui.'];
-        }
-
-        if ($newStatus === WorkflowStatus::FOUND_RETURNED && !$this->canMarkReturned($latestClaimVerificationStatus, $latestClaimLegacyStatus, $oldStatus)) {
-            return ['ok' => false, 'message' => 'Status "Selesai" hanya bisa dipilih setelah klaim ditandai selesai pada Verifikasi Klaim.'];
+        if (!$barang->canHaveStatusUpdatedByAdmin() || !$barang->isAllowedManualStatusTarget($newStatus)) {
+            return ['ok' => false, 'message' => self::LOCKED_STATUS_MESSAGE];
         }
 
         if ($oldStatus === $newStatus) {
@@ -52,20 +43,6 @@ class FoundItemStatusService
         $this->notifyClaimParticipants($barang, $this->resolveStatusLabel($newStatus));
 
         return ['ok' => true, 'message' => 'Perubahan status berhasil disimpan.'];
-    }
-
-    private function canMarkClaimed(string $latestClaimVerificationStatus, string $latestClaimLegacyStatus): bool
-    {
-        return Schema::hasColumn('klaims', 'status_verifikasi')
-            ? in_array($latestClaimVerificationStatus, [WorkflowStatus::CLAIM_APPROVED, WorkflowStatus::CLAIM_COMPLETED], true)
-            : $latestClaimLegacyStatus === WorkflowStatus::CLAIM_LEGACY_APPROVED;
-    }
-
-    private function canMarkReturned(string $latestClaimVerificationStatus, string $latestClaimLegacyStatus, string $oldStatus): bool
-    {
-        return Schema::hasColumn('klaims', 'status_verifikasi')
-            ? $latestClaimVerificationStatus === WorkflowStatus::CLAIM_COMPLETED
-            : ($latestClaimLegacyStatus === WorkflowStatus::CLAIM_LEGACY_APPROVED && $oldStatus === WorkflowStatus::FOUND_CLAIMED);
     }
 
     private function notifyClaimParticipants(Barang $barang, string $statusLabel): void
