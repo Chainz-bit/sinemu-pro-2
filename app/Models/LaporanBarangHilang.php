@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\WorkflowStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -64,6 +65,102 @@ class LaporanBarangHilang extends Model
         'verified_by_admin_id',
         'verified_at',
     ];
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminBlockedDeletionStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_SUBMITTED,
+            WorkflowStatus::REPORT_APPROVED,
+            WorkflowStatus::REPORT_MATCHED,
+            WorkflowStatus::REPORT_CLAIMED,
+            WorkflowStatus::REPORT_COMPLETED,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminDeletableStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_REJECTED,
+            'ditolak',
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminVerifiableStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_SUBMITTED,
+            'pending',
+            'menunggu',
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function adminEditableStatuses(): array
+    {
+        return [
+            WorkflowStatus::REPORT_SUBMITTED,
+            WorkflowStatus::REPORT_APPROVED,
+            'pending',
+            'menunggu',
+        ];
+    }
+
+    public function canBeDeletedByAdmin(): bool
+    {
+        return in_array(
+            strtolower(trim((string) ($this->status_laporan ?? ''))),
+            self::adminDeletableStatuses(),
+            true
+        );
+    }
+
+    public function canBeVerifiedByAdmin(): bool
+    {
+        return in_array(
+            strtolower(trim((string) ($this->status_laporan ?? ''))),
+            self::adminVerifiableStatuses(),
+            true
+        );
+    }
+
+    public function canBeEditedByAdmin(): bool
+    {
+        if (!in_array(
+            strtolower(trim((string) ($this->status_laporan ?? ''))),
+            self::adminEditableStatuses(),
+            true
+        )) {
+            return false;
+        }
+
+        return !$this->relationHasRecords('klaims')
+            && !$this->relationHasRecords('pencocokans');
+    }
+
+    private function relationHasRecords(string $relation): bool
+    {
+        $countKey = $relation . '_count';
+        if (array_key_exists($countKey, $this->attributes)) {
+            return (int) $this->attributes[$countKey] > 0;
+        }
+
+        if ($this->relationLoaded($relation)) {
+            return $this->getRelation($relation)->isNotEmpty();
+        }
+
+        return $this->{$relation}()->exists();
+    }
 
     public function user()
     {

@@ -10,9 +10,9 @@ use App\Models\Klaim;
 use App\Services\Admin\Claims\ClaimVerificationDetailPageService;
 use App\Services\Admin\Claims\ClaimVerificationListingService;
 use App\Services\Admin\Claims\ClaimVerificationWorkflowService;
+use App\Services\User\Claims\ClaimProofStorageService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -21,7 +21,8 @@ class ClaimVerificationController extends Controller
     public function __construct(
         private readonly ClaimVerificationListingService $listingService,
         private readonly ClaimVerificationDetailPageService $detailPageService,
-        private readonly ClaimVerificationWorkflowService $workflowService
+        private readonly ClaimVerificationWorkflowService $workflowService,
+        private readonly ClaimProofStorageService $claimProofStorageService
     ) {
     }
 
@@ -109,23 +110,15 @@ class ClaimVerificationController extends Controller
         abort_if(!\App\Support\ManagerPortal::check(), 403);
         $this->ensureClaimOwnedByAdmin($klaim);
 
-        foreach ((array) ($klaim->bukti_foto ?? []) as $path) {
-            if (is_string($path) && trim($path) !== '') {
-                $normalized = trim(str_replace('\\', '/', $path), '/');
-                if (str_starts_with($normalized, 'storage/')) {
-                    $normalized = substr($normalized, strlen('storage/'));
-                } elseif (str_starts_with($normalized, 'public/')) {
-                    $normalized = substr($normalized, strlen('public/'));
-                }
-                if (str_starts_with($normalized, 'private/verifikasi-klaim/')) {
-                    Storage::disk('local')->delete($normalized);
-                } elseif (str_starts_with($normalized, 'verifikasi-klaim/')) {
-                    Storage::disk('public')->delete($normalized);
-                }
-            }
+        if (! $klaim->canBeDeleted()) {
+            return redirect()->back()->with('error', 'Klaim yang masih aktif tidak dapat dihapus.');
         }
 
-        $klaim->delete();
+        $proofs = $this->claimProofStorageService->collectProofs($klaim);
+        DB::transaction(static function () use ($klaim): void {
+            $klaim->delete();
+        });
+        $this->claimProofStorageService->deleteProofs($proofs);
 
         return redirect()->back()->with('status', 'Data klaim berhasil dihapus.');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
 use App\Models\Klaim;
 use App\Support\ManagerPortal;
 use Illuminate\Support\Facades\Auth;
@@ -48,21 +49,21 @@ class ClaimEvidenceController extends Controller
 
         if (Auth::guard(ManagerPortal::guard())->check()) {
             $admin = Auth::guard(ManagerPortal::guard())->user();
+            abort_unless($admin instanceof Admin && $admin->isActive(), 403);
+
+            $adminRegionId = (int) ($admin->region_id ?? 0);
+            abort_unless($adminRegionId > 0, 403);
+
+            $klaim->loadMissing(['barang:id,region_id', 'laporanHilang:id,region_id']);
+            $hasRegionalScope = (int) ($klaim->barang?->region_id ?? 0) === $adminRegionId
+                || (int) ($klaim->laporanHilang?->region_id ?? 0) === $adminRegionId;
+            abort_unless($hasRegionalScope, 403);
 
             if (!is_null($klaim->admin_id)) {
                 abort_unless((int) $klaim->admin_id === (int) $admin->id, 403);
                 return;
             }
 
-            $klaim->loadMissing(['barang:id,region_id', 'laporanHilang:id,region_id']);
-            $adminRegionId = (int) ($admin->region_id ?? 0);
-            $canAccessLegacyClaim = $adminRegionId > 0
-                && (
-                    (int) ($klaim->barang?->region_id ?? 0) === $adminRegionId
-                    || (int) ($klaim->laporanHilang?->region_id ?? 0) === $adminRegionId
-                );
-
-            abort_unless($canAccessLegacyClaim, 403);
             return;
         }
 

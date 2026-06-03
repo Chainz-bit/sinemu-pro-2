@@ -56,6 +56,7 @@
     $reportStatus = \App\Support\ReportStatusPresenter::key($laporanBarangHilang->status_laporan ?? null);
     $statusLabel = \App\Support\ReportStatusPresenter::label($reportStatus);
     $statusClass = \App\Support\ReportStatusPresenter::cssClass($reportStatus);
+    $canVerifyReport = $laporanBarangHilang->canBeVerifiedByAdmin();
 
     $pelaporName = $laporanBarangHilang->user?->nama ?? $laporanBarangHilang->user?->name ?? 'Pengguna';
     $claimStatusHistoryLabel = match ($latestKlaim->status_klaim ?? null) {
@@ -199,24 +200,31 @@
                     <div class="lost-detail-panel-body">
                         <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
 
-                        <div class="lost-verify-box">
-                            <small>Verifikasi Laporan</small>
-                            <p>Tentukan apakah laporan ini layak ditampilkan di halaman publik.</p>
-                            <div class="lost-verify-actions">
-                                <form method="POST" action="{{ manager_route('lost-items.verify', $laporanBarangHilang->id) }}" data-confirm-delete data-confirm-title="Setujui Laporan" data-confirm-message="Setujui laporan ini? Laporan akan bisa dipublikasikan ke Home." data-confirm-submit-label="Setujui" data-confirm-submit-variant="primary">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status_laporan" value="approved">
-                                    <button type="submit" class="filter-btn lost-action-btn lost-action-btn-primary">Setujui Laporan</button>
-                                </form>
-                                <form method="POST" action="{{ manager_route('lost-items.verify', $laporanBarangHilang->id) }}" data-confirm-delete data-confirm-title="Tolak Laporan" data-confirm-message="Tolak laporan ini? Laporan tidak akan tampil di Home." data-confirm-submit-label="Tolak" data-confirm-submit-variant="danger">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status_laporan" value="rejected">
-                                    <button type="submit" class="filter-btn lost-action-btn lost-action-btn-ghost">Tolak Laporan</button>
-                                </form>
+                        @if($canVerifyReport)
+                            <div class="lost-verify-box">
+                                <small>Verifikasi Laporan</small>
+                                <p>Tentukan apakah laporan ini layak ditampilkan di halaman publik.</p>
+                                <div class="lost-verify-actions">
+                                    <form method="POST" action="{{ manager_route('lost-items.verify', $laporanBarangHilang->id) }}" data-confirm-delete data-confirm-title="Setujui Laporan" data-confirm-message="Setujui laporan ini? Laporan akan bisa dipublikasikan ke Home." data-confirm-submit-label="Setujui" data-confirm-submit-variant="primary">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status_laporan" value="approved">
+                                        <button type="submit" class="filter-btn lost-action-btn lost-action-btn-primary">Setujui Laporan</button>
+                                    </form>
+                                    <form method="POST" action="{{ manager_route('lost-items.verify', $laporanBarangHilang->id) }}" data-confirm-delete data-confirm-title="Tolak Laporan" data-confirm-message="Tolak laporan ini? Laporan tidak akan tampil di Home." data-confirm-submit-label="Tolak" data-confirm-submit-variant="danger">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status_laporan" value="rejected">
+                                        <button type="submit" class="filter-btn lost-action-btn lost-action-btn-ghost">Tolak Laporan</button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="lost-verify-box">
+                                <small>Verifikasi Laporan</small>
+                                <p>Laporan ini sudah diproses dan tidak dapat diverifikasi ulang.</p>
+                            </div>
+                        @endif
 
                         @if(!$latestKlaim)
                             <p>Belum ada klaim aktif untuk laporan ini.</p>

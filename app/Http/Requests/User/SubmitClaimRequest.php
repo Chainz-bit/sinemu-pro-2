@@ -18,7 +18,7 @@ class SubmitClaimRequest extends FormRequest
     {
         return [
             'barang_id' => ['required', 'integer', 'exists:barangs,id'],
-            'laporan_hilang_id' => ['required', 'integer', 'exists:laporan_barang_hilangs,id'],
+            'laporan_hilang_id' => ['nullable', 'integer', 'exists:laporan_barang_hilangs,id'],
             'kontak_pelapor' => ['required', 'string', 'max:50'],
             'bukti_kepemilikan' => ['required', 'string', 'max:2000'],
             'bukti_ciri_khusus' => ['required', 'string', 'max:2000'],

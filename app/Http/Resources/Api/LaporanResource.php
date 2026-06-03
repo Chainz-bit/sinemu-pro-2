@@ -157,6 +157,7 @@ class LaporanResource extends JsonResource
         return Klaim::query()
             ->where('barang_id', (int) $this->id)
             ->where('user_id', $userId)
+            ->activeForSubmission()
             ->exists();
     }
 
@@ -164,10 +165,11 @@ class LaporanResource extends JsonResource
     {
         return Klaim::query()
             ->where('barang_id', (int) $this->id)
-            ->whereIn('status_klaim', [
-                WorkflowStatus::CLAIM_LEGACY_PENDING,
-                WorkflowStatus::CLAIM_LEGACY_APPROVED,
-            ])
+            ->where(function ($query): void {
+                $query
+                    ->activeForSubmission()
+                    ->orWhere('status_verifikasi', WorkflowStatus::CLAIM_COMPLETED);
+            })
             ->exists();
     }
 }

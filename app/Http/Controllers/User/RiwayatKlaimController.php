@@ -8,6 +8,7 @@ use App\Services\User\Claims\ClaimHistoryService;
 use App\Services\User\Claims\ClaimProofStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RiwayatKlaimController extends Controller
 {
@@ -37,9 +38,16 @@ class RiwayatKlaimController extends Controller
         abort_unless(Auth::check(), 403);
         $user = Auth::user();
         abort_unless((int) $klaim->user_id === (int) $user->id, 403);
-        $this->claimProofStorageService->deleteProofs($klaim);
 
-        $klaim->delete();
+        if (! $klaim->canBeDeleted()) {
+            return redirect()->back()->with('error', 'Klaim yang masih aktif tidak dapat dihapus.');
+        }
+
+        $proofs = $this->claimProofStorageService->collectProofs($klaim);
+        DB::transaction(static function () use ($klaim): void {
+            $klaim->delete();
+        });
+        $this->claimProofStorageService->deleteProofs($proofs);
 
         return redirect()
             ->route('user.claim-history', request()->query())

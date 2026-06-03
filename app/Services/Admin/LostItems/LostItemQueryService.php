@@ -42,7 +42,8 @@ class LostItemQueryService
                     ->limit(1)
                     ->select('status_klaim'),
                 'latest_claim_status'
-            );
+            )
+            ->withCount(['klaims', 'pencocokans']);
 
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
             $query->where('laporan_barang_hilangs.sumber_laporan', 'lapor_hilang');

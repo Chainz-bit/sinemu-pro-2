@@ -7,13 +7,16 @@ use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
+use App\Models\Pencocokan;
 use App\Models\User;
 use App\Models\UserNotification;
 use App\Models\Wilayah;
 use App\Services\Google\GoogleIdTokenVerifier;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -522,10 +525,24 @@ class MobileApiTest extends TestCase
 
     public function test_user_can_claim_approved_found_item_once(): void
     {
+        Storage::fake('local');
+
         $claimer = $this->createUser('claimer');
         $finder = $this->createUser('finder');
         $admin = $this->createActiveAdmin();
         $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $laporan = LaporanBarangHilang::query()->create([
+            'user_id' => $claimer->id,
+            'region_id' => $admin->region_id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Kunci motor',
+            'lokasi_hilang' => 'Parkiran kampus',
+            'tanggal_hilang' => '2026-05-26',
+            'keterangan' => 'Kunci hilang dengan gantungan biru',
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+        ]);
 
         $barang = Barang::query()->create([
             'admin_id' => $admin->id,
@@ -537,25 +554,41 @@ class MobileApiTest extends TestCase
             'lokasi_ditemukan' => 'Parkiran kampus',
             'tanggal_ditemukan' => '2026-05-26',
             'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
-            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+        ]);
+
+        Pencocokan::query()->create([
+            'laporan_hilang_id' => $laporan->id,
+            'barang_id' => $barang->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'matched_at' => now(),
         ]);
 
         Sanctum::actingAs($claimer);
 
-        $this->postJson('/api/barang-temuan/'.$barang->id.'/klaim', [
-            'alasan' => 'Barang ini milik saya, cirinya ada gantungan biru.',
-            'kontak' => '08123456789',
-        ])
+        $this->post('/api/barang-temuan/'.$barang->id.'/klaim', [
+            'laporan_hilang_id' => $laporan->id,
+            'kontak_pelapor' => '08123456789',
+            'bukti_kepemilikan' => 'Saya memiliki kunci cadangan kendaraan.',
+            'bukti_ciri_khusus' => 'Ada gantungan biru.',
+            'bukti_lokasi_spesifik' => 'Parkiran kampus dekat pos.',
+            'bukti_waktu_hilang' => '10:30',
+            'bukti_foto' => [$this->fakePng('bukti-klaim.png')],
+            'catatan' => 'Barang ini milik saya.',
+            'persetujuan_klaim' => '1',
+        ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('data.barang_id', $barang->id)
             ->assertJsonPath('data.status', WorkflowStatus::CLAIM_LEGACY_PENDING);
 
         $this->assertDatabaseHas('klaims', [
+            'laporan_hilang_id' => $laporan->id,
             'barang_id' => $barang->id,
             'user_id' => $claimer->id,
             'admin_id' => $admin->id,
             'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
-            'kontak' => '08123456789',
+            'catatan' => 'Barang ini milik saya.',
         ]);
 
         $this->assertDatabaseHas('barangs', [
@@ -563,12 +596,18 @@ class MobileApiTest extends TestCase
             'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ]);
 
-        $this->postJson('/api/barang-temuan/'.$barang->id.'/klaim', [
-            'alasan' => 'Coba klaim lagi.',
-            'kontak' => '08123456789',
-        ])
+        $this->post('/api/barang-temuan/'.$barang->id.'/klaim', [
+            'laporan_hilang_id' => $laporan->id,
+            'kontak_pelapor' => '08123456789',
+            'bukti_kepemilikan' => 'Saya memiliki kunci cadangan kendaraan.',
+            'bukti_ciri_khusus' => 'Ada gantungan biru.',
+            'bukti_lokasi_spesifik' => 'Parkiran kampus dekat pos.',
+            'bukti_waktu_hilang' => '10:30',
+            'bukti_foto' => [$this->fakePng('bukti-klaim-kedua.png')],
+            'persetujuan_klaim' => '1',
+        ], ['Accept' => 'application/json'])
             ->assertConflict()
-            ->assertJsonPath('message', 'Barang sudah diklaim atau sedang diproses.');
+            ->assertJsonPath('message', 'Barang ini sedang tidak tersedia untuk diklaim.');
     }
 
     public function test_found_item_detail_includes_claimability_metadata(): void
@@ -635,8 +674,8 @@ class MobileApiTest extends TestCase
         $this->getJson('/api/laporan/temuan/'.$previouslyClaimedBarang->id)
             ->assertOk()
             ->assertJsonPath('data.is_owner', false)
-            ->assertJsonPath('data.claimable', false)
-            ->assertJsonPath('data.claim_block_reason', 'Klaim sudah pernah diajukan.');
+            ->assertJsonPath('data.claimable', true)
+            ->assertJsonPath('data.claim_block_reason', null);
     }
 
     public function test_user_can_only_mark_own_notification_as_read(): void
@@ -680,6 +719,15 @@ class MobileApiTest extends TestCase
             'nomor_telepon' => '08123456789',
             'password' => Hash::make('password'),
         ]);
+    }
+
+    private function fakePng(string $name): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sinemu-mobile-api-');
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=') ?: '';
+        file_put_contents($path, $png);
+
+        return new UploadedFile($path, $name, 'image/png', null, true);
     }
 
     private function createActiveAdmin(): Admin

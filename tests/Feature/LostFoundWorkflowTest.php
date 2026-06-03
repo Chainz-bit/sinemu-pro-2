@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\AdminNotification;
 use App\Models\Barang;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Models\SuperAdmin;
@@ -16,6 +18,7 @@ use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LostFoundWorkflowTest extends TestCase
@@ -100,6 +103,7 @@ class LostFoundWorkflowTest extends TestCase
     public function test_admin_and_user_can_complete_the_new_matching_and_claim_workflow(): void
     {
         $user = $this->createUser();
+        $finder = $this->createUser('workflow-finder@example.com', 'workflow-finder', '081111111112');
         $admin = $this->createAdmin();
         $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
 
@@ -120,7 +124,7 @@ class LostFoundWorkflowTest extends TestCase
         $foundItem = Barang::query()->create([
             'admin_id' => $admin->id,
             'region_id' => $admin->region_id,
-            'user_id' => $user->id,
+            'user_id' => $finder->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Tablet Xiaomi',
             'deskripsi' => 'Ditemukan di meja belakang',
@@ -316,6 +320,7 @@ class LostFoundWorkflowTest extends TestCase
     public function test_user_cannot_claim_found_item_that_is_not_available(): void
     {
         $user = $this->createUser();
+        $finder = $this->createUser('not-available-finder@example.com', 'not-available-finder', '081111111113');
         $admin = $this->createAdmin();
         $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
 
@@ -336,7 +341,7 @@ class LostFoundWorkflowTest extends TestCase
         $foundItem = Barang::query()->create([
             'admin_id' => $admin->id,
             'region_id' => $admin->region_id,
-            'user_id' => $user->id,
+            'user_id' => $finder->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Tablet Tidak Tersedia',
             'deskripsi' => 'Ditemukan di meja belakang',
@@ -375,6 +380,125 @@ class LostFoundWorkflowTest extends TestCase
             'barang_id' => $foundItem->id,
             'laporan_hilang_id' => $lostReport->id,
         ]);
+    }
+
+    public function test_claim_form_allows_available_found_item_without_lost_report(): void
+    {
+        $user = $this->createUser();
+        $finder = $this->createUser('form-finder@example.com', 'form-finder', '081111111114');
+        $admin = $this->createAdmin();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $foundItem = $this->createApprovedFoundItemForMatching($admin, $finder, $kategori, (int) $admin->region_id);
+
+        $response = $this->actingAs($user)
+            ->get(route('user.claims.create', ['barang_id' => $foundItem->id]));
+
+        $response->assertOk()
+            ->assertSee('Jika Anda belum membuat laporan kehilangan, Anda tetap bisa mengajukan klaim dengan bukti kepemilikan yang jelas.', false)
+            ->assertSee('Tidak menggunakan laporan hilang', false)
+            ->assertSee($foundItem->nama_barang, false)
+            ->assertDontSee('Belum ada data yang bisa diklaim', false);
+
+        $this->assertSame($foundItem->id, $response->viewData('selectedBarangId'));
+        $this->assertCount(1, $response->viewData('foundItems'));
+        $this->assertCount(0, $response->viewData('claimableLostReports'));
+    }
+
+    public function test_user_can_claim_found_item_without_lost_report_with_complete_proof(): void
+    {
+        Storage::fake('local');
+
+        $user = $this->createUser();
+        $finder = $this->createUser('direct-claim-finder@example.com', 'direct-claim-finder', '081111111116');
+        $admin = $this->createAdmin();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $foundItem = $this->createApprovedFoundItemForMatching($admin, $finder, $kategori, (int) $admin->region_id);
+        $notificationsBefore = AdminNotification::query()->count();
+
+        $this->actingAs($user)
+            ->post(route('user.claims.store'), [
+                'barang_id' => $foundItem->id,
+                'kontak_pelapor' => '081234567890',
+                'bukti_kepemilikan' => 'Saya memiliki nota dan nomor seri barang.',
+                'bukti_ciri_khusus' => 'Ada stiker kecil di bagian belakang.',
+                'bukti_detail_isi' => 'Kondisi terakhir memakai casing hitam.',
+                'bukti_lokasi_spesifik' => 'Ruang baca dekat jendela.',
+                'bukti_waktu_hilang' => '09:45',
+                'bukti_foto' => [UploadedFile::fake()->create('bukti-direct.jpg', 128, 'image/jpeg')],
+                'persetujuan_klaim' => '1',
+            ])
+            ->assertRedirect(route('user.claim-history'))
+            ->assertSessionHas('status', 'Pengajuan klaim berhasil dikirim. Pantau status verifikasi di Riwayat Klaim.');
+
+        $claim = Klaim::query()->sole();
+        $proofPath = $claim->bukti_foto[0] ?? '';
+
+        $this->assertNull($claim->laporan_hilang_id);
+        $this->assertNull($claim->pencocokan_id);
+        $this->assertSame($foundItem->id, $claim->barang_id);
+        $this->assertSame($user->id, $claim->user_id);
+        $this->assertSame($admin->id, $claim->admin_id);
+        $this->assertSame('081234567890', $claim->kontak);
+        $this->assertSame('Saya memiliki nota dan nomor seri barang.', $claim->bukti_kepemilikan);
+        Storage::disk('local')->assertExists($proofPath);
+        $this->assertSame($notificationsBefore + 1, AdminNotification::query()->count());
+        $this->assertDatabaseHas('admin_notifications', [
+            'admin_id' => $admin->id,
+            'type' => 'klaim_baru',
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $foundItem->id,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+        ]);
+    }
+
+    public function test_user_cannot_submit_duplicate_active_claim_when_item_status_is_stale(): void
+    {
+        Storage::fake('local');
+
+        $user = $this->createUser();
+        $finder = $this->createUser('duplicate-finder@example.com', 'duplicate-finder', '081111111117');
+        $admin = $this->createAdmin();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $lostReport = $this->createApprovedLostReportForMatching($user, $admin, (int) $admin->region_id);
+        $foundItem = $this->createApprovedFoundItemForMatching($admin, $finder, $kategori, (int) $admin->region_id);
+        $match = Pencocokan::query()->create([
+            'laporan_hilang_id' => $lostReport->id,
+            'barang_id' => $foundItem->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'matched_at' => now(),
+        ]);
+        Klaim::query()->create([
+            'laporan_hilang_id' => $lostReport->id,
+            'barang_id' => $foundItem->id,
+            'pencocokan_id' => $match->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+        ]);
+        $notificationsBefore = AdminNotification::query()->count();
+
+        $this->actingAs($user)
+            ->post(route('user.claims.store'), [
+                'barang_id' => $foundItem->id,
+                'laporan_hilang_id' => $lostReport->id,
+                'kontak_pelapor' => '081234567890',
+                'bukti_kepemilikan' => 'Nomor seri perangkat',
+                'bukti_ciri_khusus' => 'Ada stiker kecil',
+                'bukti_detail_isi' => 'Casing abu-abu',
+                'bukti_lokasi_spesifik' => 'Meja belakang dekat colokan listrik',
+                'bukti_waktu_hilang' => '10:30',
+                'bukti_foto' => [UploadedFile::fake()->create('bukti-duplicate.jpg', 128, 'image/jpeg')],
+                'persetujuan_klaim' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Anda sudah pernah mengajukan klaim aktif untuk barang ini.');
+
+        $this->assertSame(1, Klaim::query()->count());
+        $this->assertSame($notificationsBefore, AdminNotification::query()->count());
+        $this->assertCount(0, Storage::disk('local')->allFiles('private/verifikasi-klaim'));
     }
 
     public function test_admin_can_mark_candidate_as_not_matching_and_candidate_is_not_suggested_again(): void
@@ -755,14 +879,18 @@ class LostFoundWorkflowTest extends TestCase
         ]);
     }
 
-    private function createUser(): User
+    private function createUser(
+        string $email = 'user@example.com',
+        string $username = 'user-uji',
+        string $phone = '081111111111'
+    ): User
     {
         $user = User::query()->create([
             'name' => 'User Uji',
             'nama' => 'User Uji',
-            'username' => 'user-uji',
-            'email' => 'user@example.com',
-            'nomor_telepon' => '081111111111',
+            'username' => $username,
+            'email' => $email,
+            'nomor_telepon' => $phone,
             'password' => 'password123',
         ]);
 

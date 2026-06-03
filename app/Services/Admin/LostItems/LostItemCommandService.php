@@ -8,17 +8,26 @@ use App\Services\UserNotificationService;
 use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class LostItemCommandService
 {
-    public function update(LaporanBarangHilang $item, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): void
+    /**
+     * @return array{ok:bool,message:string}
+     */
+    public function update(LaporanBarangHilang $item, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): array
     {
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $item->sumber_laporan !== 'lapor_hilang') {
             abort(404);
+        }
+
+        if (!$item->canBeEditedByAdmin()) {
+            return ['ok' => false, 'message' => 'Laporan ini tidak dapat diedit karena sudah diproses.'];
         }
 
         $payload = [
@@ -68,17 +77,61 @@ class LostItemCommandService
         if (!empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
         }
+
+        return ['ok' => true, 'message' => 'Data barang hilang berhasil diperbarui.'];
     }
 
-    public function destroy(LaporanBarangHilang $item): void
+    /**
+     * @return array{ok:bool,message:string}
+     */
+    public function destroy(LaporanBarangHilang $item): array
     {
         if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
             abort_if($item->sumber_laporan !== 'lapor_hilang', 404);
         }
 
+        if (!$item->canBeDeletedByAdmin()) {
+            return ['ok' => false, 'message' => 'Laporan yang masih aktif tidak dapat dihapus.'];
+        }
+
+        if ($this->hasClaimOrMatchingHistory($item)) {
+            return ['ok' => false, 'message' => 'Laporan ini tidak dapat dihapus karena sudah terhubung dengan proses klaim atau pencocokan.'];
+        }
+
         $photoPath = $item->foto_barang;
-        $item->delete();
-        ReportImageCleaner::purgeIfOrphaned($photoPath);
+        DB::transaction(static function () use ($item): void {
+            $item->delete();
+        });
+
+        $this->purgeReportPhotoAfterCommit($photoPath);
+
+        return ['ok' => true, 'message' => 'Laporan barang hilang berhasil dihapus.'];
+    }
+
+    private function hasClaimOrMatchingHistory(LaporanBarangHilang $item): bool
+    {
+        return $item->klaims()->exists()
+            || $item->pencocokans()->exists()
+            || $item->pencocokans()
+                ->whereHas('barang', function ($query): void {
+                    $query->whereIn('status_barang', [
+                        WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+                        WorkflowStatus::FOUND_CLAIMED,
+                    ]);
+                })
+                ->exists();
+    }
+
+    private function purgeReportPhotoAfterCommit(?string $photoPath): void
+    {
+        try {
+            ReportImageCleaner::purgeIfOrphaned($photoPath);
+        } catch (Throwable $exception) {
+            Log::error('Foto laporan barang hilang gagal dihapus setelah record laporan dihapus.', [
+                'path' => $photoPath,
+                'exception' => $exception,
+            ]);
+        }
     }
 
     /**
@@ -94,6 +147,10 @@ class LostItemCommandService
             ? WorkflowStatus::REPORT_APPROVED
             : WorkflowStatus::REPORT_REJECTED;
         $oldStatus = (string) ($item->status_laporan ?? '');
+
+        if (!$item->canBeVerifiedByAdmin()) {
+            return ['ok' => false, 'message' => 'Laporan ini tidak dapat diverifikasi ulang karena sudah diproses.'];
+        }
 
         if ($oldStatus === $newStatus) {
             return ['ok' => true, 'message' => 'Status laporan tidak berubah.'];

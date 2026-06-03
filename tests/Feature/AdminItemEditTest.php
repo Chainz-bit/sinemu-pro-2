@@ -5,13 +5,18 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\Barang;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
+use App\Models\Pencocokan;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Models\Wilayah;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminItemEditTest extends TestCase
@@ -126,6 +131,28 @@ class AdminItemEditTest extends TestCase
         $this->assertSame('2026-04-18', $laporanBarangHilang?->tanggal_hilang);
     }
 
+    public function test_admin_can_update_submitted_lost_item(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'tampil_di_home' => false,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->patch(route('admin.lost-items.update', $laporanBarangHilang), $this->validLostItemPayload());
+
+        $response->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang));
+        $response->assertSessionHas('status', 'Data barang hilang berhasil diperbarui.');
+
+        $laporanBarangHilang = $laporanBarangHilang->fresh();
+
+        $this->assertSame('Dompet Hitam', $laporanBarangHilang?->nama_barang);
+        $this->assertSame('Gedung Serbaguna', $laporanBarangHilang?->lokasi_hilang);
+    }
+
     public function test_lost_item_update_validates_required_fields(): void
     {
         $admin = $this->createAdmin();
@@ -148,6 +175,241 @@ class AdminItemEditTest extends TestCase
         ]);
 
         $this->assertSame('Dompet Cokelat', $laporanBarangHilang->fresh()?->nama_barang);
+    }
+
+    #[DataProvider('lockedLostReportStatuses')]
+    public function test_locked_lost_item_edit_page_is_rejected(string $status): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => $status,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-items.edit', $laporanBarangHilang))
+            ->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang))
+            ->assertSessionHas('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+    }
+
+    #[DataProvider('lockedLostReportStatuses')]
+    public function test_locked_lost_item_update_is_rejected_without_changing_fields(string $status): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => $status,
+        ]);
+
+        $response = $this->from(route('admin.lost-items.show', $laporanBarangHilang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.lost-items.update', $laporanBarangHilang), $this->validLostItemPayload());
+
+        $response->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang));
+        $response->assertSessionHas('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+
+        $laporanBarangHilang = $laporanBarangHilang->fresh();
+
+        $this->assertSame('Dompet Cokelat', $laporanBarangHilang?->nama_barang);
+        $this->assertSame('Kantin Kampus', $laporanBarangHilang?->lokasi_hilang);
+        $this->assertSame('2026-04-16', $laporanBarangHilang?->tanggal_hilang);
+        $this->assertSame('Berisi kartu mahasiswa dan SIM.', $laporanBarangHilang?->keterangan);
+    }
+
+    public function test_locked_lost_item_update_does_not_replace_or_delete_photo(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $originalPhoto = 'barang-hilang/2026/04/original.jpg';
+        Storage::disk('public')->put($originalPhoto, 'foto asli');
+
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+            'foto_barang' => $originalPhoto,
+        ]);
+
+        $payload = array_merge($this->validLostItemPayload(), [
+            'foto_barang' => UploadedFile::fake()->createWithContent(
+                'pengganti.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+            ),
+        ]);
+
+        $response = $this->from(route('admin.lost-items.show', $laporanBarangHilang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.lost-items.update', $laporanBarangHilang), $payload);
+
+        $response->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang));
+        $response->assertSessionHas('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+
+        $laporanBarangHilang = $laporanBarangHilang->fresh();
+        $files = Storage::disk('public')->allFiles('barang-hilang');
+        sort($files);
+
+        $this->assertSame($originalPhoto, $laporanBarangHilang?->foto_barang);
+        Storage::disk('public')->assertExists($originalPhoto);
+        $this->assertSame([$originalPhoto], $files);
+    }
+
+    public function test_approved_lost_item_with_claim_cannot_be_edited(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $laporanBarangHilang = $this->createLostItem($user);
+        $barang = $this->createFoundItem($admin, $user, $kategori);
+
+        $this->createClaim($admin, $user, $laporanBarangHilang, $barang);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-items.edit', $laporanBarangHilang))
+            ->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang))
+            ->assertSessionHas('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+
+        $this->from(route('admin.lost-items.show', $laporanBarangHilang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.lost-items.update', $laporanBarangHilang), $this->validLostItemPayload())
+            ->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang))
+            ->assertSessionHas('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+
+        $this->assertSame('Dompet Cokelat', $laporanBarangHilang->fresh()?->nama_barang);
+    }
+
+    public function test_approved_lost_item_with_matching_cannot_be_edited(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+        $laporanBarangHilang = $this->createLostItem($user);
+        $barang = $this->createFoundItem($admin, $user, $kategori);
+
+        Pencocokan::query()->create([
+            'laporan_hilang_id' => $laporanBarangHilang->id,
+            'barang_id' => $barang->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
+            'catatan' => 'Diduga kuat cocok.',
+            'matched_at' => now(),
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-items.edit', $laporanBarangHilang))
+            ->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang))
+            ->assertSessionHas('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+
+        $this->from(route('admin.lost-items.show', $laporanBarangHilang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.lost-items.update', $laporanBarangHilang), $this->validLostItemPayload())
+            ->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang))
+            ->assertSessionHas('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+
+        $this->assertSame('Dompet Cokelat', $laporanBarangHilang->fresh()?->nama_barang);
+    }
+
+    public function test_lost_item_index_hides_edit_data_menu_for_locked_report(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+
+        $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_MATCHED,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-items'))
+            ->assertOk()
+            ->assertSee('Lihat Detail')
+            ->assertDontSee('Edit Data');
+    }
+
+    #[DataProvider('lostItemIndexActionMenuProvider')]
+    public function test_lost_item_index_action_menu_visibility_matches_report_status(
+        string $status,
+        bool $tampilDiHome,
+        bool $expectsEdit,
+        bool $expectsUpload,
+        bool $expectsDelete
+    ): void {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+
+        $this->createLostItem($user, [
+            'nama_barang' => 'Menu Aksi ' . $status,
+            'status_laporan' => $status,
+            'tampil_di_home' => $tampilDiHome,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-items'))
+            ->assertOk()
+            ->assertSee('Lihat Detail');
+
+        $expectsEdit
+            ? $response->assertSee('Edit Data')
+            : $response->assertDontSee('Edit Data');
+
+        $expectsUpload
+            ? $response->assertSee('Tampilkan di Home')
+            : $response->assertDontSee('Tampilkan di Home');
+
+        $expectsDelete
+            ? $response->assertSee('<button type="submit" class="menu-submit danger">Hapus</button>', false)
+            : $response->assertDontSee('<button type="submit" class="menu-submit danger">Hapus</button>', false);
+    }
+
+    public function test_admin_from_other_region_cannot_edit_lost_report(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $laporanBarangHilang = $this->createLostItem($user);
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Edit Lain',
+            'lat' => -6.41,
+            'lng' => 108.41,
+        ]);
+        $otherAdmin = $this->createAdminForRegion($otherRegion, 'other-region');
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->get(route('admin.lost-items.edit', $laporanBarangHilang))
+            ->assertForbidden();
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->patch(route('admin.lost-items.update', $laporanBarangHilang), $this->validLostItemPayload())
+            ->assertForbidden();
+
+        $this->assertSame($admin->region_id, $laporanBarangHilang->fresh()?->region_id);
+        $this->assertSame('Dompet Cokelat', $laporanBarangHilang->fresh()?->nama_barang);
+    }
+
+    /**
+     * @return array<string,array{0:string}>
+     */
+    public static function lockedLostReportStatuses(): array
+    {
+        return [
+            'matched' => [WorkflowStatus::REPORT_MATCHED],
+            'claimed' => [WorkflowStatus::REPORT_CLAIMED],
+            'completed' => [WorkflowStatus::REPORT_COMPLETED],
+            'rejected' => [WorkflowStatus::REPORT_REJECTED],
+        ];
+    }
+
+    /**
+     * @return array<string,array{0:string,1:bool,2:bool,3:bool,4:bool}>
+     */
+    public static function lostItemIndexActionMenuProvider(): array
+    {
+        return [
+            'submitted' => [WorkflowStatus::REPORT_SUBMITTED, false, true, false, false],
+            'approved unpublished' => [WorkflowStatus::REPORT_APPROVED, false, true, true, false],
+            'approved published' => [WorkflowStatus::REPORT_APPROVED, true, true, false, false],
+            'matched' => [WorkflowStatus::REPORT_MATCHED, false, false, false, false],
+            'claimed' => [WorkflowStatus::REPORT_CLAIMED, false, false, false, false],
+            'completed' => [WorkflowStatus::REPORT_COMPLETED, false, false, false, false],
+            'rejected' => [WorkflowStatus::REPORT_REJECTED, false, false, false, true],
+        ];
     }
 
     /**
@@ -225,6 +487,25 @@ class AdminItemEditTest extends TestCase
         ]);
     }
 
+    private function createClaim(Admin $admin, User $user, LaporanBarangHilang $laporanBarangHilang, Barang $barang): Klaim
+    {
+        return Klaim::query()->create([
+            'laporan_hilang_id' => $laporanBarangHilang->id,
+            'barang_id' => $barang->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'catatan' => 'Klaim sedang diproses.',
+            'kontak' => '081233344455',
+            'bukti_foto' => ['verifikasi-klaim/2026/04/bukti.jpg'],
+            'bukti_kepemilikan' => 'Foto keluarga di dalam dompet.',
+            'bukti_ciri_khusus' => 'Ada bekas lipatan.',
+            'bukti_lokasi_spesifik' => 'Kantin kampus.',
+            'bukti_waktu_hilang' => '12:30:00',
+        ]);
+    }
+
     /**
      * @param array<string, mixed> $overrides
      */
@@ -292,6 +573,29 @@ class AdminItemEditTest extends TestCase
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
             'alamat_lengkap' => 'Jl. Admin Item No. 1',
+            'status_verifikasi' => 'active',
+        ]);
+    }
+
+    private function createAdminForRegion(Wilayah $region, string $suffix): Admin
+    {
+        $superAdmin = SuperAdmin::query()->create([
+            'nama' => 'Super Admin Item ' . $suffix,
+            'email' => 'admin-item-super-' . $suffix . '@example.com',
+            'username' => 'super-item-admin-' . $suffix,
+            'password' => Hash::make('password123'),
+        ]);
+
+        return Admin::query()->create([
+            'super_admin_id' => $superAdmin->id,
+            'region_id' => $region->id,
+            'nama' => 'Admin Item ' . $suffix,
+            'email' => 'admin-item-' . $suffix . '@example.com',
+            'username' => 'admin-item-' . $suffix,
+            'password' => Hash::make('password123'),
+            'instansi' => 'Kampus SINEMU',
+            'kecamatan' => 'Sindang',
+            'alamat_lengkap' => 'Jl. Admin Item No. ' . $suffix,
             'status_verifikasi' => 'active',
         ]);
     }

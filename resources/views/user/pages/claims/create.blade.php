@@ -17,12 +17,11 @@
         </section>
 
         <section class="input-card">
-            @if(($foundItems ?? collect())->isEmpty() || ($claimableLostReports ?? collect())->isEmpty())
+            @if(($foundItems ?? collect())->isEmpty())
                 <div class="claim-create-empty">
-                    <strong>Belum ada data yang bisa diklaim</strong>
-                    <p>Pastikan Anda sudah memiliki laporan barang hilang tervalidasi dan barang yang cocok tersedia untuk klaim.</p>
+                    <strong>Belum ada barang temuan yang bisa diklaim</strong>
+                    <p>Barang temuan yang dapat diklaim harus sudah diverifikasi {{ $managerRoleLabelLower }} dan masih tersedia.</p>
                     <div class="claim-create-empty-actions">
-                        <a href="{{ route('user.lost-reports.create') }}" class="btn-primary">Buat Laporan Hilang</a>
                         <a href="{{ route('home') }}#hilang-temuan" class="btn-secondary">Lihat Barang Temuan</a>
                     </div>
                 </div>
@@ -66,9 +65,9 @@
                     </div>
 
                     <div class="form-col-12 form-group">
-                        <label class="form-label" for="laporan_hilang_id">Pilih Laporan Barang Hilang Anda <span>*</span></label>
-                        <select name="laporan_hilang_id" id="laporan_hilang_id" class="form-input" required data-custom-select>
-                            <option value="">Pilih laporan Anda</option>
+                        <label class="form-label" for="laporan_hilang_id">Pilih Laporan Barang Hilang Anda <small>(opsional)</small></label>
+                        <select name="laporan_hilang_id" id="laporan_hilang_id" class="form-input" data-custom-select>
+                            <option value="">Tidak menggunakan laporan hilang</option>
                             @foreach($claimableLostReports as $report)
                                 @php
                                     $reportDateLabel = !empty($report->tanggal_hilang)
@@ -91,6 +90,7 @@
                                 </option>
                             @endforeach
                         </select>
+                        <small class="form-note">Jika Anda belum membuat laporan kehilangan, Anda tetap bisa mengajukan klaim dengan bukti kepemilikan yang jelas.</small>
                     </div>
 
                     <div class="form-col-12 form-group">

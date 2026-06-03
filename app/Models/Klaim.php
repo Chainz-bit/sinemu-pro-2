@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\WorkflowStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -17,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $catatan
  * @property string|null $kontak
  * @property array|null $bukti_foto
+ * @property string|null $bukti_kepemilikan
  * @property string|null $bukti_ciri_khusus
  * @property string|null $bukti_detail_isi
  * @property string|null $bukti_lokasi_spesifik
@@ -47,6 +50,7 @@ class Klaim extends Model
         'catatan',
         'kontak',
         'bukti_foto',
+        'bukti_kepemilikan',
         'bukti_ciri_khusus',
         'bukti_detail_isi',
         'bukti_lokasi_spesifik',
@@ -63,6 +67,56 @@ class Klaim extends Model
         'hasil_checklist' => 'array',
         'diverifikasi_at' => 'datetime',
     ];
+
+    /**
+     * @return array<int,string>
+     */
+    public static function activeLegacyStatuses(): array
+    {
+        return [
+            WorkflowStatus::CLAIM_LEGACY_PENDING,
+            WorkflowStatus::CLAIM_LEGACY_APPROVED,
+        ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public static function activeVerificationStatuses(): array
+    {
+        return [
+            WorkflowStatus::CLAIM_SUBMITTED,
+            WorkflowStatus::CLAIM_UNDER_REVIEW,
+            WorkflowStatus::CLAIM_APPROVED,
+        ];
+    }
+
+    public function scopeActiveForSubmission(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query
+                ->whereIn('status_klaim', self::activeLegacyStatuses())
+                ->orWhereIn('status_verifikasi', self::activeVerificationStatuses());
+        });
+    }
+
+    public function canBeDeleted(): bool
+    {
+        $claimStatus = strtolower(trim((string) $this->status_klaim));
+        $verificationStatus = strtolower(trim((string) ($this->status_verifikasi ?? '')));
+        $blockedStatuses = [
+            ...self::activeLegacyStatuses(),
+            ...self::activeVerificationStatuses(),
+            WorkflowStatus::CLAIM_COMPLETED,
+        ];
+
+        if (in_array($claimStatus, $blockedStatuses, true) || in_array($verificationStatus, $blockedStatuses, true)) {
+            return false;
+        }
+
+        return in_array($claimStatus, [WorkflowStatus::CLAIM_LEGACY_REJECTED, WorkflowStatus::CLAIM_REJECTED], true)
+            || $verificationStatus === WorkflowStatus::CLAIM_REJECTED;
+    }
 
     public function laporanHilang()
     {

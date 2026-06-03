@@ -77,6 +77,12 @@ class LostItemController extends Controller
             return redirect()->route(\App\Support\ManagerPortal::routeName('lost-items'));
         }
 
+        if (!$laporanBarangHilang->canBeEditedByAdmin()) {
+            return redirect()
+                ->route(\App\Support\ManagerPortal::routeName('lost-items.show'), $laporanBarangHilang->id)
+                ->with('error', 'Laporan ini tidak dapat diedit karena sudah diproses.');
+        }
+
         /** @var \App\Models\Admin $admin */
         $admin = \App\Support\ManagerPortal::user();
 
@@ -91,18 +97,23 @@ class LostItemController extends Controller
 
     public function update(UpdateLostItemRequest $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse
     {
-        $this->commandService->update($laporanBarangHilang, $request->validated(), $request->file('foto_barang'), $this->imageUploader);
+        $result = $this->commandService->update($laporanBarangHilang, $request->validated(), $request->file('foto_barang'), $this->imageUploader);
+
+        if (!$result['ok']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
 
         return redirect()
             ->route(\App\Support\ManagerPortal::routeName('lost-items.show'), $laporanBarangHilang->id)
-            ->with('status', 'Data barang hilang berhasil diperbarui.');
+            ->with('status', $result['message']);
     }
 
     public function destroy(LaporanBarangHilang $laporanBarangHilang): RedirectResponse
     {
-        $this->commandService->destroy($laporanBarangHilang);
+        $result = $this->commandService->destroy($laporanBarangHilang);
+        $flashType = $result['ok'] ? 'status' : 'error';
 
-        return redirect()->back()->with('status', 'Laporan barang hilang berhasil dihapus.');
+        return redirect()->back()->with($flashType, $result['message']);
     }
 
     public function updateStatus(UpdateLostItemStatusRequest $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse

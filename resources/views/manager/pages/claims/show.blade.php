@@ -35,7 +35,7 @@
     $catatanVerifikasiAdmin = trim((string) ($klaim->catatan_verifikasi_admin ?? ''));
     $alasanPenolakan = trim((string) ($klaim->alasan_penolakan ?? ''));
     $ciriKhususPengaju = trim((string) ($klaim->bukti_ciri_khusus ?? $klaim->laporanHilang?->ciri_khusus ?? ''));
-    $buktiKepemilikanPengaju = trim((string) ($klaim->laporanHilang?->bukti_kepemilikan ?? ''));
+    $buktiKepemilikanPengaju = trim((string) ($klaim->bukti_kepemilikan ?? $klaim->laporanHilang?->bukti_kepemilikan ?? ''));
     $detailIsiPengaju = trim((string) ($klaim->bukti_detail_isi ?? ''));
     $lokasiSpesifikPengaju = trim((string) ($klaim->bukti_lokasi_spesifik ?? ''));
     $waktuHilangPengaju = trim((string) ($klaim->bukti_waktu_hilang ?? ''));

@@ -2,9 +2,9 @@
 
 namespace App\Services\User\Claims;
 
+use App\Models\Admin;
 use App\Models\Barang;
 use App\Models\LaporanBarangHilang;
-use App\Models\Pencocokan;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Collection;
 
@@ -16,7 +16,7 @@ class ClaimFormPageService
     public function build(int $userId, ?int $requestedBarangId = null): array
     {
         $claimableLostReports = $this->getClaimableLostReports($userId);
-        $foundItems = $this->getMatchedFoundItems($claimableLostReports);
+        $foundItems = $this->getClaimableFoundItems($userId);
 
         $selectedBarangId = null;
         if (!is_null($requestedBarangId) && $foundItems->contains(fn (Barang $barang) => (int) $barang->id === $requestedBarangId)) {
@@ -67,42 +67,39 @@ class ClaimFormPageService
     }
 
     /**
-     * @param Collection<int,LaporanBarangHilang> $reports
      * @return Collection<int,Barang>
      */
-    private function getMatchedFoundItems(Collection $reports): Collection
+    private function getClaimableFoundItems(int $userId): Collection
     {
-        if ($reports->isEmpty()) {
-            return collect();
-        }
-
-        $reportIds = $reports->pluck('id')->map(fn ($id) => (int) $id)->all();
-        $matchedBarangIds = Pencocokan::query()
-            ->whereIn('laporan_hilang_id', $reportIds)
-            ->whereIn('status_pencocokan', [
-                WorkflowStatus::MATCH_CONFIRMED,
-                WorkflowStatus::MATCH_CLAIM_IN_PROGRESS,
-                WorkflowStatus::MATCH_CLAIM_REJECTED,
-            ])
-            ->pluck('barang_id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
-
-        if ($matchedBarangIds === []) {
+        if ($userId <= 0) {
             return collect();
         }
 
         $query = Barang::query()
             ->with('kategori:id,nama_kategori')
-            ->whereIn('id', $matchedBarangIds)
             ->where('status_barang', 'tersedia')
             ->whereIn('status_laporan', [
                 WorkflowStatus::REPORT_APPROVED,
                 WorkflowStatus::REPORT_MATCHED,
                 WorkflowStatus::REPORT_CLAIMED,
             ])
+            ->where(function ($query) use ($userId): void {
+                $query
+                    ->whereNull('user_id')
+                    ->orWhere('user_id', '!=', $userId);
+            })
+            ->whereHas('admin', function ($query): void {
+                $query
+                    ->where('status_verifikasi', Admin::STATUS_ACTIVE)
+                    ->whereColumn('admins.region_id', 'barangs.region_id');
+            })
+            ->whereDoesntHave('klaims', function ($query): void {
+                $query->where(function ($claimQuery): void {
+                    $claimQuery
+                        ->activeForSubmission()
+                        ->orWhere('status_verifikasi', WorkflowStatus::CLAIM_COMPLETED);
+                });
+            })
             ->select([
                 'id',
                 'kategori_id',

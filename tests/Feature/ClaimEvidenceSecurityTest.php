@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ClaimEvidenceSecurityTest extends TestCase
@@ -64,6 +65,54 @@ class ClaimEvidenceSecurityTest extends TestCase
             ->assertForbidden();
     }
 
+    #[DataProvider('nonActiveManagerStatusProvider')]
+    public function test_non_active_manager_cannot_view_claim_evidence(string $status): void
+    {
+        Storage::fake('local');
+        $claim = $this->createClaimWithEvidence();
+        $claim->admin->update(['status_verifikasi' => $status]);
+
+        $this->actingAs($claim->admin, 'admin')
+            ->get(route('claims.evidence.show', ['klaim' => $claim->id, 'index' => 0]))
+            ->assertForbidden();
+    }
+
+    public function test_soft_deleted_manager_cannot_view_claim_evidence_with_existing_session(): void
+    {
+        Storage::fake('local');
+        $claim = $this->createClaimWithEvidence();
+        $admin = $claim->admin;
+        $admin->delete();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('claims.evidence.show', ['klaim' => $claim->id, 'index' => 0]))
+            ->assertForbidden();
+    }
+
+    public function test_manager_without_region_cannot_view_claim_evidence(): void
+    {
+        Storage::fake('local');
+        $claim = $this->createClaimWithEvidence();
+        $claim->admin->update(['region_id' => null]);
+
+        $this->actingAs($claim->admin, 'admin')
+            ->get(route('claims.evidence.show', ['klaim' => $claim->id, 'index' => 0]))
+            ->assertForbidden();
+    }
+
+    public function test_assigned_manager_cannot_view_claim_evidence_outside_region_scope(): void
+    {
+        Storage::fake('local');
+        $claim = $this->createClaimWithEvidence();
+        $otherRegion = Wilayah::query()->create(['nama_wilayah' => 'Wilayah Di Luar Scope']);
+        $claim->barang->update(['region_id' => $otherRegion->id]);
+        $claim->laporanHilang->update(['region_id' => $otherRegion->id]);
+
+        $this->actingAs($claim->admin, 'admin')
+            ->get(route('claims.evidence.show', ['klaim' => $claim->id, 'index' => 0]))
+            ->assertForbidden();
+    }
+
     public function test_super_admin_can_view_claim_evidence(): void
     {
         Storage::fake('local');
@@ -91,6 +140,22 @@ class ClaimEvidenceSecurityTest extends TestCase
 
         $this->get(route('media.image', ['folder' => 'verifikasi-klaim', 'path' => '2026/05/legacy.png']))
             ->assertNotFound();
+
+        // Feature test ini hanya memastikan request Laravel tidak menyajikan file static tersebut.
+        // Web server produksi tetap perlu diaudit karena public/storage dapat dilayani sebelum Laravel.
+        $this->get('/storage/verifikasi-klaim/2026/05/legacy.png')
+            ->assertStatus(403);
+    }
+
+    public function test_apache_config_blocks_direct_static_legacy_evidence_urls(): void
+    {
+        $htaccess = file_get_contents(public_path('.htaccess'));
+
+        $this->assertIsString($htaccess);
+        $this->assertStringContainsString(
+            'RewriteRule ^storage/verifikasi-klaim(?:/|$) - [F,L,NC]',
+            $htaccess
+        );
     }
 
     public function test_missing_or_malicious_evidence_path_returns_404(): void
@@ -114,6 +179,7 @@ class ClaimEvidenceSecurityTest extends TestCase
         Storage::fake('public');
 
         $user = $this->createUser('private-upload-user@example.com', 'private-upload-user');
+        $finder = $this->createUser('private-upload-finder@example.com', 'private-upload-finder');
         $admin = $this->createAdmin();
         $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
 
@@ -132,7 +198,7 @@ class ClaimEvidenceSecurityTest extends TestCase
         $foundItem = Barang::query()->create([
             'admin_id' => $admin->id,
             'region_id' => $admin->region_id,
-            'user_id' => $user->id,
+            'user_id' => $finder->id,
             'kategori_id' => $kategori->id,
             'nama_barang' => 'Laptop Private',
             'deskripsi' => 'Ditemukan di perpustakaan',
@@ -198,8 +264,21 @@ class ClaimEvidenceSecurityTest extends TestCase
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Mode: read-only, tidak mengubah file atau data.', $output);
         $this->assertStringContainsString('legacy_public_paths: 1', $output);
+        $this->assertStringContainsString('berisiko diakses langsung melalui /storage/verifikasi-klaim/*', $output);
         $this->assertSame($before, $claim->fresh()?->bukti_foto);
         Storage::disk('public')->assertExists('verifikasi-klaim/2026/05/legacy.png');
+    }
+
+    /**
+     * @return array<string,array{string}>
+     */
+    public static function nonActiveManagerStatusProvider(): array
+    {
+        return [
+            'pending' => [Admin::STATUS_PENDING],
+            'rejected' => [Admin::STATUS_REJECTED],
+            'inactive' => [Admin::STATUS_INACTIVE],
+        ];
     }
 
     public function test_migration_command_defaults_to_dry_run_without_changing_database_or_files(): void

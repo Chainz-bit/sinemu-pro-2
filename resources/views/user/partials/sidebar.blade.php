@@ -44,7 +44,8 @@
 <x-dashboard.sidebar
     id="admin-sidebar"
     :active-menu="($activeMenu ?? '')"
-    :brand-url="route('user.dashboard')"
+    :brand-url="route('home')"
+    brand-alt="Kembali ke halaman utama"
     :nav-items="$userSidebarItems"
 >
     {{-- BAGIAN: Profil + aksi akun user --}}
@@ -61,9 +62,6 @@
         </button>
 
         <div class="profile-menu" id="profile-menu">
-            <a href="{{ route('home') }}">
-                Home
-            </a>
             <a href="{{ route('user.profile') }}" class="{{ ($activeMenu ?? '') === 'profile' ? 'active' : '' }}">
                 Profil Saya
             </a>

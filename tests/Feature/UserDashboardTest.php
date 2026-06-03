@@ -27,6 +27,28 @@ class UserDashboardTest extends TestCase
         Cache::flush();
     }
 
+    public function test_user_sidebar_logo_links_to_landing_and_profile_menu_excludes_home(): void
+    {
+        $user = $this->createUser();
+
+        $response = $this->actingAs($user)->get(route('user.dashboard'));
+
+        $response->assertOk();
+        $content = $response->getContent();
+
+        $this->assertStringContainsString(
+            '<a class="sidebar-brand" href="' . route('home') . '" aria-label="Kembali ke halaman utama">',
+            $content
+        );
+        $this->assertMatchesRegularExpression('/<div class="profile-menu" id="profile-menu">(.*?)<\/div>/s', $content);
+
+        preg_match('/<div class="profile-menu" id="profile-menu">(.*?)<\/div>/s', $content, $profileMenu);
+
+        $this->assertStringNotContainsString('Home', $profileMenu[1]);
+        $this->assertStringContainsString('Profil Saya', $profileMenu[1]);
+        $this->assertStringContainsString('Keluar', $profileMenu[1]);
+    }
+
     public function test_user_dashboard_shows_stats_and_combined_latest_activities(): void
     {
         $admin = $this->createAdmin();

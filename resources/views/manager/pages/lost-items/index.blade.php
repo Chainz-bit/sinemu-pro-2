@@ -153,20 +153,22 @@
                                 </button>
                                 <div class="row-menu" id="menu-{{ $index }}">
                                     <a href="{{ manager_route('lost-items.show', $item->id) }}">Lihat Detail</a>
-                                    <a href="{{ manager_route('lost-items.edit', $item->id) }}">Edit Data</a>
-                                    @if(!($item->tampil_di_home ?? false))
+                                    @if($item->canBeEditedByAdmin())
+                                        <a href="{{ manager_route('lost-items.edit', $item->id) }}">Edit Data</a>
+                                    @endif
+                                    @if($reportStatus === \App\Support\WorkflowStatus::REPORT_APPROVED && !($item->tampil_di_home ?? false))
                                         <form method="POST" action="{{ manager_route('dashboard.reports.publish-home', ['type' => 'hilang', 'id' => $item->id]) }}">
                                             @csrf
-                                            <button type="submit" class="menu-submit">Upload</button>
+                                            <button type="submit" class="menu-submit">Tampilkan di Home</button>
                                         </form>
-                                    @else
-                                        <span class="row-menu-note">Sudah di-upload</span>
                                     @endif
-                                    <form method="POST" action="{{ manager_route('lost-items.destroy', $item->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus laporan ini?">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="menu-submit danger">Hapus</button>
-                                    </form>
+                                    @if($item->canBeDeletedByAdmin())
+                                        <form method="POST" action="{{ manager_route('lost-items.destroy', $item->id) }}" data-confirm-delete data-confirm-message="Yakin ingin menghapus laporan ini?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="menu-submit danger">Hapus</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

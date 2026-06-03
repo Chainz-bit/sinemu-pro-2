@@ -35,7 +35,9 @@ class ClaimEvidenceAuditService
             'notes' => [
                 'Audit ini read-only dan tidak meng-copy, memindahkan, atau menghapus file.',
                 'Path lama verifikasi-klaim/* tetap dibaca dari disk public melalui route berotorisasi selama masa transisi.',
+                'Jika public/storage symlink aktif, file legacy public berisiko diakses langsung melalui /storage/verifikasi-klaim/* tanpa melewati Laravel.',
                 'Path baru private/verifikasi-klaim/* dibaca dari disk local melalui route berotorisasi.',
+                'Jalankan migrasi ke private, verifikasi hasil audit, lalu bersihkan file public legacy dengan prosedur terpisah yang terkontrol.',
             ],
         ];
     }

@@ -86,6 +86,11 @@ class Admin extends Authenticatable
         'pickup_lng' => 'float',
     ];
 
+    public function isActive(): bool
+    {
+        return $this->status_verifikasi === self::STATUS_ACTIVE && !$this->trashed();
+    }
+
     public function superAdmin()
     {
         return $this->belongsTo(SuperAdmin::class);

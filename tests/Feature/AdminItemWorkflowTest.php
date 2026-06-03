@@ -15,6 +15,7 @@ use App\Models\Wilayah;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminItemWorkflowTest extends TestCase
@@ -187,7 +188,33 @@ class AdminItemWorkflowTest extends TestCase
         $response->assertSessionHas('error', 'Perbarui status klaim dari halaman Verifikasi Klaim agar checklist keamanan tetap diterapkan.');
     }
 
-    public function test_admin_can_verify_lost_item_report(): void
+    public function test_admin_can_approve_submitted_lost_item_report(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'tampil_di_home' => false,
+        ]);
+
+        $response = $this->from(route('admin.lost-items.show', $laporanBarangHilang))
+            ->actingAs($admin, 'admin')
+            ->patch(route('admin.lost-items.verify', $laporanBarangHilang), [
+                'status_laporan' => 'approved',
+            ]);
+
+        $response->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang));
+        $response->assertSessionHas('status', 'Verifikasi laporan barang hilang berhasil diperbarui.');
+
+        $laporanBarangHilang = $laporanBarangHilang->fresh();
+
+        $this->assertSame(WorkflowStatus::REPORT_APPROVED, $laporanBarangHilang?->status_laporan);
+        $this->assertTrue((bool) $laporanBarangHilang?->tampil_di_home);
+        $this->assertSame($admin->id, $laporanBarangHilang?->verified_by_admin_id);
+        $this->assertNotNull($laporanBarangHilang?->verified_at);
+    }
+
+    public function test_admin_can_reject_submitted_lost_item_report(): void
     {
         $admin = $this->createAdmin();
         $user = $this->createUser();
@@ -233,15 +260,17 @@ class AdminItemWorkflowTest extends TestCase
         $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $laporanBarangHilang->fresh()?->status_laporan);
     }
 
-    public function test_lost_item_verify_with_same_status_does_not_duplicate_user_notification(): void
+    #[DataProvider('processedLostReportStatuses')]
+    public function test_processed_lost_item_report_cannot_be_verified_again(string $currentStatus, string $targetStatus): void
     {
         $admin = $this->createAdmin();
         $user = $this->createUser();
         $verifiedAt = now()->subDay()->startOfSecond();
         $laporanBarangHilang = $this->createLostItem($user, [
-            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'status_laporan' => $currentStatus,
             'verified_by_admin_id' => $admin->id,
             'verified_at' => $verifiedAt,
+            'tampil_di_home' => $currentStatus === WorkflowStatus::REPORT_APPROVED,
         ]);
 
         UserNotification::query()->create([
@@ -254,13 +283,78 @@ class AdminItemWorkflowTest extends TestCase
         $this->from(route('admin.lost-items.show', $laporanBarangHilang))
             ->actingAs($admin, 'admin')
             ->patch(route('admin.lost-items.verify', $laporanBarangHilang), [
-                'status_laporan' => 'approved',
+                'status_laporan' => $targetStatus,
             ])
             ->assertRedirect(route('admin.lost-items.show', $laporanBarangHilang))
-            ->assertSessionHas('status', 'Status laporan tidak berubah.');
+            ->assertSessionHas('error', 'Laporan ini tidak dapat diverifikasi ulang karena sudah diproses.');
 
+        $laporanBarangHilang = $laporanBarangHilang->fresh();
+
+        $this->assertSame($currentStatus, $laporanBarangHilang?->status_laporan);
+        $this->assertSame($admin->id, $laporanBarangHilang?->verified_by_admin_id);
         $this->assertSame(1, UserNotification::query()->where('user_id', $user->id)->count());
-        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($laporanBarangHilang->fresh()?->verified_at)->toDateTimeString());
+        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($laporanBarangHilang?->verified_at)->toDateTimeString());
+    }
+
+    public function test_lost_item_detail_hides_verification_buttons_after_report_processed(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'verified_by_admin_id' => $admin->id,
+            'verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.lost-items.show', $laporanBarangHilang))
+            ->assertOk()
+            ->assertSee('Laporan ini sudah diproses dan tidak dapat diverifikasi ulang.')
+            ->assertDontSee('Setujui Laporan')
+            ->assertDontSee('Tolak Laporan');
+    }
+
+    public function test_admin_from_other_region_cannot_verify_lost_report(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $laporanBarangHilang = $this->createLostItem($user, [
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'verified_by_admin_id' => null,
+            'verified_at' => null,
+        ]);
+        $otherRegion = Wilayah::query()->create([
+            'nama_wilayah' => 'Wilayah Lain Workflow',
+            'lat' => -6.41,
+            'lng' => 108.41,
+        ]);
+        $otherAdmin = $this->createAdminForRegion($otherRegion, 'other-region');
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->patch(route('admin.lost-items.verify', $laporanBarangHilang), [
+                'status_laporan' => 'approved',
+            ])
+            ->assertForbidden();
+
+        $laporanBarangHilang = $laporanBarangHilang->fresh();
+
+        $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $laporanBarangHilang?->status_laporan);
+        $this->assertNull($laporanBarangHilang?->verified_by_admin_id);
+        $this->assertNull($laporanBarangHilang?->verified_at);
+    }
+
+    /**
+     * @return array<string,array{0:string,1:string}>
+     */
+    public static function processedLostReportStatuses(): array
+    {
+        return [
+            'approved' => [WorkflowStatus::REPORT_APPROVED, 'rejected'],
+            'rejected' => [WorkflowStatus::REPORT_REJECTED, 'approved'],
+            'matched' => [WorkflowStatus::REPORT_MATCHED, 'rejected'],
+            'claimed' => [WorkflowStatus::REPORT_CLAIMED, 'rejected'],
+            'completed' => [WorkflowStatus::REPORT_COMPLETED, 'rejected'],
+        ];
     }
 
     /**
@@ -341,6 +435,29 @@ class AdminItemWorkflowTest extends TestCase
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
             'alamat_lengkap' => 'Jl. Admin Workflow No. 1',
+            'status_verifikasi' => 'active',
+        ]);
+    }
+
+    private function createAdminForRegion(Wilayah $region, string $suffix): Admin
+    {
+        $superAdmin = SuperAdmin::query()->create([
+            'nama' => 'Super Admin Workflow ' . $suffix,
+            'email' => 'admin-item-workflow-super-' . $suffix . '@example.com',
+            'username' => 'super-item-workflow-' . $suffix,
+            'password' => Hash::make('password123'),
+        ]);
+
+        return Admin::query()->create([
+            'super_admin_id' => $superAdmin->id,
+            'region_id' => $region->id,
+            'nama' => 'Admin Workflow ' . $suffix,
+            'email' => 'admin-item-workflow-' . $suffix . '@example.com',
+            'username' => 'admin-item-workflow-' . $suffix,
+            'password' => Hash::make('password123'),
+            'instansi' => 'Kampus SINEMU',
+            'kecamatan' => 'Sindang',
+            'alamat_lengkap' => 'Jl. Admin Workflow No. ' . $suffix,
             'status_verifikasi' => 'active',
         ]);
     }
