@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApproveClaimRequest;
 use App\Http\Requests\Admin\ClaimVerificationIndexRequest;
 use App\Http\Requests\Admin\RejectClaimRequest;
+use App\Models\Admin;
 use App\Models\Klaim;
 use App\Services\Admin\Claims\ClaimVerificationDetailPageService;
 use App\Services\Admin\Claims\ClaimVerificationListingService;
 use App\Services\Admin\Claims\ClaimVerificationWorkflowService;
 use App\Services\User\Claims\ClaimProofStorageService;
+use App\Support\ManagerPortal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -28,8 +30,8 @@ class ClaimVerificationController extends Controller
 
     public function index(ClaimVerificationIndexRequest $request): View|StreamedResponse
     {
-        /** @var \App\Models\Admin $admin */
-        $admin = \App\Support\ManagerPortal::user();
+        /** @var Admin $admin */
+        $admin = ManagerPortal::user();
         $indexState = $this->listingService->prepareIndexQuery($request);
         $query = $indexState['query'];
         $sort = $indexState['sort'];
@@ -46,7 +48,7 @@ class ClaimVerificationController extends Controller
     public function approve(ApproveClaimRequest $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
-        $adminId = (int) \App\Support\ManagerPortal::id();
+        $adminId = (int) ManagerPortal::id();
 
         if (!$this->workflowService->canApprove($klaim)) {
             return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat disetujui.');
@@ -65,13 +67,18 @@ class ClaimVerificationController extends Controller
     public function reject(RejectClaimRequest $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
-        $adminId = (int) \App\Support\ManagerPortal::id();
+        $adminId = (int) ManagerPortal::id();
 
         if (!$this->workflowService->canReject($klaim)) {
             return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat ditolak.');
         }
 
-        $this->workflowService->reject($klaim, $request->validated(), $adminId);
+        if (!$this->workflowService->reject($klaim, $request->validated(), $adminId)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Klaim tidak dapat ditolak karena konteks klaim sudah tidak valid.');
+        }
 
         return redirect()->back()->with('status', 'Klaim berhasil ditolak.');
     }
@@ -80,7 +87,9 @@ class ClaimVerificationController extends Controller
     {
         $this->ensureClaimOwnedByAdmin($klaim);
         abort_if(!$this->workflowService->canComplete($klaim), 422, 'Klaim harus disetujui sebelum ditandai selesai.');
-        $this->workflowService->complete($klaim, (int) \App\Support\ManagerPortal::id());
+        if (!$this->workflowService->complete($klaim, (int) ManagerPortal::id())) {
+            return redirect()->back()->with('error', 'Klaim tidak dapat ditandai selesai karena konteks klaim sudah tidak valid.');
+        }
 
         return redirect()->back()->with('status', 'Klaim ditandai selesai.');
     }
@@ -88,8 +97,8 @@ class ClaimVerificationController extends Controller
     public function show(Klaim $klaim): View
     {
         $this->ensureClaimOwnedByAdmin($klaim);
-        /** @var \App\Models\Admin|null $admin */
-        $admin = \App\Support\ManagerPortal::user();
+        /** @var Admin|null $admin */
+        $admin = ManagerPortal::user();
 
         $klaim->load([
             'barang.kategori:id,nama_kategori',
@@ -107,7 +116,7 @@ class ClaimVerificationController extends Controller
 
     public function destroy(Klaim $klaim): RedirectResponse
     {
-        abort_if(!\App\Support\ManagerPortal::check(), 403);
+        abort_if(!ManagerPortal::check(), 403);
         $this->ensureClaimOwnedByAdmin($klaim);
 
         if (! $klaim->canBeDeleted()) {
@@ -125,13 +134,13 @@ class ClaimVerificationController extends Controller
 
     private function ensureClaimOwnedByAdmin(Klaim $klaim): void
     {
-        $adminId = \App\Support\ManagerPortal::id();
+        $adminId = ManagerPortal::id();
         if (is_null($klaim->admin_id)) {
-            $admin = \App\Support\ManagerPortal::user();
+            $admin = ManagerPortal::user();
             $klaim->loadMissing(['barang:id,region_id', 'laporanHilang:id,region_id']);
 
             $canAccessLegacyClaim = false;
-            if ($admin && $admin->region_id) {
+            if ($admin instanceof Admin && $admin->region_id) {
                 $canAccessLegacyClaim = ((int) ($klaim->barang?->region_id ?? 0) === (int) $admin->region_id)
                     || ((int) ($klaim->laporanHilang?->region_id ?? 0) === (int) $admin->region_id);
             }

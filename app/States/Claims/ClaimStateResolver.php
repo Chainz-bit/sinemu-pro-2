@@ -9,14 +9,17 @@ class ClaimStateResolver
 {
     public function resolve(Klaim $klaim): ClaimState
     {
-        if ((string) ($klaim->status_verifikasi ?? '') === WorkflowStatus::CLAIM_COMPLETED) {
-            return new CompletedClaimState();
-        }
+        $verificationStatus = (string) ($klaim->status_verifikasi ?? '');
 
-        return match ((string) $klaim->status_klaim) {
-            'disetujui' => new ApprovedClaimState(),
-            'ditolak' => new RejectedClaimState(),
-            default => new PendingClaimState(),
+        return match ($verificationStatus) {
+            WorkflowStatus::CLAIM_COMPLETED => new CompletedClaimState(),
+            WorkflowStatus::CLAIM_APPROVED => new ApprovedClaimState(),
+            WorkflowStatus::CLAIM_REJECTED => new RejectedClaimState(),
+            default => match ((string) $klaim->status_klaim) {
+                WorkflowStatus::CLAIM_LEGACY_APPROVED => new ApprovedClaimState(),
+                WorkflowStatus::CLAIM_LEGACY_REJECTED => new RejectedClaimState(),
+                default => new PendingClaimState(),
+            },
         };
     }
 }

@@ -129,7 +129,7 @@
                                 <i class="fa-solid fa-chevron-right login-portal-arrow"></i>
                             </a>
 
-                            <a href="{{ route('login') }}" class="login-portal-option">
+                            <a href="{{ manager_route('login') }}" class="login-portal-option">
                                 <span class="login-portal-option-icon"><i class="fa-regular fa-id-badge"></i></span>
                                 <span class="login-portal-option-text">
                                     <strong>{{ $managerRoleLabel }}</strong>
