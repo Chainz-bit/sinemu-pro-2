@@ -200,6 +200,25 @@ class Barang extends Model
         ];
     }
 
+    /**
+     * Apakah pengelola dapat melakukan toggle publikasi (tarik/terbitkan) laporan ini.
+     * Hanya diizinkan jika status laporan adalah APPROVED dan sudah diverifikasi.
+     * Tidak diizinkan saat laporan sedang dalam proses klaim (claimed/matched).
+     */
+    public function canTogglePublikasiByAdmin(): bool
+    {
+        $allowedStatuses = [
+            WorkflowStatus::REPORT_APPROVED,
+        ];
+
+        return in_array(
+                strtolower(trim((string) ($this->status_laporan ?? ''))),
+                $allowedStatuses,
+                true
+            )
+            && !is_null($this->verified_by_admin_id);
+    }
+
     public function canBeDeletedByAdmin(): bool
     {
         return $this->hasAdminDeletableReportStatus()

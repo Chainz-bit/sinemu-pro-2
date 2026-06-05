@@ -35,11 +35,13 @@ class HomeController extends Controller
 
     public function showLostDetail(LaporanBarangHilang $laporanBarangHilang)
     {
+        $laporanBarangHilang->loadMissing('user:id,nama,name');
         return view('home.pages.detail', $this->homePageService->buildLostDetailViewData($laporanBarangHilang));
     }
 
     public function showFoundDetail(Barang $barang)
     {
+        $barang->loadMissing(['admin:id,nama,instansi', 'kategori:id,nama_kategori']);
         return view('home.pages.detail', $this->homePageService->buildFoundDetailViewData($barang));
     }
 }

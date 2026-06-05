@@ -47,7 +47,7 @@ class HomeLostItemService
                     [$lostStatusLabel, $lostStatusClass] = match ($reportStatus) {
                         WorkflowStatus::REPORT_APPROVED => ['Terverifikasi', 'item-status-info'],
                         WorkflowStatus::REPORT_MATCHED => ['Sudah Dicocokkan', 'item-status-success'],
-                        WorkflowStatus::REPORT_CLAIMED => ['Sedang Diklaim', 'item-status-warning'],
+                        WorkflowStatus::REPORT_CLAIMED => ['Sedang Diproses Klaim', 'item-status-warning'],
                         WorkflowStatus::REPORT_COMPLETED => ['Selesai', 'item-status-success'],
                         WorkflowStatus::REPORT_REJECTED => ['Ditolak', 'item-status-muted'],
                         default => ['Menunggu Verifikasi', 'item-status-warning'],
@@ -60,7 +60,7 @@ class HomeLostItemService
                         'location' => $this->normalizeLocationLabel((string) $item->lokasi_hilang),
                         'date' => $item->tanggal_hilang ? Carbon::parse((string) $item->tanggal_hilang)->toDateString() : '',
                         'date_label' => $item->tanggal_hilang ? Carbon::parse((string) $item->tanggal_hilang)->translatedFormat('d M Y') : '-',
-                        'image_url' => $this->mediaAssetService->resolveItemImageUrl((string) ($item->foto_barang ?? ''), 'barang-hilang'),
+                        'image_url' => $this->mediaAssetService->resolveItemImagePublicUrl((string) ($item->foto_barang ?? ''), 'barang-hilang'),
                         'detail_url' => route('home.lost-detail', $item->id),
                         'status_label' => $lostStatusLabel,
                         'status_class' => $lostStatusClass,

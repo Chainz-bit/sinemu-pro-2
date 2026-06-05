@@ -56,7 +56,7 @@ class HomeFoundItemService
                         'location' => $this->normalizeLocationLabel((string) $item->lokasi_ditemukan),
                         'date' => $item->tanggal_ditemukan ? Carbon::parse((string) $item->tanggal_ditemukan)->toDateString() : '',
                         'date_label' => $item->tanggal_ditemukan ? Carbon::parse((string) $item->tanggal_ditemukan)->translatedFormat('d M Y') : '-',
-                        'image_url' => $this->mediaAssetService->resolveItemImageUrl((string) ($item->foto_barang ?? ''), 'barang-temuan'),
+                        'image_url' => $this->mediaAssetService->resolveItemImagePublicUrl((string) ($item->foto_barang ?? ''), 'barang-temuan'),
                         'detail_url' => route('home.found-detail', $item->id),
                         'claim_status_key' => $claimStatusKey,
                         'claim_status_label' => match ($claimStatusKey) {

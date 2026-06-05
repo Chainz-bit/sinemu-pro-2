@@ -40,6 +40,7 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
             Route::patch('barang-hilang/{laporanBarangHilang}', [LostItemController::class, 'update'])->name('lost-items.update');
             Route::patch('barang-hilang/{laporanBarangHilang}/status', [LostItemController::class, 'updateStatus'])->name('lost-items.update-status');
             Route::patch('barang-hilang/{laporanBarangHilang}/verify', [LostItemController::class, 'verify'])->name('lost-items.verify');
+            Route::patch('barang-hilang/{laporanBarangHilang}/toggle-publikasi', [LostItemController::class, 'togglePublikasi'])->name('lost-items.toggle-publikasi');
             Route::delete('barang-hilang/{laporanBarangHilang}', [LostItemController::class, 'destroy'])->name('lost-items.destroy');
         });
 
@@ -51,6 +52,7 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
             Route::get('barang-temuan/{barang}/export', [FoundItemController::class, 'export'])->name('found-items.export');
             Route::patch('barang-temuan/{barang}/status', [FoundItemController::class, 'updateStatus'])->name('found-items.update-status');
             Route::patch('barang-temuan/{barang}/verify', [FoundItemController::class, 'verify'])->name('found-items.verify');
+            Route::patch('barang-temuan/{barang}/toggle-publikasi', [FoundItemController::class, 'togglePublikasi'])->name('found-items.toggle-publikasi');
             Route::delete('barang-temuan/{barang}', [FoundItemController::class, 'destroy'])->name('found-items.destroy');
         });
 

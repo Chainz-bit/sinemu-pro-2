@@ -255,6 +255,7 @@ class HomePageViewService
                 WorkflowStatus::REPORT_APPROVED,
                 WorkflowStatus::REPORT_MATCHED,
                 WorkflowStatus::REPORT_CLAIMED,
+                WorkflowStatus::REPORT_COMPLETED,
             ]);
         }
 
@@ -275,6 +276,7 @@ class HomePageViewService
                 WorkflowStatus::REPORT_APPROVED,
                 WorkflowStatus::REPORT_MATCHED,
                 WorkflowStatus::REPORT_CLAIMED,
+                WorkflowStatus::REPORT_COMPLETED,
             ]);
         }
 

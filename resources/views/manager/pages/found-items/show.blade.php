@@ -93,9 +93,11 @@
         ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
         ->implode('');
     $statusHistories = $barang->statusHistories->take(8);
+    $canTogglePublikasi = $barang->canTogglePublikasiByAdmin();
+    $sedangDipublikasi  = (bool) ($barang->tampil_di_home ?? false);
     $tanggalDitemukanLabel = !empty($barang->tanggal_ditemukan)
         ? \Illuminate\Support\Carbon::parse($barang->tanggal_ditemukan)->format('d M Y')
-        : '-';
+        : '–';
     $waktuDitemukanRaw = (string) ($barang->waktu_ditemukan ?? '');
     $waktuDitemukanLabel = $waktuDitemukanRaw !== ''
         ? (date('H:i', strtotime($waktuDitemukanRaw)) ?: $waktuDitemukanRaw)
@@ -231,6 +233,47 @@
                             <div class="found-verify-box">
                                 <small>Verifikasi Laporan</small>
                                 <p>Barang temuan ini sudah diproses dan tidak dapat diverifikasi ulang.</p>
+                            </div>
+                        @endif
+
+                        @if($canTogglePublikasi)
+                            <div class="found-verify-box">
+                                <small>Status Publikasi</small>
+                                @if($sedangDipublikasi)
+                                    <p>Laporan ini sedang <strong>dipublikasikan</strong> di halaman publik pengguna.</p>
+                                    <form
+                                        method="POST"
+                                        action="{{ manager_route('found-items.toggle-publikasi', $barang->id) }}"
+                                        data-confirm-delete
+                                        data-confirm-title="Tarik Publikasi"
+                                        data-confirm-message="Laporan ini akan ditarik dari halaman publik. Pengguna tidak akan bisa menemukannya hingga dipublikasikan kembali."
+                                        data-confirm-submit-label="Tarik Publikasi"
+                                        data-confirm-submit-variant="danger"
+                                    >
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" id="btn-tarik-publikasi-found" class="filter-btn found-action-btn found-action-btn-ghost">
+                                            Tarik Publikasi
+                                        </button>
+                                    </form>
+                                @else
+                                    <p>Laporan ini <strong>tidak dipublikasikan</strong> dan tidak tampil di halaman publik.</p>
+                                    <form
+                                        method="POST"
+                                        action="{{ manager_route('found-items.toggle-publikasi', $barang->id) }}"
+                                        data-confirm-delete
+                                        data-confirm-title="Publikasikan Kembali"
+                                        data-confirm-message="Laporan ini akan ditampilkan kembali di halaman publik pengguna."
+                                        data-confirm-submit-label="Publikasikan"
+                                        data-confirm-submit-variant="primary"
+                                    >
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" id="btn-publikasikan-kembali-found" class="filter-btn found-action-btn found-action-btn-primary">
+                                            Publikasikan Kembali
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         @endif
 

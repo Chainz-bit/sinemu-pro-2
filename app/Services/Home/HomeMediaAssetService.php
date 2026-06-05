@@ -75,6 +75,41 @@ class HomeMediaAssetService
         return asset('img/login-image.png');
     }
 
+    /**
+     * Versi ringan dari resolveItemImageUrl() khusus untuk listing halaman publik.
+     * Tidak melakukan disk I/O atau base64 encoding — langsung kembalikan URL media.
+     * Digunakan di HomeLostItemService dan HomeFoundItemService untuk mengurangi latency.
+     */
+    public function resolveItemImagePublicUrl(string $fotoPath, string $defaultFolder): string
+    {
+        $cleanPath = str_replace('\\', '/', trim($fotoPath, '/'));
+        if ($cleanPath === '') {
+            return asset('img/login-image.png');
+        }
+
+        if (Str::startsWith($cleanPath, ['http://', 'https://'])) {
+            return $cleanPath;
+        }
+
+        if (Str::startsWith($cleanPath, 'storage/')) {
+            $cleanPath = substr($cleanPath, 8);
+        } elseif (Str::startsWith($cleanPath, 'public/')) {
+            $cleanPath = substr($cleanPath, 7);
+        }
+
+        [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
+
+        if (in_array($folder, ['barang-hilang', 'barang-temuan'], true) && $subPath !== '') {
+            return route('media.image', ['folder' => $folder, 'path' => $subPath]);
+        }
+
+        if ($subPath !== '') {
+            return route('media.image', ['folder' => $defaultFolder, 'path' => $cleanPath]);
+        }
+
+        return asset('img/login-image.png');
+    }
+
     public function resolveUserAvatarUrl(?string $profilePath): string
     {
         $defaultAvatar = asset('img/profil.jpg');

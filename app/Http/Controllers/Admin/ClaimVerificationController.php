@@ -141,8 +141,12 @@ class ClaimVerificationController extends Controller
 
             $canAccessLegacyClaim = false;
             if ($admin instanceof Admin && $admin->region_id) {
-                $canAccessLegacyClaim = ((int) ($klaim->barang?->region_id ?? 0) === (int) $admin->region_id)
-                    || ((int) ($klaim->laporanHilang?->region_id ?? 0) === (int) $admin->region_id);
+                $barangRegionId    = $klaim->barang?->region_id;
+                $laporanRegionId   = $klaim->laporanHilang?->region_id;
+                $canAccessLegacyClaim = !is_null($barangRegionId)
+                    && !is_null($laporanRegionId)
+                    && (int) $barangRegionId  === (int) $admin->region_id
+                    && (int) $laporanRegionId === (int) $admin->region_id;
             }
 
             abort_if(!$canAccessLegacyClaim, 403);

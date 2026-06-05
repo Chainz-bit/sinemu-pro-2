@@ -56,7 +56,9 @@
     $reportStatus = \App\Support\ReportStatusPresenter::key($laporanBarangHilang->status_laporan ?? null);
     $statusLabel = \App\Support\ReportStatusPresenter::label($reportStatus);
     $statusClass = \App\Support\ReportStatusPresenter::cssClass($reportStatus);
-    $canVerifyReport = $laporanBarangHilang->canBeVerifiedByAdmin();
+    $canVerifyReport       = $laporanBarangHilang->canBeVerifiedByAdmin();
+    $canTogglePublikasi    = $laporanBarangHilang->canTogglePublikasiByAdmin();
+    $sedangDipublikasi     = (bool) ($laporanBarangHilang->tampil_di_home ?? false);
 
     $pelaporName = $laporanBarangHilang->user?->nama ?? $laporanBarangHilang->user?->name ?? 'Pengguna';
     $claimStatusHistoryLabel = match ($latestKlaim->status_klaim ?? null) {
@@ -223,6 +225,47 @@
                             <div class="lost-verify-box">
                                 <small>Verifikasi Laporan</small>
                                 <p>Laporan ini sudah diproses dan tidak dapat diverifikasi ulang.</p>
+                            </div>
+                        @endif
+
+                        @if($canTogglePublikasi)
+                            <div class="lost-verify-box">
+                                <small>Status Publikasi</small>
+                                @if($sedangDipublikasi)
+                                    <p>Laporan ini sedang <strong>dipublikasikan</strong> di halaman publik pengguna.</p>
+                                    <form
+                                        method="POST"
+                                        action="{{ manager_route('lost-items.toggle-publikasi', $laporanBarangHilang->id) }}"
+                                        data-confirm-delete
+                                        data-confirm-title="Tarik Publikasi"
+                                        data-confirm-message="Laporan ini akan ditarik dari halaman publik. Pengguna tidak akan bisa menemukannya hingga dipublikasikan kembali."
+                                        data-confirm-submit-label="Tarik Publikasi"
+                                        data-confirm-submit-variant="danger"
+                                    >
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" id="btn-tarik-publikasi-lost" class="filter-btn lost-action-btn lost-action-btn-ghost">
+                                            Tarik Publikasi
+                                        </button>
+                                    </form>
+                                @else
+                                    <p>Laporan ini <strong>tidak dipublikasikan</strong> dan tidak tampil di halaman publik.</p>
+                                    <form
+                                        method="POST"
+                                        action="{{ manager_route('lost-items.toggle-publikasi', $laporanBarangHilang->id) }}"
+                                        data-confirm-delete
+                                        data-confirm-title="Publikasikan Kembali"
+                                        data-confirm-message="Laporan ini akan ditampilkan kembali di halaman publik pengguna."
+                                        data-confirm-submit-label="Publikasikan"
+                                        data-confirm-submit-variant="primary"
+                                    >
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" id="btn-publikasikan-kembali-lost" class="filter-btn lost-action-btn lost-action-btn-primary">
+                                            Publikasikan Kembali
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         @endif
 

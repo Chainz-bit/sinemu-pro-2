@@ -88,4 +88,27 @@ class FoundItemCommandService
 
         return ['ok' => true, 'message' => 'Data barang temuan berhasil diperbarui.'];
     }
+
+    /**
+     * Toggle status publikasi barang temuan (tampil_di_home).
+     * Hanya boleh dilakukan jika status memenuhi syarat (APPROVED, sudah diverifikasi).
+     *
+     * @return array{ok:bool,message:string}
+     */
+    public function togglePublikasi(Barang $barang): array
+    {
+        if (!$barang->canTogglePublikasiByAdmin()) {
+            return [
+                'ok'      => false,
+                'message' => 'Publikasi tidak dapat diubah. Laporan harus berstatus Disetujui dan sudah diverifikasi.',
+            ];
+        }
+
+        $sedangDipublikasikan = (bool) ($barang->tampil_di_home ?? false);
+        $barang->update(['tampil_di_home' => !$sedangDipublikasikan]);
+
+        $aksi = $sedangDipublikasikan ? 'ditarik dari publikasi' : 'dipublikasikan kembali';
+
+        return ['ok' => true, 'message' => 'Laporan barang temuan berhasil ' . $aksi . '.'];
+    }
 }

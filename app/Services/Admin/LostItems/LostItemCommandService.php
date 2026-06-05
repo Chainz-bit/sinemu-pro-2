@@ -177,4 +177,27 @@ class LostItemCommandService
 
         return ['ok' => true, 'message' => 'Verifikasi laporan barang hilang berhasil diperbarui.'];
     }
+
+    /**
+     * Toggle status publikasi laporan barang hilang (tampil_di_home).
+     * Hanya boleh dilakukan jika status memenuhi syarat (APPROVED, sudah diverifikasi).
+     *
+     * @return array{ok:bool,message:string}
+     */
+    public function togglePublikasi(LaporanBarangHilang $item): array
+    {
+        if (!$item->canTogglePublikasiByAdmin()) {
+            return [
+                'ok'      => false,
+                'message' => 'Publikasi tidak dapat diubah. Laporan harus berstatus Disetujui dan sudah diverifikasi.',
+            ];
+        }
+
+        $sedangDipublikasikan = (bool) ($item->tampil_di_home ?? false);
+        $item->update(['tampil_di_home' => !$sedangDipublikasikan]);
+
+        $aksi = $sedangDipublikasikan ? 'ditarik dari publikasi' : 'dipublikasikan kembali';
+
+        return ['ok' => true, 'message' => 'Laporan barang hilang berhasil ' . $aksi . '.'];
+    }
 }

@@ -125,6 +125,22 @@ class FoundItemController extends Controller
         return $this->exportService->export($barang);
     }
 
+    public function togglePublikasi(Barang $barang): RedirectResponse
+    {
+        /** @var \App\Models\Admin $admin */
+        $admin = \App\Support\ManagerPortal::user();
+
+        // Authorization: hanya pengelola dengan region yang sama yang boleh toggle
+        if (!is_null($barang->region_id) && (int) $barang->region_id !== (int) $admin->region_id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah publikasi laporan ini.');
+        }
+
+        $result = $this->commandService->togglePublikasi($barang);
+        $flashType = $result['ok'] ? 'status' : 'error';
+
+        return redirect()->back()->with($flashType, $result['message']);
+    }
+
     public function destroy(Barang $barang): RedirectResponse
     {
         $result = $this->deletionService->destroy($barang);

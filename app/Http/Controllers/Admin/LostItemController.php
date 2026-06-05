@@ -108,6 +108,22 @@ class LostItemController extends Controller
             ->with('status', $result['message']);
     }
 
+    public function togglePublikasi(LaporanBarangHilang $laporanBarangHilang): RedirectResponse
+    {
+        /** @var \App\Models\Admin $admin */
+        $admin = \App\Support\ManagerPortal::user();
+
+        // Authorization: hanya pengelola dengan region yang sama yang boleh toggle
+        if (!is_null($laporanBarangHilang->region_id) && (int) $laporanBarangHilang->region_id !== (int) $admin->region_id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah publikasi laporan ini.');
+        }
+
+        $result = $this->commandService->togglePublikasi($laporanBarangHilang);
+        $flashType = $result['ok'] ? 'status' : 'error';
+
+        return redirect()->back()->with($flashType, $result['message']);
+    }
+
     public function destroy(LaporanBarangHilang $laporanBarangHilang): RedirectResponse
     {
         $result = $this->commandService->destroy($laporanBarangHilang);
