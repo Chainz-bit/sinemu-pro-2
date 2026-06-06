@@ -29,6 +29,7 @@ class UserProfileActivityService
             ->latest('updated_at')
             ->limit(8)
             ->get()
+            ->toBase()
             ->map(function (LaporanBarangHilang $report) {
                 $reportStatus = ReportStatusPresenter::key($report->status_laporan ?? null);
                 [$statusKey, $statusClass, $statusLabel] = match ($reportStatus) {
@@ -63,6 +64,7 @@ class UserProfileActivityService
                 'created_at',
                 'updated_at',
             ])))
+            ->toBase()
             ->map(function (Klaim $claim) {
                 $namaBarang = $claim->barang?->nama_barang
                     ?? $claim->laporanHilang?->nama_barang
