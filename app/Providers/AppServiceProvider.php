@@ -33,8 +33,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Paksa skema HTTP jika di lingkungan local/produksi tanpa SSL
-        if (config('app.env') === 'local' || config('app.env') === 'production') {
-            URL::forceScheme('http');
+        if (config('app.env') === 'production' || config('app.env') === 'production') {
+            URL::forceScheme('https');
         }
 
         // Hubungkan proses bisnis dengan notifikasi admin.
