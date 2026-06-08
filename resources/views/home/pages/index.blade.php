@@ -349,7 +349,7 @@
                                 <p class="item-meta"><i class="fa-solid fa-location-dot"></i> {{ $item['location'] }}</p>
                                 <p class="item-meta"><i class="fa-regular fa-clock"></i>
                                     {{ $item['date_label'] ?? $item['date'] }}</p>
-                                <a href="{{ $item['detail_url'] }}" class="item-detail-link">Lihat Detail Laporan</a>
+                                <a href="{{ $item['detail_url'] }}" class="item-detail-link">Lihat Detail</a>
                                 @auth('web')
                                     @if($isClaimable)
                                         <a class="btn item-action-btn"
