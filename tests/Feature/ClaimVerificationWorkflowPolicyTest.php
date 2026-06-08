@@ -234,6 +234,65 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
         $this->assertSame(1, UserNotification::query()->where('type', 'klaim_selesai')->count());
     }
 
+    public function test_direct_claim_approve_reject_and_complete_flows_work(): void
+    {
+        $approveFixture = $this->createClaimFixture();
+        $approveFixture['claim']->update([
+            'laporan_hilang_id' => null,
+            'pencocokan_id' => null,
+        ]);
+        $approveFixture['barang']->update([
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+        ]);
+
+        $this->assertTrue($this->workflow()->approve($approveFixture['claim'], $this->approvalPayload(), $approveFixture['admin']->id));
+        $this->assertDatabaseHas('klaims', [
+            'id' => $approveFixture['claim']->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $approveFixture['barang']->id,
+            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+        ]);
+        $this->assertSame(1, UserNotification::query()->where('type', 'klaim_disetujui')->count());
+
+        UserNotification::query()->delete();
+        $rejectFixture = $this->createClaimFixture();
+        $rejectFixture['claim']->update([
+            'laporan_hilang_id' => null,
+            'pencocokan_id' => null,
+        ]);
+        $rejectFixture['barang']->update([
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+        ]);
+
+        $this->assertTrue($this->workflow()->reject($rejectFixture['claim'], $this->rejectionPayload(), $rejectFixture['admin']->id));
+        $this->assertDatabaseHas('klaims', [
+            'id' => $rejectFixture['claim']->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_REJECTED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_REJECTED,
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $rejectFixture['barang']->id,
+            'status_barang' => WorkflowStatus::FOUND_AVAILABLE,
+        ]);
+        $this->assertSame(1, UserNotification::query()->where('type', 'klaim_ditolak')->count());
+
+        UserNotification::query()->delete();
+        $completeFixture = $this->createApprovedClaimFixture();
+        $completeFixture['claim']->update([
+            'laporan_hilang_id' => null,
+            'pencocokan_id' => null,
+        ]);
+        $completeFixture['barang']->update([
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+        ]);
+
+        $this->assertTrue($this->workflow()->complete($completeFixture['claim'], $completeFixture['admin']->id));
+        $this->assertSame(1, UserNotification::query()->where('type', 'klaim_selesai')->count());
+    }
+
     /**
      * @return array<string,array{string,?string}>
      */

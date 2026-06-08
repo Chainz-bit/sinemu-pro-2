@@ -62,11 +62,11 @@ class ApproveClaimAction
     private function buildVerificationResult(array $validated): array
     {
         $checklist = [
-            'identitas_pelapor_valid' => ((string) ($validated['identitas_pelapor_valid'] ?? '0')) === '1',
-            'detail_barang_valid' => ((string) ($validated['detail_barang_valid'] ?? '0')) === '1',
-            'kronologi_valid' => ((string) ($validated['kronologi_valid'] ?? '0')) === '1',
-            'bukti_visual_valid' => ((string) ($validated['bukti_visual_valid'] ?? '0')) === '1',
-            'kecocokan_data_laporan' => ((string) ($validated['kecocokan_data_laporan'] ?? '0')) === '1',
+            'identitas_pelapor_valid' => ($validated['identitas_pelapor_valid'] ?? 0) == 1,
+            'detail_barang_valid' => ($validated['detail_barang_valid'] ?? 0) == 1,
+            'kronologi_valid' => ($validated['kronologi_valid'] ?? 0) == 1,
+            'bukti_visual_valid' => ($validated['bukti_visual_valid'] ?? 0) == 1,
+            'kecocokan_data_laporan' => ($validated['kecocokan_data_laporan'] ?? 0) == 1,
         ];
 
         $weights = [

@@ -54,7 +54,17 @@ class ClaimVerificationController extends Controller
             return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat disetujui.');
         }
 
-        if (!$this->workflowService->approve($klaim, $request->validated(), $adminId)) {
+        $data = [
+            'identitas_pelapor_valid' => $request->input('identitas_pelapor_valid', 0),
+            'detail_barang_valid' => $request->input('detail_barang_valid', 0),
+            'kronologi_valid' => $request->input('kronologi_valid', 0),
+            'bukti_visual_valid' => $request->input('bukti_visual_valid', 0),
+            'kecocokan_data_laporan' => $request->input('kecocokan_data_laporan', 0),
+            'catatan_verifikasi_admin' => $request->input('catatan_verifikasi_admin'),
+            'alasan_penolakan' => $request->input('alasan_penolakan'),
+        ];
+
+        if (!$this->workflowService->approve($klaim, $data, $adminId)) {
             return redirect()
                 ->back()
                 ->withInput()
@@ -73,7 +83,17 @@ class ClaimVerificationController extends Controller
             return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat ditolak.');
         }
 
-        if (!$this->workflowService->reject($klaim, $request->validated(), $adminId)) {
+        $data = [
+            'identitas_pelapor_valid' => $request->input('identitas_pelapor_valid', 0),
+            'detail_barang_valid' => $request->input('detail_barang_valid', 0),
+            'kronologi_valid' => $request->input('kronologi_valid', 0),
+            'bukti_visual_valid' => $request->input('bukti_visual_valid', 0),
+            'kecocokan_data_laporan' => $request->input('kecocokan_data_laporan', 0),
+            'catatan_verifikasi_admin' => $request->input('catatan_verifikasi_admin'),
+            'alasan_penolakan' => $request->input('alasan_penolakan'),
+        ];
+
+        if (!$this->workflowService->reject($klaim, $data, $adminId)) {
             return redirect()
                 ->back()
                 ->withInput()

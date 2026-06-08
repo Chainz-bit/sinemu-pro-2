@@ -119,18 +119,37 @@ class ClaimVerificationWorkflowService
 
     private function canCompleteContext(Klaim $klaim, int $adminId): bool
     {
-        return $this->hasManageableContext($klaim, $adminId)
-            && $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIMED
-            && $klaim->pencocokan?->status_pencocokan === WorkflowStatus::MATCH_CLAIM_APPROVED
+        if (!$this->hasManageableContext($klaim, $adminId)) {
+            return false;
+        }
+
+        if ($klaim->pencocokan !== null) {
+            return $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIMED
+                && $klaim->pencocokan->status_pencocokan === WorkflowStatus::MATCH_CLAIM_APPROVED
+                && !$this->hasCompletedClaimForSameItem($klaim);
+        }
+
+        return $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIMED
             && !$this->hasCompletedClaimForSameItem($klaim);
     }
 
     private function hasPendingClaimContext(Klaim $klaim): bool
     {
-        return $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIM_IN_PROGRESS
-            && $klaim->barang?->status_laporan === WorkflowStatus::REPORT_MATCHED
-            && $klaim->laporanHilang?->status_laporan === WorkflowStatus::REPORT_CLAIMED
-            && $klaim->pencocokan?->status_pencocokan === WorkflowStatus::MATCH_CLAIM_IN_PROGRESS;
+        if ($klaim->barang === null) {
+            return false;
+        }
+
+        if ($klaim->pencocokan !== null) {
+            return $klaim->barang->status_barang === WorkflowStatus::FOUND_CLAIM_IN_PROGRESS
+                && $klaim->barang->status_laporan === WorkflowStatus::REPORT_MATCHED
+                && $klaim->laporanHilang !== null
+                && $klaim->laporanHilang->status_laporan === WorkflowStatus::REPORT_CLAIMED
+                && $klaim->pencocokan->status_pencocokan === WorkflowStatus::MATCH_CLAIM_IN_PROGRESS;
+        }
+
+        return $klaim->barang->status_barang === WorkflowStatus::FOUND_CLAIM_IN_PROGRESS
+            && $klaim->barang->status_laporan === WorkflowStatus::REPORT_APPROVED
+            && $klaim->laporanHilang === null;
     }
 
     private function hasManageableContext(Klaim $klaim, int $adminId): bool
@@ -146,8 +165,10 @@ class ClaimVerificationWorkflowService
 
         $regionIds = [
             $klaim->barang?->region_id,
-            $klaim->laporanHilang?->region_id,
         ];
+        if ($klaim->laporanHilang) {
+            $regionIds[] = $klaim->laporanHilang->region_id;
+        }
 
         foreach ($regionIds as $regionId) {
             if (is_null($regionId) || (int) $regionId !== (int) $admin->region_id) {
@@ -155,12 +176,18 @@ class ClaimVerificationWorkflowService
             }
         }
 
-        return $klaim->barang !== null
-            && $klaim->laporanHilang !== null
-            && $klaim->pencocokan !== null
-            && (int) $klaim->pencocokan->barang_id === (int) $klaim->barang->id
-            && (int) $klaim->pencocokan->laporan_hilang_id === (int) $klaim->laporanHilang->id
-            && (is_null($klaim->pencocokan->admin_id) || (int) $klaim->pencocokan->admin_id === (int) $admin->id);
+        if ($klaim->barang === null) {
+            return false;
+        }
+
+        if ($klaim->pencocokan !== null) {
+            return $klaim->laporanHilang !== null
+                && (int) $klaim->pencocokan->barang_id === (int) $klaim->barang->id
+                && (int) $klaim->pencocokan->laporan_hilang_id === (int) $klaim->laporanHilang->id
+                && (is_null($klaim->pencocokan->admin_id) || (int) $klaim->pencocokan->admin_id === (int) $admin->id);
+        }
+
+        return $klaim->laporanHilang === null;
     }
 
     private function hasCompletedClaimForSameItem(Klaim $klaim): bool
