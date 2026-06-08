@@ -64,13 +64,13 @@ class ClaimHistoryTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('user.claim-history', [
             'search' => 'Tablet',
-            'status' => 'sedang_diproses',
+            'status' => 'selesai',
             'type' => 'temuan',
         ]));
 
         $response->assertOk();
         $response->assertViewHas('search', 'Tablet');
-        $response->assertViewHas('statusFilter', 'sedang_diproses');
+        $response->assertViewHas('statusFilter', 'selesai');
         $response->assertViewHas('typeFilter', 'temuan');
 
         $claims = $response->viewData('claims');
@@ -80,8 +80,8 @@ class ClaimHistoryTest extends TestCase
 
         $items = collect($claims->items());
         $this->assertSame('Tablet Xiaomi', $items->first()->item_name);
-        $this->assertSame('Sedang Diproses', $items->first()->status_text);
-        $this->assertSame('sedang_diproses', $items->first()->status_key);
+        $this->assertSame('Selesai', $items->first()->status_text);
+        $this->assertSame('disetujui', $items->first()->status_key);
     }
 
     private function createClaim(Admin $admin, User $user, string $itemName, string $verificationStatus): Klaim

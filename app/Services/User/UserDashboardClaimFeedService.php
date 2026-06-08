@@ -39,20 +39,20 @@ class UserDashboardClaimFeedService
                 $statusPayload = [
                     'status' => match ($claimKey) {
                         'menunggu' => 'menunggu_tinjauan',
-                        'disetujui' => 'sedang_diproses',
+                        'disetujui' => 'selesai',
                         'ditolak' => 'tidak_disetujui',
                         default => 'selesai',
                     },
                     'status_class' => match ($claimKey) {
                         'ditolak' => 'status-ditolak',
                         'selesai' => 'status-selesai',
-                        'disetujui' => 'status-diproses',
+                        'disetujui' => 'status-selesai',
                         default => 'status-dalam_peninjauan',
                     },
                     'status_text' => match ($claimKey) {
                         'ditolak' => 'Tidak Disetujui',
                         'selesai' => 'Selesai',
-                        'disetujui' => 'Sedang Diproses',
+                        'disetujui' => 'Selesai',
                         default => 'Menunggu Tinjauan',
                     },
                 ];
