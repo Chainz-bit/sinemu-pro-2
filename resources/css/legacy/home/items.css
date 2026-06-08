@@ -71,11 +71,17 @@
 
 .carousel-track {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
     gap: 1rem;
-    overflow: visible;
     padding-bottom: 6px;
     user-select: auto;
+}
+
+.carousel-track::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
 }
 
 .carousel-track.is-single {
@@ -85,7 +91,7 @@
 }
 
 .carousel-item {
-    flex: 1 1 clamp(220px, 28vw, 320px);
+    flex: 0 0 clamp(220px, 28vw, 320px);
     display: block;
     float: none;
     max-width: 360px;
@@ -254,9 +260,7 @@
     padding: 0;
 }
 
-.carousel-nav-btn {
-    display: none;
-}
+/* display: none; removed to show carousel nav buttons */
 
 .carousel-nav-btn:hover {
     background: var(--sinemu-secondary);
