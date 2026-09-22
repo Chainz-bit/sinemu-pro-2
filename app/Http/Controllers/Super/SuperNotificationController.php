@@ -58,7 +58,7 @@ class SuperNotificationController extends Controller
             ['dismissed_at', 'updated_at']
         );
 
-        return back()->with('status', 'Riwayat notifikasi berhasil dibersihkan dari topbar.');
+        return back()->with('status', 'Riwayat notifikasi berhasil dibersihkan.');
     }
 
     public function dismissed(): View

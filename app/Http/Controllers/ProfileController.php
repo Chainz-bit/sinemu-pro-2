@@ -45,7 +45,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $this->profileService->update($user, $request);
 
-        return Redirect::route('profile.edit')->with('status', 'Profil user berhasil diperbarui.');
+        return Redirect::route('profile.edit')->with('status', 'Profil pengguna berhasil diperbarui.');
     }
 
     /**

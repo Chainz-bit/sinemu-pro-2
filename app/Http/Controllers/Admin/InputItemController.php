@@ -34,7 +34,7 @@ class InputItemController extends Controller
         /** @var \App\Models\Admin|null $admin */
         $admin = \App\Support\ManagerPortal::user();
         if (!$admin) {
-            return back()->with('error', 'Sesi ' . \App\Support\RoleLabels::managerLower() . ' tidak ditemukan. Silakan login ulang.');
+            return back()->with('error', 'Sesi ' . \App\Support\RoleLabels::managerLower() . ' tidak ditemukan. Silakan masuk kembali.');
         }
 
         if (empty($admin->region_id)) {
