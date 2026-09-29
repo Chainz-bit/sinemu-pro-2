@@ -240,11 +240,11 @@ class UserDashboardTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('user.dashboard', [
             'search' => 'Tablet Xiaomi',
-            'status' => 'sedang_diproses',
+            'status' => 'semua',
         ]));
 
         $response->assertOk();
-        $response->assertViewHas('statusFilter', 'sedang_diproses');
+        $response->assertViewHas('statusFilter', 'semua');
         $response->assertViewHas('search', 'Tablet Xiaomi');
 
         $latestActivities = $response->viewData('latestActivities');
@@ -256,11 +256,40 @@ class UserDashboardTest extends TestCase
 
         $this->assertCount(3, $items);
         $this->assertTrue($items->every(fn ($item) => $item->item_name === 'Tablet Xiaomi'));
-        $this->assertTrue($items->every(fn ($item) => $item->status === 'sedang_diproses'));
+
+        $claimItem = $items->firstWhere('type', 'claim');
+        $foundReportItem = $items->firstWhere('type', 'found_report');
+        $lostReportItem = $items->firstWhere('type', 'lost_report');
+
+        $this->assertNotNull($claimItem);
+        $this->assertNotNull($foundReportItem);
+        $this->assertNotNull($lostReportItem);
+
+        $this->assertSame('selesai', $claimItem->status);
+        $this->assertSame('sedang_diproses', $foundReportItem->status);
+        $this->assertSame('sedang_diproses', $lostReportItem->status);
+
         $this->assertEqualsCanonicalizing(
             ['claim', 'found_report', 'lost_report'],
             $items->pluck('type')->all()
         );
+
+        // Filter by 'selesai' to ensure claim is returned
+        $responseSelesai = $this->actingAs($user)->get(route('user.dashboard', [
+            'search' => 'Tablet Xiaomi',
+            'status' => 'selesai',
+        ]));
+        $activitiesSelesai = $responseSelesai->viewData('latestActivities');
+        $this->assertSame(1, $activitiesSelesai->total());
+        $this->assertSame('claim', collect($activitiesSelesai->items())->first()->type);
+
+        // Filter by 'sedang_diproses' to ensure lost and found reports are returned
+        $responseDiproses = $this->actingAs($user)->get(route('user.dashboard', [
+            'search' => 'Tablet Xiaomi',
+            'status' => 'sedang_diproses',
+        ]));
+        $activitiesDiproses = $responseDiproses->viewData('latestActivities');
+        $this->assertSame(2, $activitiesDiproses->total());
     }
 
     private function createUser(string $email = 'dashboard-user@example.com', string $username = 'user-dashboard', string $phone = '081111111112'): User

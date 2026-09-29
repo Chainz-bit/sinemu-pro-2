@@ -43,7 +43,7 @@ class ClaimHistoryItemPresenter
 
         return match ($key) {
             'ditolak' => ['Tidak Disetujui', 'status-ditolak', 'tidak_disetujui'],
-            'disetujui' => ['Sedang Diproses', 'status-diproses', 'sedang_diproses'],
+            'disetujui' => ['Selesai', 'status-selesai', 'disetujui'],
             'selesai' => ['Selesai', 'status-selesai', 'selesai'],
             default => ['Menunggu Tinjauan', 'status-dalam_peninjauan', 'menunggu_tinjauan'],
         };

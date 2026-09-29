@@ -140,7 +140,7 @@ class LostItemController extends Controller
         }
         return redirect()
             ->route(\App\Support\ManagerPortal::routeName('claim-verifications.show'), $latestKlaim->id)
-            ->with('error', 'Perbarui status klaim dari halaman Verifikasi Klaim agar checklist keamanan tetap diterapkan.');
+            ->with('error', 'Perbarui status klaim dari halaman Verifikasi Klaim agar daftar periksa keamanan tetap diterapkan.');
     }
 
     public function verify(VerifyLostItemReportRequest $request, LaporanBarangHilang $laporanBarangHilang): RedirectResponse

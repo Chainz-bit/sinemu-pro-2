@@ -19,7 +19,7 @@
             </a>
             <button class="navbar-toggler border-0 shadow-none order-2 ms-auto d-lg-none" type="button"
                 data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
-                aria-label="Toggle navigation">
+                aria-label="Alihkan navigasi">
                 <iconify-icon icon="mdi:menu" aria-hidden="true"></iconify-icon>
             </button>
 
@@ -51,7 +51,7 @@
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="dropdown-item text-danger">
-                                        Logout
+                                        Keluar
                                     </button>
                                 </form>
                             </li>
@@ -77,7 +77,7 @@
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="profile-submenu-item text-danger">
-                                    Logout
+                                    Keluar
                                 </button>
                             </form>
                         </div>
@@ -111,7 +111,7 @@
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <button type="button" class="btn-close login-portal-close" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
+                            aria-label="Tutup"></button>
                         <div class="modal-body p-0">
                             <div class="login-portal-head text-center">
                                 <img src="{{ asset('img/logo.png') }}" alt="Sinemu" class="login-portal-logo" loading="lazy"
@@ -349,7 +349,7 @@
                                 <p class="item-meta"><i class="fa-solid fa-location-dot"></i> {{ $item['location'] }}</p>
                                 <p class="item-meta"><i class="fa-regular fa-clock"></i>
                                     {{ $item['date_label'] ?? $item['date'] }}</p>
-                                <a href="{{ $item['detail_url'] }}" class="item-detail-link">Lihat Detail Laporan</a>
+                                <a href="{{ $item['detail_url'] }}" class="item-detail-link">Lihat Detail</a>
                                 @auth('web')
                                     @if($isClaimable)
                                         <a class="btn item-action-btn"
@@ -684,7 +684,7 @@
                         @csrf
                         <div class="modal-header">
                             <h5 class="modal-title">Lapor Barang Temuan</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
@@ -716,7 +716,7 @@
                                     @endif
                                 </select>
                                 @if($wilayahOptions->isEmpty())
-                                    <div class="form-text">Saat ini belum ada wilayah dengan pengelola aktif. Silakan hubungi Support SiNemu.</div>
+                                    <div class="form-text">Saat ini belum ada wilayah dengan pengelola aktif. Silakan hubungi Bantuan SiNemu.</div>
                                 @endif
                             </div>
                             <div class="mb-3">

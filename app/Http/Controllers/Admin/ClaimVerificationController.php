@@ -51,7 +51,7 @@ class ClaimVerificationController extends Controller
         $adminId = (int) ManagerPortal::id();
 
         if (!$this->workflowService->canApprove($klaim)) {
-            return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat disetujui.');
+            return redirect()->back()->with('error', 'Status klaim saat ini tidak memenuhi syarat untuk disetujui.');
         }
 
         $data = [
@@ -80,7 +80,7 @@ class ClaimVerificationController extends Controller
         $adminId = (int) ManagerPortal::id();
 
         if (!$this->workflowService->canReject($klaim)) {
-            return redirect()->back()->with('error', 'Klaim tidak berada pada state yang dapat ditolak.');
+            return redirect()->back()->with('error', 'Status klaim saat ini tidak memenuhi syarat untuk ditolak.');
         }
 
         $data = [
