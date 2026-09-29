@@ -28,10 +28,17 @@ async function bootMap() {
     mod.initMap();
 }
 
+async function bootChatbot() {
+    if (!document.getElementById('chatbotToggle')) return;
+    const mod = await import('./chatbot.js');
+    mod.initChatbot();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     void bootNavbar();
     void bootFilterAndCounts();
     void bootCarousel();
     void bootContactForm();
     void bootMap();
+    void bootChatbot();
 });
