@@ -804,4 +804,57 @@
     </footer>
     {{-- Footer End --}}
 
+    {{-- ========================================= --}}
+    {{-- Chatbot Widget Start --}}
+    {{-- ========================================= --}}
+    <button class="chatbot-toggle" id="chatbotToggle" aria-label="Buka chatbot Sinu">
+        <img src="{{ asset('img/chatbot-icon.png') }}" alt="Sinu Chatbot" id="chatbotIconImg">
+        <span class="chatbot-close-icon" aria-hidden="true">&times;</span>
+    </button>
+
+    <div class="chatbot-window" id="chatbotWindow" role="dialog" aria-label="Chat dengan Sinu">
+        {{-- Header --}}
+        <div class="chatbot-header">
+            <img src="{{ asset('img/chatbot-icon.png') }}" alt="Sinu" class="chatbot-header-avatar">
+            <div class="chatbot-header-info">
+                <div class="chatbot-header-name">Sinu — Asisten Sinemu</div>
+                <div class="chatbot-header-status">Online</div>
+            </div>
+            <button class="chatbot-new-btn" id="chatbotNewBtn" title="Percakapan baru">
+                <iconify-icon icon="mdi:chat-plus-outline" aria-hidden="true"></iconify-icon>
+            </button>
+        </div>
+
+        {{-- Messages --}}
+        <div class="chatbot-messages" id="chatbotMessages">
+            {{-- Welcome message & history loaded by JS --}}
+        </div>
+
+        {{-- Typing indicator --}}
+        <div class="chatbot-typing" id="chatbotTyping">
+            <img src="{{ asset('img/chatbot-icon.png') }}" alt="" class="chatbot-msg-avatar">
+            <div class="chatbot-typing-bubble">
+                <span class="chatbot-typing-dot"></span>
+                <span class="chatbot-typing-dot"></span>
+                <span class="chatbot-typing-dot"></span>
+            </div>
+        </div>
+
+        {{-- Quick Actions --}}
+        <div class="chatbot-quick-actions" id="chatbotQuickActions">
+            <button class="chatbot-quick-btn" type="button">Cara lapor barang hilang?</button>
+            <button class="chatbot-quick-btn" type="button">Cara klaim barang temuan?</button>
+            <button class="chatbot-quick-btn" type="button">Apa itu Sinemu?</button>
+        </div>
+
+        {{-- Input --}}
+        <div class="chatbot-input-area">
+            <textarea class="chatbot-input" id="chatbotInput" placeholder="Ketik pesan..." rows="1" maxlength="2000"></textarea>
+            <button class="chatbot-send-btn" id="chatbotSend" aria-label="Kirim pesan">
+                <iconify-icon icon="mdi:send" aria-hidden="true"></iconify-icon>
+            </button>
+        </div>
+    </div>
+    {{-- Chatbot Widget End --}}
+
 @endsection

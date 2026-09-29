@@ -55,3 +55,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/notifikasi/{notification}/read', [NotifikasiController::class, 'markAsRead'])
         ->whereNumber('notification');
 });
+
+// Chatbot API (public, rate-limited)
+Route::prefix('chatbot')->middleware('throttle:30,1')->group(function () {
+    Route::post('/send', [\App\Http\Controllers\Api\ChatbotController::class, 'send']);
+    Route::get('/history', [\App\Http\Controllers\Api\ChatbotController::class, 'history']);
+    Route::post('/new', [\App\Http\Controllers\Api\ChatbotController::class, 'newConversation']);
+});
+

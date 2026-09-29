@@ -6,6 +6,7 @@ import '../../css/legacy/page-transition.css';
 import '../../css/legacy/home.css';
 import '../../css/legacy/flash-popup.css';
 import '../../css/legacy/custom-select.css';
+import '../../css/legacy/chatbot.css';
 
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import flatpickr from 'flatpickr';
