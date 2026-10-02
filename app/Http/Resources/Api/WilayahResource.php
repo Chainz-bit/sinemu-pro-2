@@ -15,6 +15,8 @@ class WilayahResource extends JsonResource
         return [
             'id' => (int) $this->id,
             'nama' => (string) $this->nama_wilayah,
+            'lat' => $this->lat !== null ? (float) $this->lat : null,
+            'lng' => $this->lng !== null ? (float) $this->lng : null,
         ];
     }
 }
