@@ -30,6 +30,12 @@ body.dashboard-fixed-mode .main-content-scroll {
     overflow: hidden;
 }
 
+.dashboard-page-content > .intro {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: auto;
+}
+
 .dashboard-report-card {
     flex: 1 1 auto;
     min-height: 0;

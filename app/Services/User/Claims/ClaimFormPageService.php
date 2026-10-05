@@ -10,12 +10,29 @@ use Illuminate\Support\Collection;
 
 class ClaimFormPageService
 {
+    private const DROPDOWN_ITEMS_LIMIT = 50;
+
     /**
      * @return array{foundItems:Collection<int,Barang>,claimableLostReports:Collection<int,LaporanBarangHilang>,selectedBarangId:int|null}
      */
     public function build(int $userId, ?int $requestedBarangId = null): array
     {
         $claimableLostReports = $this->getClaimableLostReports($userId);
+
+        // 1. Dukungan Targeted Item: jika request memiliki parameter barang_id spesifik,
+        // cukup ambil 1 data barang temuan tersebut secara langsung tanpa me-load puluhan barang lain.
+        if (!is_null($requestedBarangId) && $requestedBarangId > 0) {
+            $targetedItem = $this->getTargetedFoundItem($userId, $requestedBarangId);
+            if ($targetedItem !== null) {
+                return [
+                    'foundItems' => collect([$targetedItem]),
+                    'claimableLostReports' => $claimableLostReports,
+                    'selectedBarangId' => (int) $targetedItem->id,
+                ];
+            }
+        }
+
+        // 2. Scoping & Hard Limit jika form dibuka tanpa parameter barang_id spesifik
         $foundItems = $this->getClaimableFoundItems($userId);
 
         $selectedBarangId = null;
@@ -33,6 +50,37 @@ class ClaimFormPageService
     }
 
     /**
+     * Ambil 1 barang temuan yang ditargetkan secara langsung berdasarkan ID.
+     */
+    private function getTargetedFoundItem(int $userId, int $barangId): ?Barang
+    {
+        return Barang::query()
+            ->with('kategori:id,nama_kategori')
+            ->where('id', $barangId)
+            ->where('status_barang', WorkflowStatus::FOUND_AVAILABLE)
+            ->whereIn('status_laporan', [
+                WorkflowStatus::REPORT_APPROVED,
+                WorkflowStatus::REPORT_MATCHED,
+                WorkflowStatus::REPORT_CLAIMED,
+            ])
+            ->where(function ($query) use ($userId): void {
+                $query
+                    ->whereNull('user_id')
+                    ->orWhere('user_id', '!=', $userId);
+            })
+            ->select([
+                'id',
+                'nama_barang',
+                'tanggal_ditemukan',
+                'lokasi_ditemukan',
+                'kategori_id',
+                'region_id',
+                'status_barang',
+            ])
+            ->first();
+    }
+
+    /**
      * @return Collection<int,LaporanBarangHilang>
      */
     private function getClaimableLostReports(int $userId): Collection
@@ -41,10 +89,11 @@ class ClaimFormPageService
             return collect();
         }
 
-        $query = LaporanBarangHilang::query()
+        return LaporanBarangHilang::query()
             ->where('user_id', $userId)
             ->where('sumber_laporan', 'lapor_hilang')
             ->whereIn('status_laporan', [
+                WorkflowStatus::REPORT_SUBMITTED,
                 WorkflowStatus::REPORT_APPROVED,
                 WorkflowStatus::REPORT_MATCHED,
                 WorkflowStatus::REPORT_CLAIMED,
@@ -60,10 +109,8 @@ class ClaimFormPageService
                 'detail_lokasi_hilang',
                 'waktu_hilang',
             ])
-            ->orderByDesc('tanggal_hilang')
-            ->orderByDesc('updated_at');
-
-        return $query->get();
+            ->latest('id')
+            ->get();
     }
 
     /**
@@ -75,9 +122,9 @@ class ClaimFormPageService
             return collect();
         }
 
-        $query = Barang::query()
+        return Barang::query()
             ->with('kategori:id,nama_kategori')
-            ->where('status_barang', 'tersedia')
+            ->where('status_barang', WorkflowStatus::FOUND_AVAILABLE)
             ->whereIn('status_laporan', [
                 WorkflowStatus::REPORT_APPROVED,
                 WorkflowStatus::REPORT_MATCHED,
@@ -89,27 +136,27 @@ class ClaimFormPageService
                     ->orWhere('user_id', '!=', $userId);
             })
             ->whereHas('admin', function ($query): void {
-                $query
-                    ->where('status_verifikasi', Admin::STATUS_ACTIVE)
-                    ->whereColumn('admins.region_id', 'barangs.region_id');
+                $query->where('status_verifikasi', Admin::STATUS_ACTIVE);
             })
             ->whereDoesntHave('klaims', function ($query): void {
-                $query->where(function ($claimQuery): void {
-                    $claimQuery
-                        ->activeForSubmission()
-                        ->orWhere('status_verifikasi', WorkflowStatus::CLAIM_COMPLETED);
-                });
+                $query->whereIn('status_verifikasi', [
+                    WorkflowStatus::CLAIM_SUBMITTED,
+                    WorkflowStatus::CLAIM_UNDER_REVIEW,
+                    WorkflowStatus::CLAIM_APPROVED,
+                    WorkflowStatus::CLAIM_COMPLETED,
+                ]);
             })
             ->select([
                 'id',
-                'kategori_id',
                 'nama_barang',
-                'lokasi_ditemukan',
                 'tanggal_ditemukan',
+                'lokasi_ditemukan',
+                'kategori_id',
+                'region_id',
                 'status_barang',
             ])
-            ->orderByDesc('updated_at');
-
-        return $query->get();
+            ->latest('id')
+            ->limit(self::DROPDOWN_ITEMS_LIMIT)
+            ->get();
     }
 }

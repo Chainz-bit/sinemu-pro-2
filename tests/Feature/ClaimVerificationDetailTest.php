@@ -132,6 +132,121 @@ class ClaimVerificationDetailTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_claim_without_pencocokan_auto_links_and_renders_ai_panel_with_action_button(): void
+    {
+        $admin = $this->createAdmin('autolink-admin@example.com', 'autolink-admin');
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Dompet']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Dompet Kulit',
+            'deskripsi' => 'Ditemukan di kantin',
+            'lokasi_ditemukan' => 'Kantin',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        // Klaim mandiri tanpa laporan hilang dan tanpa pencocokan_id (persis seperti klaim 3)
+        $claim = Klaim::query()->create([
+            'laporan_hilang_id' => null,
+            'barang_id' => $foundItem->id,
+            'pencocokan_id' => null,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'catatan' => 'Klaim bukti mandiri',
+            'bukti_kepemilikan' => 'Ada struk pembelian di dalam',
+            'bukti_ciri_khusus' => 'Goresan di sudut kanan',
+        ]);
+
+        $this->assertNull($claim->pencocokan_id);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.claim-verifications.show', $claim));
+
+        $response->assertOk();
+        $response->assertSee('Analisis AI');
+        $response->assertSee('Jalankan Analisis AI Sekarang');
+        $response->assertDontSee('Belum ada data pencocokan resmi yang terhubung ke klaim ini.');
+
+        $claim->refresh();
+        $this->assertNotNull($claim->pencocokan_id);
+        $this->assertDatabaseHas('pencocokans', [
+            'id' => $claim->pencocokan_id,
+            'laporan_hilang_id' => null,
+            'barang_id' => $foundItem->id,
+        ]);
+    }
+
+    public function test_run_ai_analysis_endpoint_returns_json_and_saves_score(): void
+    {
+        $admin = $this->createAdmin('ai-test-admin@example.com', 'ai-test-admin');
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Kunci']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Kunci Motor Honda',
+            'deskripsi' => 'Ditemukan di parkiran motor',
+            'lokasi_ditemukan' => 'Parkiran Motor',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $claim = Klaim::query()->create([
+            'laporan_hilang_id' => null,
+            'barang_id' => $foundItem->id,
+            'pencocokan_id' => null,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'bukti_kepemilikan' => 'Ada gantungan berlogo Honda',
+            'bukti_ciri_khusus' => 'Gantungan karet merah',
+        ]);
+
+        $mockService = $this->createMock(\App\Services\GeminiMatchingService::class);
+        $mockService->method('match')->willReturn([
+            'success' => true,
+            'similarity_score' => 88,
+            'recommendation' => 'high',
+            'reasoning' => 'Kunci dan gantungan sangat identik dengan bukti kepemilikan.',
+            'model_used' => 'gemini-3.6-flash',
+            'error' => null,
+        ]);
+        $this->app->instance(\App\Services\GeminiMatchingService::class, $mockService);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.claim-verifications.run-ai-analysis', $claim), [], [
+                'Accept' => 'application/json',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.similarity_score', 88)
+            ->assertJsonPath('data.recommendation', 'high')
+            ->assertJsonPath('data.reasoning', 'Kunci dan gantungan sangat identik dengan bukti kepemilikan.');
+
+        $claim->refresh();
+        $this->assertNotNull($claim->pencocokan_id);
+        $this->assertDatabaseHas('pencocokans', [
+            'id' => $claim->pencocokan_id,
+            'ai_similarity_score' => 88,
+            'ai_recommendation' => 'high',
+            'ai_reasoning' => 'Kunci dan gantungan sangat identik dengan bukti kepemilikan.',
+        ]);
+    }
+
     private function createUser(): User
     {
         $user = User::query()->create([

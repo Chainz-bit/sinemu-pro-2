@@ -91,17 +91,22 @@ class SubmitClaimAction
                     return ['ok' => false, 'message' => 'Barang belum memiliki pengelola aktif untuk memproses klaim.', 'status' => 409];
                 }
 
+                $pencocokan = null;
                 if ($laporan) {
                     if (!in_array((string) $laporan->status_laporan, [WorkflowStatus::REPORT_APPROVED, WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_CLAIMED], true)) {
                         return ['ok' => false, 'message' => 'Laporan barang hilang harus disetujui ' . $managerRoleLabelLower . ' terlebih dahulu sebelum klaim.', 'status' => 422];
                     }
 
-                    $pencocokan = Pencocokan::query()
-                        ->where('laporan_hilang_id', (int) $laporan->id)
-                        ->where('barang_id', (int) $barang->id)
-                        ->latest('updated_at')
-                        ->lockForUpdate()
-                        ->first();
+                    $pencocokan = Pencocokan::firstOrCreate(
+                        [
+                            'laporan_hilang_id' => (int) $laporan->id,
+                            'barang_id' => (int) $barang->id,
+                        ],
+                        [
+                            'status_pencocokan' => 'pending',
+                            'admin_id' => null,
+                        ]
+                    );
                 }
 
                 $hasDuplicateClaim = Klaim::query()
@@ -129,10 +134,6 @@ class SubmitClaimAction
                     if ($hasBlockingClaimForReport) {
                         return ['ok' => false, 'message' => 'Laporan ini masih punya klaim aktif. Tunggu proses klaim sebelumnya selesai.', 'status' => 409];
                     }
-                }
-
-                if ($laporan && (!$pencocokan || !in_array((string) $pencocokan->status_pencocokan, [WorkflowStatus::MATCH_CONFIRMED, WorkflowStatus::MATCH_CLAIM_IN_PROGRESS, WorkflowStatus::MATCH_CLAIM_REJECTED], true))) {
-                    return ['ok' => false, 'message' => 'Barang ini belum ditandai cocok oleh ' . $managerRoleLabelLower . ' dengan laporan Anda.', 'status' => 422];
                 }
 
                 if ($laporan) {

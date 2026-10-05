@@ -131,20 +131,26 @@ class ApiClaimPolicyTest extends TestCase
         $this->assertInvalidSubmissionHasNoSideEffects($notificationsBefore);
     }
 
-    public function test_api_claim_rejects_unmatched_report_and_item_without_side_effects(): void
+    public function test_api_claim_with_unmatched_report_auto_links_pending_match_record(): void
     {
         Storage::fake('local');
 
         $fixture = $this->createClaimFixture(withMatch: false);
-        $notificationsBefore = AdminNotification::query()->count();
 
         Sanctum::actingAs($fixture['claimer']);
 
-        $this->post('/api/barang-temuan/'.$fixture['barang']->id.'/klaim', $this->validClaimPayload($fixture['laporan']), ['Accept' => 'application/json'])
-            ->assertUnprocessable()
-            ->assertJsonPath('message', 'Barang ini belum ditandai cocok oleh pengelola barang dengan laporan Anda.');
+        $response = $this->post('/api/barang-temuan/'.$fixture['barang']->id.'/klaim', $this->validClaimPayload($fixture['laporan']), ['Accept' => 'application/json'])
+            ->assertCreated();
 
-        $this->assertInvalidSubmissionHasNoSideEffects($notificationsBefore);
+        $klaim = Klaim::query()->where('barang_id', $fixture['barang']->id)->first();
+        $this->assertNotNull($klaim);
+        $this->assertNotNull($klaim->pencocokan_id);
+
+        $this->assertDatabaseHas('pencocokans', [
+            'id' => $klaim->pencocokan_id,
+            'laporan_hilang_id' => $fixture['laporan']->id,
+            'barang_id' => $fixture['barang']->id,
+        ]);
     }
 
     public function test_api_claim_rejects_active_duplicate_without_storing_new_proof_or_notification(): void

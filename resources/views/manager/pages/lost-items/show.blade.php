@@ -131,7 +131,7 @@
                     </div>
 
                     <div class="lost-detail-body">
-                        <h2>{{ strtoupper($laporanBarangHilang->nama_barang) }}</h2>
+                        <h2>{{ $laporanBarangHilang->nama_barang }}</h2>
                         <p>{{ $laporanBarangHilang->keterangan ?: 'Tidak ada deskripsi tambahan.' }}</p>
 
                         <div class="lost-detail-meta">
@@ -261,7 +261,7 @@
                                     >
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" id="btn-publikasikan-kembali-lost" class="filter-btn lost-action-btn lost-action-btn-primary">
+                                        <button type="submit" id="btn-publikasikan-kembali-lost" class="filter-btn lost-action-btn lost-action-btn-outline">
                                             Publikasikan Kembali
                                         </button>
                                     </form>
@@ -270,12 +270,19 @@
                         @endif
 
                         @if(!$latestKlaim)
-                            <p>Belum ada klaim aktif untuk laporan ini.</p>
+                            <p class="lost-claim-empty-note">Belum ada klaim aktif untuk laporan ini.</p>
                         @else
-                            <p>Perubahan status klaim dilakukan dari halaman Verifikasi Klaim agar checklist keamanan tetap konsisten.</p>
-                            <a href="{{ manager_route('claim-verifications.show', $latestKlaim->id) }}" class="filter-btn lost-action-btn lost-action-btn-primary">
-                                Buka Verifikasi Klaim
-                            </a>
+                            <div class="lost-claim-action-card">
+                                <div class="lost-claim-action-content">
+                                    <p class="lost-claim-action-text">Status klaim dikelola melalui halaman verifikasi agar checklist keamanan tetap konsisten.</p>
+                                </div>
+                                <a href="{{ manager_route('claim-verifications.show', $latestKlaim->id) }}" class="lost-claim-btn">
+                                    <span>Buka Verifikasi Klaim</span>
+                                    <svg class="lost-claim-btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </div>
                         @endif
                     </div>
                 </article>

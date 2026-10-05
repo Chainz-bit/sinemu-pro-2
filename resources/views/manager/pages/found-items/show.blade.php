@@ -145,7 +145,7 @@
                     </div>
 
                     <div class="found-detail-body">
-                        <h2>{{ strtoupper($barang->nama_barang) }}</h2>
+                        <h2>{{ $barang->nama_barang }}</h2>
                         <p>{{ $barang->deskripsi ?: 'Deskripsi barang belum ditambahkan pada laporan ini.' }}</p>
 
                         <div class="found-detail-meta">
@@ -269,7 +269,7 @@
                                     >
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" id="btn-publikasikan-kembali-found" class="filter-btn found-action-btn found-action-btn-primary">
+                                        <button type="submit" id="btn-publikasikan-kembali-found" class="filter-btn found-action-btn found-action-btn-outline">
                                             Publikasikan Kembali
                                         </button>
                                     </form>

@@ -65,6 +65,9 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
         Route::post('verifikasi-klaim/{klaim}/approve', [ClaimVerificationController::class, 'approve'])->name('claim-verifications.approve');
         Route::post('verifikasi-klaim/{klaim}/reject', [ClaimVerificationController::class, 'reject'])->name('claim-verifications.reject');
         Route::post('verifikasi-klaim/{klaim}/complete', [ClaimVerificationController::class, 'complete'])->name('claim-verifications.complete');
+        Route::post('verifikasi-klaim/{klaim}/run-ai-match', [ClaimVerificationController::class, 'runAiMatch'])->name('claim-verifications.run-ai-match');
+        Route::post('verifikasi-klaim/{klaim}/run-ai-analysis', [ClaimVerificationController::class, 'runAiAnalysis'])->name('claim-verifications.run-ai-analysis');
+
 
         Route::get('input-barang', [InputItemController::class, 'index'])->name('input-items');
         Route::post('input-barang', [InputItemController::class, 'store'])->name('input-items.store');

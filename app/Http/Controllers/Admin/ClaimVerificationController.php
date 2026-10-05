@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApproveClaimRequest;
 use App\Http\Requests\Admin\ClaimVerificationIndexRequest;
 use App\Http\Requests\Admin\RejectClaimRequest;
+use App\Jobs\RunAiMatchingJob;
 use App\Models\Admin;
 use App\Models\Klaim;
+use App\Models\Pencocokan;
+use App\Services\GeminiMatchingService;
 use App\Services\Admin\Claims\ClaimVerificationDetailPageService;
 use App\Services\Admin\Claims\ClaimVerificationListingService;
 use App\Services\Admin\Claims\ClaimVerificationWorkflowService;
 use App\Services\User\Claims\ClaimProofStorageService;
 use App\Support\ManagerPortal;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -150,6 +154,152 @@ class ClaimVerificationController extends Controller
         $this->claimProofStorageService->deleteProofs($proofs);
 
         return redirect()->back()->with('status', 'Data klaim berhasil dihapus.');
+    }
+
+    /**
+     * Jalankan analisis AI langsung secara on-demand untuk klaim ini.
+     * Endpoint: POST verifikasi-klaim/{klaim}/run-ai-analysis
+     *           POST verifikasi-klaim/{klaim}/run-ai-match
+     */
+    public function runAiAnalysis(Klaim $klaim, GeminiMatchingService $matchingService): JsonResponse|RedirectResponse
+    {
+        $this->ensureClaimOwnedByAdmin($klaim);
+
+        if (is_null($klaim->barang_id)) {
+            $message = 'Klaim tidak memiliki data barang temuan yang valid untuk dianalisis.';
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+            return redirect()->back()->with('error', $message);
+        }
+
+        $klaim->loadMissing([
+            'barang.kategori:id,nama_kategori',
+            'laporanHilang.kategori:id,nama_kategori',
+            'pencocokan',
+        ]);
+
+        $barang = $klaim->barang;
+        if (!$barang) {
+            $message = 'Barang temuan tidak ditemukan.';
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 404);
+            }
+            return redirect()->back()->with('error', $message);
+        }
+
+        // Cari atau buat record pencocokan jika belum terhubung
+        $pencocokan = $klaim->pencocokan;
+        if (!$pencocokan) {
+            if ($klaim->laporan_hilang_id) {
+                $pencocokan = Pencocokan::firstOrCreate(
+                    [
+                        'laporan_hilang_id' => (int) $klaim->laporan_hilang_id,
+                        'barang_id' => (int) $barang->id,
+                    ],
+                    [
+                        'status_pencocokan' => 'pending',
+                        'admin_id' => $klaim->admin_id,
+                    ]
+                );
+            } else {
+                $pencocokan = Pencocokan::create([
+                    'laporan_hilang_id' => null,
+                    'barang_id' => (int) $barang->id,
+                    'status_pencocokan' => 'pending',
+                    'admin_id' => $klaim->admin_id,
+                ]);
+            }
+
+            $klaim->forceFill(['pencocokan_id' => $pencocokan->id])->save();
+        }
+
+        // Siapkan data barang temuan
+        $barangData = array_merge(
+            $barang->toArray(),
+            ['nama_kategori' => $barang->kategori?->nama_kategori]
+        );
+
+        // Siapkan data laporan hilang atau bukti klaim mandiri
+        if ($klaim->laporanHilang) {
+            $laporan = $klaim->laporanHilang;
+            $laporanData = array_merge(
+                $laporan->toArray(),
+                ['nama_kategori' => $laporan->kategori?->nama_kategori]
+            );
+        } else {
+            $fotoBukti = null;
+            if (!empty($klaim->bukti_foto)) {
+                $fotoBukti = is_array($klaim->bukti_foto) ? ($klaim->bukti_foto[0] ?? null) : $klaim->bukti_foto;
+            }
+
+            $laporanData = [
+                'nama_barang' => 'Klaim Mandiri: ' . ($barang->nama_barang ?? 'Barang'),
+                'nama_kategori' => $barang->kategori?->nama_kategori ?? '-',
+                'lokasi_hilang' => $klaim->bukti_lokasi_spesifik ?: ($barang->lokasi_ditemukan ?: '-'),
+                'tanggal_hilang' => $klaim->bukti_waktu_hilang ?: ($klaim->created_at?->format('Y-m-d') ?: '-'),
+                'keterangan' => 'Bukti Kepemilikan: ' . ($klaim->bukti_kepemilikan ?: '-') .
+                    ($klaim->bukti_detail_isi ? "\nDetail Isi: " . $klaim->bukti_detail_isi : '') .
+                    ($klaim->catatan ? "\nCatatan Pelapor: " . $klaim->catatan : ''),
+                'ciri_khusus' => $klaim->bukti_ciri_khusus ?: '-',
+                'foto_barang' => $fotoBukti,
+            ];
+        }
+
+        // Eksekusi GeminiMatchingService secara on-demand
+        $result = $matchingService->match($laporanData, $barangData);
+
+        if (!$result['success']) {
+            $errorMessage = $result['error'] ?? 'Gagal menjalankan analisis AI.';
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $errorMessage], 500);
+            }
+            return redirect()->back()->with('error', $errorMessage);
+        }
+
+        // Simpan hasil ke tabel pencocokans
+        $pencocokan->update([
+            'ai_similarity_score' => $result['similarity_score'],
+            'ai_recommendation'   => $result['recommendation'],
+            'ai_reasoning'        => $result['reasoning'],
+            'ai_matched_at'       => now(),
+            'ai_model_used'       => $result['model_used'],
+        ]);
+
+        $score = (int) $result['similarity_score'];
+        $gaugeColor = match (true) {
+            $score >= 75 => '#16a34a',
+            $score >= 50 => '#d97706',
+            default      => '#64748b',
+        };
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Analisis AI berhasil dijalankan.',
+                'data' => [
+                    'similarity_score' => $score,
+                    'recommendation' => $result['recommendation'],
+                    'recommendation_label' => $pencocokan->aiRecommendationLabel(),
+                    'recommendation_class' => $pencocokan->aiRecommendationClass(),
+                    'reasoning' => $result['reasoning'],
+                    'model_used' => $result['model_used'] ?? '',
+                    'matched_at' => $pencocokan->ai_matched_at?->translatedFormat('d M Y, H:i') . ' WIB',
+                    'gauge_color' => $gaugeColor,
+                    'gauge_offset' => (int) round(157 - ($score / 100) * 157),
+                ],
+            ]);
+        }
+
+        return redirect()->back()->with('status', 'Analisis AI berhasil dijalankan.');
+    }
+
+    /**
+     * Wrapper alias untuk kompatibilitas route run-ai-match.
+     */
+    public function runAiMatch(Klaim $klaim, GeminiMatchingService $matchingService): JsonResponse|RedirectResponse
+    {
+        return $this->runAiAnalysis($klaim, $matchingService);
     }
 
     private function ensureClaimOwnedByAdmin(Klaim $klaim): void
