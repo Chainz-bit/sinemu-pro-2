@@ -8,6 +8,8 @@
     <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}">
 
     {{-- BAGIAN: Gaya Global --}}
+    {{-- Anti-FOUC: hide body until CSS is loaded --}}
+    <style>body{opacity:0}body.page-transition{opacity:1}[x-cloak]{display:none!important}</style>
     @vite('resources/js/entries/manager.js')
     <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js" defer></script>
 </head>
@@ -29,7 +31,8 @@
             $sinemuFlashMessages[] = ['type' => 'error', 'message' => (string) $errors->first()];
         }
     @endphp
-    <script>window.__SINEMU_FLASH_MESSAGES = @json($sinemuFlashMessages);</script>
+    <script id="sinemuFlashMessagesData" type="application/json">@json($sinemuFlashMessages)</script>
+    <script>window.__SINEMU_FLASH_MESSAGES = JSON.parse(document.getElementById('sinemuFlashMessagesData')?.textContent || '[]');</script>
     {{-- BAGIAN: Kerangka pengelola barang --}}
     <div class="admin-shell {{ ($hideSidebar ?? false) ? 'admin-shell-no-sidebar' : '' }}">
         @if(!($hideSidebar ?? false))

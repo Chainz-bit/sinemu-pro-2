@@ -15,6 +15,7 @@ $maxWidth = [
 @endphp
 
 <div
+    x-cloak
     x-data="{
         show: @js($show),
         focusables() {

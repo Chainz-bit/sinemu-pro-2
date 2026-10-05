@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    {{-- Anti-FOUC: hide body until CSS is loaded --}}
+    <style>body{opacity:0}body.page-transition{opacity:1}[x-cloak]{display:none!important}</style>
     @vite('resources/js/entries/auth-base.js')
     @stack('styles')
 </head>
@@ -30,7 +32,8 @@
             $sinemuFlashMessages[] = ['type' => 'error', 'message' => (string) $errors->first()];
         }
     @endphp
-    <script>window.__SINEMU_FLASH_MESSAGES = @json($sinemuFlashMessages);</script>
+    <script id="sinemuFlashMessagesData" type="application/json">@json($sinemuFlashMessages)</script>
+    <script>window.__SINEMU_FLASH_MESSAGES = JSON.parse(document.getElementById('sinemuFlashMessagesData')?.textContent || '[]');</script>
     @yield('content')
     @stack('scripts')
 </body>

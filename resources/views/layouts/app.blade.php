@@ -8,6 +8,8 @@
     <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}">
 
+    {{-- Anti-FOUC: hide body until CSS is loaded --}}
+    <style>body{opacity:0}body.page-transition{opacity:1}[x-cloak]{display:none!important}</style>
     @vite('resources/js/entries/app-layout.js')
 </head>
 <body>
@@ -28,7 +30,8 @@
             $sinemuFlashMessages[] = ['type' => 'error', 'message' => (string) $errors->first()];
         }
     @endphp
-    <script>window.__SINEMU_FLASH_MESSAGES = @json($sinemuFlashMessages);</script>
+    <script id="sinemuFlashMessagesData" type="application/json">@json($sinemuFlashMessages)</script>
+    <script>window.__SINEMU_FLASH_MESSAGES = JSON.parse(document.getElementById('sinemuFlashMessagesData')?.textContent || '[]');</script>
 
     <!-- Navbar Bootstrap -->
   <nav class="navbar navbar-expand-lg bg-body-tertiary shadow-sm py-3 mb-4">
@@ -75,7 +78,7 @@
     <!-- Footer -->
     <footer class="bg-dark text-white py-4 mt-5">
         <div class="container text-center">
-            <p class="mb-0">Â© 2024 SINEMU INDONESIA - BUILD FOR COMMUNITY</p>
+            <p class="mb-0">© 2024 SINEMU INDONESIA - BUILD FOR COMMUNITY</p>
         </div>
     </footer>
 </body>

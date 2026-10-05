@@ -35,7 +35,8 @@
                             <span class="avatar avatar-img">
                                 <img src="{{ $userAvatar ?? asset('img/profil.jpg') }}"
                                     alt="Profil {{ $userName ?? 'Pengguna' }}" loading="lazy" decoding="async"
-                                    onerror="this.onerror=null;this.src='{{ asset('img/profil.jpg') }}';">
+                                    data-fallback="{{ asset('img/profil.jpg') }}"
+                                    onerror="this.onerror=null;this.src=this.dataset.fallback;">
                             </span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end profile-menu">
@@ -67,7 +68,8 @@
                             <span class="avatar avatar-img">
                                 <img src="{{ $userAvatar ?? asset('img/profil.jpg') }}"
                                     alt="Profil {{ $userName ?? 'Pengguna' }}" loading="lazy" decoding="async"
-                                    onerror="this.onerror=null;this.src='{{ asset('img/profil.jpg') }}';">
+                                    data-fallback="{{ asset('img/profil.jpg') }}"
+                                    onerror="this.onerror=null;this.src=this.dataset.fallback;">
                             </span>
                         </button>
                         <div id="mobileProfileSubmenu" class="collapse profile-submenu-mobile d-lg-none">
@@ -277,7 +279,8 @@
                             <div class="item-media">
                                 <img src="{{ $item['image_url'] ?? asset('img/login-image.png') }}" alt="{{ $item['name'] }}"
                                     loading="lazy" decoding="async" width="600" height="360"
-                                    onerror="this.onerror=null;this.src='{{ asset('img/login-image.png') }}';">
+                                    data-fallback="{{ asset('img/login-image.png') }}"
+                                    onerror="this.onerror=null;this.src=this.dataset.fallback;">
                                 <span
                                     class="item-status {{ $item['status_class'] ?? 'item-status-danger' }}">{{ $item['status_label'] ?? 'Belum Ditemukan' }}</span>
                             </div>
@@ -340,7 +343,8 @@
                             <div class="item-media">
                                 <img src="{{ $item['image_url'] ?? asset('img/login-image.png') }}" alt="{{ $item['name'] }}"
                                     loading="lazy" decoding="async" width="600" height="360"
-                                    onerror="this.onerror=null;this.src='{{ asset('img/login-image.png') }}';">
+                                    data-fallback="{{ asset('img/login-image.png') }}"
+                                    onerror="this.onerror=null;this.src=this.dataset.fallback;">
                                 <span
                                     class="item-status {{ $statusClass }}">{{ $item['claim_status_label'] ?? 'Tersedia untuk Diklaim' }}</span>
                             </div>
@@ -748,13 +752,16 @@
         @endauth
 
         <script id="pickupLocationsData" type="application/json">
-                @json($pickupLocations ?? [])
-            </script>
-        <script>
-            window.__SINEMU_ROLE_LABELS = @json([
+            @json($pickupLocations ?? [])
+        </script>
+        <script id="sinemuRoleLabelsData" type="application/json">
+            @json([
                 'managerDisplayName' => $managerRoleLabel,
                 'managerDisplayNameLower' => $managerRoleLabelLower,
-            ]);
+            ])
+        </script>
+        <script>
+            window.__SINEMU_ROLE_LABELS = JSON.parse(document.getElementById('sinemuRoleLabelsData')?.textContent || '{}');
         </script>
 
     </div>
