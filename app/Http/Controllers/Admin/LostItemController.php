@@ -4,17 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LostItemIndexRequest;
-use App\Http\Requests\Admin\UpdateLostItemStatusRequest;
 use App\Http\Requests\Admin\UpdateLostItemRequest;
+use App\Http\Requests\Admin\UpdateLostItemStatusRequest;
 use App\Http\Requests\Admin\VerifyLostItemReportRequest;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
-use App\Services\Admin\Matching\MatchingService;
 use App\Services\Admin\LostItems\LostItemCommandService;
 use App\Services\Admin\LostItems\LostItemExportService;
 use App\Services\Admin\LostItems\LostItemQueryService;
-use App\Support\WorkflowStatus;
+use App\Services\Admin\Matching\MatchingService;
 use App\Support\Media\OptimizedImageUploader;
+use App\Support\WorkflowStatus;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -29,8 +29,7 @@ class LostItemController extends Controller
         private readonly LostItemCommandService $commandService,
         private readonly OptimizedImageUploader $imageUploader,
         private readonly MatchingService $matchingService,
-    ) {
-    }
+    ) {}
 
     public function index(LostItemIndexRequest $request): View|StreamedResponse
     {

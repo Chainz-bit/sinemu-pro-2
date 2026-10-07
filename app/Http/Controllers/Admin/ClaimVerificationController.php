@@ -68,6 +68,30 @@ class ClaimVerificationController extends Controller
             'alasan_penolakan' => $request->input('alasan_penolakan'),
         ];
 
+        // Validasi: seluruh 5 poin checklist harus bernilai "Ya" (1)
+        $allYes = (int) $data['identitas_pelapor_valid'] === 1
+            && (int) $data['detail_barang_valid'] === 1
+            && (int) $data['kronologi_valid'] === 1
+            && (int) $data['bukti_visual_valid'] === 1
+            && (int) $data['kecocokan_data_laporan'] === 1;
+
+        if (!$allYes) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Klaim tidak dapat disetujui karena ada poin checklist bernilai "Tidak".');
+        }
+
+        // Validasi: jika klaim memiliki hasil analisis AI, skor AI harus minimal 75
+        $klaim->loadMissing('pencocokan');
+        $aiScore = $klaim->pencocokan?->ai_similarity_score;
+        if ($aiScore !== null && (int) $aiScore < 75) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Klaim tidak dapat disetujui otomatis karena skor AI di bawah 75.');
+        }
+
         if (!$this->workflowService->approve($klaim, $data, $adminId)) {
             return redirect()
                 ->back()
@@ -309,17 +333,20 @@ class ClaimVerificationController extends Controller
             $admin = ManagerPortal::user();
             $klaim->loadMissing(['barang:id,region_id', 'laporanHilang:id,region_id']);
 
-            $canAccessLegacyClaim = false;
+            $canAccess = false;
             if ($admin instanceof Admin && $admin->region_id) {
                 $barangRegionId    = $klaim->barang?->region_id;
                 $laporanRegionId   = $klaim->laporanHilang?->region_id;
-                $canAccessLegacyClaim = !is_null($barangRegionId)
-                    && !is_null($laporanRegionId)
-                    && (int) $barangRegionId  === (int) $admin->region_id
-                    && (int) $laporanRegionId === (int) $admin->region_id;
+
+                $barangMatches  = !is_null($barangRegionId) && (int) $barangRegionId === (int) $admin->region_id;
+                $laporanMatches = is_null($laporanRegionId) || (int) $laporanRegionId === (int) $admin->region_id;
+
+                $canAccess = $barangMatches && $laporanMatches;
             }
 
-            abort_if(!$canAccessLegacyClaim, 403);
+            abort_if(!$canAccess, 403);
+
+            $klaim->forceFill(['admin_id' => $adminId])->save();
             return;
         }
 

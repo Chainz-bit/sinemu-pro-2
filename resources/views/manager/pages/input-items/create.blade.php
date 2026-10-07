@@ -122,7 +122,7 @@
 
                 <div class="form-actions form-col-12">
                     <button type="reset" class="btn-secondary">Batal</button>
-                    <button type="submit" class="btn-primary">Simpan Laporan</button>
+                    <button type="submit" class="btn-primary" data-loading-text="Menyimpan Laporan...">Simpan Laporan</button>
                 </div>
             </form>
         </section>

@@ -23,6 +23,10 @@
                 'message' => (string) $statusMessage,
             ];
         }
+        $warningMessage = session('warning');
+        if (!empty($warningMessage)) {
+            $sinemuFlashMessages[] = ['type' => 'warning', 'message' => (string) $warningMessage];
+        }
         $errorMessage = session('error');
         if (!empty($errorMessage)) {
             $sinemuFlashMessages[] = ['type' => 'error', 'message' => (string) $errorMessage];

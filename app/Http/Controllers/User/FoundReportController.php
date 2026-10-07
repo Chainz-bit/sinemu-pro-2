@@ -12,6 +12,7 @@ use App\Support\WorkflowStatus;
 use App\Rules\RegionHasActiveAdmin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -41,7 +42,31 @@ class FoundReportController extends Controller
 
     public function store(SubmitFoundReportRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
+        $userId = Auth::id() ?? 0;
+        $lockKey = 'submit_laporan_temuan_' . $userId . '_' . md5(
+            trim((string) $request->input('nama_barang')) . '_' .
+            trim((string) $request->input('region_id')) . '_' .
+            trim((string) $request->input('tanggal_ditemukan'))
+        );
+        $lock = Cache::lock($lockKey, 10);
+
+        if (!$lock->get()) {
+            return back()->with('warning', 'Laporan Anda sedang diproses, harap tunggu sebentar.');
+        }
+
+        try {
+            $recentDuplicate = Barang::query()
+                ->where('user_id', (int) $userId)
+                ->where('nama_barang', (string) $request->input('nama_barang'))
+                ->where('tanggal_ditemukan', (string) $request->input('tanggal_ditemukan'))
+                ->where('created_at', '>=', now()->subSeconds(15))
+                ->first();
+
+            if ($recentDuplicate) {
+                return back()->with('warning', 'Laporan barang temuan serupa baru saja dikirim. Harap tunggu sebentar.');
+            }
+
+            $validated = $request->validated();
 
         $regionId = (int) $validated['region_id'];
         $admin = Admin::query()
@@ -113,5 +138,8 @@ class FoundReportController extends Controller
         }
 
         return back()->with('status', 'Laporan barang temuan berhasil dikirim.');
+        } finally {
+            $lock->release();
+        }
     }
 }

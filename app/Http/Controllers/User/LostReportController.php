@@ -44,10 +44,26 @@ class LostReportController extends Controller
 
     public function store(SubmitLostReportRequest $request): RedirectResponse
     {
-        $result = $this->commandService->store($request, $request->validated());
-        $flashType = $result['ok'] ? 'status' : 'error';
+        $userId = (int) Auth::id();
+        $lockKey = 'submit_laporan_hilang_' . $userId . '_' . md5(
+            trim((string) $request->input('nama_barang')) . '_' .
+            trim((string) $request->input('kategori_barang')) . '_' .
+            trim((string) $request->input('tanggal_hilang'))
+        );
+        $lock = Cache::lock($lockKey, 10);
 
-        return back()->with($flashType, $result['message']);
+        if (!$lock->get()) {
+            return back()->with('warning', 'Laporan Anda sedang diproses, harap tunggu sebentar.');
+        }
+
+        try {
+            $result = $this->commandService->store($request, $request->validated());
+            $flashType = $result['ok'] ? 'status' : 'error';
+
+            return back()->with($flashType, $result['message']);
+        } finally {
+            $lock->release();
+        }
     }
 
     public function destroy(LaporanBarangHilang $laporanBarangHilang): RedirectResponse

@@ -239,7 +239,7 @@
                                 <small>Foto Bukti Kepemilikan</small>
                                 <div class="claim-proof-grid">
                                     @foreach($buktiFotoUrls as $proofUrl)
-                                        <a href="{{ $proofUrl }}" target="_blank" rel="noopener noreferrer" class="claim-proof-item">
+                                        <a href="{{ $proofUrl }}" target="_blank" rel="noopener noreferrer" class="claim-proof-item" title="Lihat foto bukti kepemilikan (Buka di tab baru)">
                                             <img src="{{ $proofUrl }}" alt="Bukti kepemilikan klaim #{{ $klaim->id }}" loading="lazy" decoding="async">
                                         </a>
                                     @endforeach
@@ -460,8 +460,8 @@
                                                 <div class="checklist-quick-actions">
                                                     <button type="button"
                                                             class="checklist-quick-btn checklist-quick-btn--autofill"
-                                                            id="btn-autofill-ai"
-                                                            title="Isi otomatis semua checklist dengan 'Ya' via AI"
+                                                            id="btn-fill-ai"
+                                                            title="Isi otomatis checklist via AI"
                                                             data-ai-score="{{ $aiScore ?? '' }}">
                                                         <svg viewBox="0 0 20 20" fill="currentColor" class="btn-svg-icon" aria-hidden="true">
                                                             <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
@@ -722,12 +722,14 @@
                         aiBtnText.textContent = 'Analisis AI Ulang';
                     }
 
-                    const autofillBtn = document.getElementById('btn-autofill-ai');
+                    const autofillBtn = document.getElementById('btn-fill-ai') || document.getElementById('btn-autofill-ai');
                     if (autofillBtn) {
                         autofillBtn.dataset.aiScore = score;
-                        if (score >= 75) {
-                            autofillBtn.removeAttribute('disabled');
-                        }
+                    }
+
+                    const verificationForm = document.querySelector('form[data-claim-verification-form]');
+                    if (verificationForm) {
+                        verificationForm.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 } catch (error) {
                     console.error('AI Matching Error:', error);

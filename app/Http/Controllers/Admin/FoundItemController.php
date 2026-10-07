@@ -16,8 +16,8 @@ use App\Services\Admin\FoundItems\FoundItemQueryService;
 use App\Services\Admin\FoundItems\FoundItemStatusService;
 use App\Services\Admin\FoundItems\FoundItemVerificationService;
 use App\Services\Admin\Matching\MatchingService;
-use App\Support\WorkflowStatus;
 use App\Support\Media\OptimizedImageUploader;
+use App\Support\WorkflowStatus;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -35,9 +35,7 @@ class FoundItemController extends Controller
         private readonly FoundItemStatusService $statusService,
         private readonly FoundItemVerificationService $verificationService,
         private readonly MatchingService $matchingService,
-    )
-    {
-    }
+    ) {}
 
     public function index(FoundItemIndexRequest $request): View|StreamedResponse
     {
@@ -65,6 +63,9 @@ class FoundItemController extends Controller
             'kategori:id,nama_kategori',
             'admin:id,nama,email',
             'statusHistories.admin:id,nama',
+            'klaims' => function ($query) {
+                $query->with(['user:id,nama,name,email', 'laporanHilang:id,nama_barang'])->latest('created_at');
+            },
         ]);
 
         $matchingCandidates = collect();

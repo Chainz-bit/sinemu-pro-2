@@ -40,7 +40,9 @@
 
     if (!empty($localFotoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($localFotoPath)) {
         $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($localFotoPath);
-        $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($localFotoPath) ?: 'image/jpeg';
+        $ext = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
+        $mimeMap = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'];
+        $mimeType = $mimeMap[$ext] ?? 'image/jpeg';
         $binary = @file_get_contents($absolutePath);
         if ($binary !== false) {
             $fotoSrc = 'data:' . $mimeType . ';base64,' . base64_encode($binary);
@@ -370,121 +372,39 @@
                         @endforelse
                     </div>
                 </article>
+
+                <article class="report-card found-detail-panel found-panel-claims">
+                    <header><h2>Daftar Klaim Masuk</h2></header>
+                    <div class="found-detail-panel-body">
+                        @php
+                            $barangKlaims = $barang->klaims ?? collect();
+                        @endphp
+                        @forelse($barangKlaims as $klaim)
+                            @php
+                                $klaimUser = $klaim->user?->nama ?? $klaim->user?->name ?? 'Pengguna';
+                                $klaimDate = !empty($klaim->created_at) ? \Illuminate\Support\Carbon::parse($klaim->created_at)->format('d M Y, H:i') : '-';
+                                $klaimStatusKey = \App\Support\ClaimStatusPresenter::key($klaim->status_klaim ?? 'menunggu');
+                                $klaimStatusLabel = \App\Support\ClaimStatusPresenter::label($klaimStatusKey);
+                                $klaimStatusClass = \App\Support\ClaimStatusPresenter::cssClass($klaimStatusKey);
+                            @endphp
+                            <div class="activity-item" style="padding-bottom: 0.65rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                                    <p style="margin: 0;"><strong>{{ $klaimUser }}</strong></p>
+                                    <span class="status-chip {{ $klaimStatusClass }}" style="font-size: 0.6875rem; padding: 2px 6px;">{{ $klaimStatusLabel }}</span>
+                                </div>
+                                <small style="display: block; color: #64748b; font-size: 0.75rem; margin-bottom: 4px;">Diajukan: {{ $klaimDate }} WIB</small>
+                                <a href="{{ manager_route('claim-verifications.show', $klaim->id) }}" class="filter-btn found-action-btn found-action-btn-outline" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; padding: 3px 8px; text-decoration: none;">
+                                    <span>Buka Verifikasi</span>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </a>
+                            </div>
+                        @empty
+                            <p class="found-claim-empty-note" style="color: #64748b; font-size: 0.8125rem; margin: 0;">Belum ada klaim masuk untuk barang temuan ini.</p>
+                        @endforelse
+                    </div>
+                </article>
             </div>
         </div>
-
-        <article class="report-card mt-3 found-matching-card" id="kandidat-pencocokan">
-            <header class="mb-3 found-matching-header">
-                <span class="found-matching-header-icon" aria-hidden="true">
-                    <i class="fa-solid fa-link"></i>
-                </span>
-                <div class="found-matching-header-copy">
-                    <h2 class="mb-1">Kandidat Laporan Barang Hilang</h2>
-                    <p class="mb-0">Sistem menilai kandidat berdasarkan kategori, nama barang, warna, merek, nomor seri, lokasi, tanggal, deskripsi, dan ciri khusus.</p>
-                </div>
-                <a href="{{ manager_route('found-items.show', $barang->id) }}#kandidat-pencocokan" class="filter-btn found-matching-refresh">
-                    <i class="fa-solid fa-rotate-right"></i>Muat Ulang Kandidat
-                </a>
-            </header>
-
-            @if((string) ($barang->status_laporan ?? '') !== \App\Support\WorkflowStatus::REPORT_APPROVED)
-                <div class="found-matching-empty">
-                    <span class="found-matching-empty-icon"><i class="fa-solid fa-clock"></i></span>
-                    <div>
-                        <h3>Kandidat belum tersedia</h3>
-                        <p>Kandidat baru akan muncul setelah laporan barang temuan disetujui {{ $managerRoleLabelLower }}.</p>
-                    </div>
-                </div>
-            @elseif(($matchingCandidates ?? collect())->isEmpty())
-                <div class="found-matching-empty">
-                    <span class="found-matching-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
-                    <div>
-                        <h3>Belum ada kandidat kuat</h3>
-                        <p>Belum ada kandidat dengan skor kecocokan yang cukup, atau semua kandidat sudah ditinjau.</p>
-                    </div>
-                </div>
-            @else
-                <div class="report-table-wrap">
-                    <table class="report-table">
-                        <thead>
-                            <tr>
-                                <th>Laporan Hilang</th>
-                                <th>Skor</th>
-                                <th>Ringkasan</th>
-                                <th>Parameter Skor</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($matchingCandidates as $candidate)
-                                @php
-                                    $laporan = $candidate->laporan;
-                                    $reasons = collect($candidate->reasons ?? [])->take(3)->values();
-                                    $meta = collect($candidate->meta ?? []);
-                                    $scoreClass = $candidate->score >= 75 ? 'status-selesai' : ($candidate->score >= 55 ? 'status-diproses' : 'status-dalam_peninjauan');
-                                    $scoreSummary = $candidate->score >= 75 ? 'Tinggi' : ($candidate->score >= 55 ? 'Sedang' : 'Rendah');
-                                    $catatanSkor = 'Skor otomatis: ' . $candidate->score . '/100';
-                                    if ($reasons->isNotEmpty()) {
-                                        $catatanSkor .= ' | ' . $reasons->implode(', ');
-                                    }
-                                @endphp
-                                <tr>
-                                    <td>
-                                        <div>
-                                            <strong>{{ $laporan->nama_barang }}</strong>
-                                            <small style="display:block;">{{ $laporan->lokasi_hilang }} - {{ \Illuminate\Support\Carbon::parse($laporan->tanggal_hilang)->format('d M Y') }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="found-matching-score">
-                                            <span class="status-chip {{ $scoreClass }}">{{ $candidate->score }} / 100</span>
-                                            <small>{{ $scoreSummary }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if($reasons->isNotEmpty())
-                                            <div>{{ $reasons->implode(', ') }}</div>
-                                        @else
-                                            <span>-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="found-matching-metrics">
-                                            <small>Nama: {{ (int) ($meta->get('nama_barang', 0)) }}</small>
-                                            <small>Kategori: {{ (int) ($meta->get('kategori', 0)) }}</small>
-                                            <small>Warna: {{ (int) ($meta->get('warna', 0)) }}</small>
-                                            <small>Merek: {{ (int) ($meta->get('merek', 0)) }}</small>
-                                            <small>No. Seri: {{ (int) ($meta->get('nomor_seri', 0)) }}</small>
-                                            <small>Lokasi: {{ (int) ($meta->get('lokasi', 0)) }}</small>
-                                            <small>Tanggal: {{ (int) ($meta->get('tanggal', 0)) }}</small>
-                                            <small>Deskripsi/Ciri: {{ (int) ($meta->get('deskripsi', 0)) }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="found-matching-actions">
-                                            <form method="POST" action="{{ manager_route('matches.store') }}">
-                                                @csrf
-                                                <input type="hidden" name="laporan_hilang_id" value="{{ $laporan->id }}">
-                                                <input type="hidden" name="barang_id" value="{{ $barang->id }}">
-                                                <input type="hidden" name="catatan" value="{{ $catatanSkor }}">
-                                                <button type="submit" class="filter-btn found-matching-btn">Tandai Diduga Cocok</button>
-                                            </form>
-                                            <form method="POST" action="{{ manager_route('matches.dismiss') }}">
-                                                @csrf
-                                                <input type="hidden" name="laporan_hilang_id" value="{{ $laporan->id }}">
-                                                <input type="hidden" name="barang_id" value="{{ $barang->id }}">
-                                                <input type="hidden" name="catatan" value="{{ 'Skor otomatis: '.$candidate->score.'/100 | Ditandai tidak cocok oleh '.$managerRoleLabelLower.'.' }}">
-                                                <button type="submit" class="filter-btn found-action-btn found-action-btn-ghost found-matching-btn">Tidak Cocok</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-        </article>
 
         @if($canUpdateItemStatus)
             <div class="found-detail-bottom-actions">

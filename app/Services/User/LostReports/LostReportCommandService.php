@@ -126,6 +126,20 @@ class LostReportCommandService
                 return ['ok' => true, 'message' => 'Laporan barang hilang berhasil diperbarui.'];
             }
 
+            $recentDuplicate = LaporanBarangHilang::query()
+                    ->where('user_id', (int) Auth::id())
+                    ->where('nama_barang', $payload['nama_barang'])
+                    ->where('tanggal_hilang', $payload['tanggal_hilang'])
+                    ->where('created_at', '>=', now()->subSeconds(15))
+                    ->first();
+
+                if ($recentDuplicate) {
+                    if ($newPhotoPath) {
+                        Storage::disk('public')->delete($newPhotoPath);
+                    }
+                    return ['ok' => false, 'message' => 'Laporan serupa baru saja dikirim. Harap tunggu sebentar.'];
+                }
+
             LaporanBarangHilang::create($payload);
             return ['ok' => true, 'message' => 'Laporan barang hilang berhasil dikirim.'];
         } catch (Throwable $exception) {
