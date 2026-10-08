@@ -133,6 +133,17 @@
                                     <span class="status-chip {{ $activity->status_class ?? 'status-dalam_peninjauan' }}">
                                         {{ $activity->status_text ?? '-' }}
                                     </span>
+                                    @if(!empty($activity->instruction))
+                                        <small class="claim-instruction-hint d-block mt-1 text-muted" style="font-size: 0.76rem; line-height: 1.25;">
+                                            {{ $activity->instruction }}
+                                        </small>
+                                        @if(($activity->type ?? '') === 'claim' && ($activity->status ?? '') === 'terverifikasi')
+                                            <a href="{{ $activity->detail_url ?? '#' }}" class="d-inline-flex align-items-center gap-1 mt-1 text-decoration-none fw-semibold" style="font-size: 0.75rem; color: #0284c7;">
+                                                <iconify-icon icon="mdi:ticket-confirmation-outline"></iconify-icon>
+                                                Tiket Pengambilan
+                                            </a>
+                                        @endif
+                                    @endif
                                 </td>
                                 <td class="menu-cell mobile-stack-action" data-label="Aksi">
                                     <button type="button" class="row-menu-trigger" data-menu-target="user-menu-{{ $loop->index }}" aria-label="Aksi">

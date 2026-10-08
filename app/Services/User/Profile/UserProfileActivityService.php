@@ -77,12 +77,12 @@ class UserProfileActivityService
                 );
                 [$statusClass, $statusLabel] = match ($claimKey) {
                     'ditolak' => ['ditolak', 'Tidak Disetujui'],
-                    'disetujui' => ['selesai', 'Selesai'],
+                    'disetujui' => ['diproses', 'Terverifikasi'],
                     'selesai' => ['selesai', 'Selesai'],
                     default => ['dalam_peninjauan', 'Menunggu Tinjauan'],
                 };
                 $kataKerja = match ($claimKey) {
-                    'disetujui' => 'disetujui',
+                    'disetujui' => 'terverifikasi',
                     'ditolak' => 'tidak disetujui',
                     'selesai' => 'selesai',
                     default => 'menunggu tinjauan',

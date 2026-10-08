@@ -30,7 +30,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
             'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
             'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
         ], [
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ], [
             'status_pencocokan' => WorkflowStatus::MATCH_CLAIM_APPROVED,
         ]);
@@ -208,7 +208,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
         ]);
         $this->assertDatabaseHas('barangs', [
             'id' => $approveFixture['barang']->id,
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ]);
         $this->assertSame(1, UserNotification::query()->where('type', 'klaim_disetujui')->count());
 
@@ -253,7 +253,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
         ]);
         $this->assertDatabaseHas('barangs', [
             'id' => $approveFixture['barang']->id,
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ]);
         $this->assertSame(1, UserNotification::query()->where('type', 'klaim_disetujui')->count());
 
@@ -291,6 +291,48 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
 
         $this->assertTrue($this->workflow()->complete($completeFixture['claim'], $completeFixture['admin']->id));
         $this->assertSame(1, UserNotification::query()->where('type', 'klaim_selesai')->count());
+    }
+
+    public function test_two_stage_workflow_approval_then_handover_completion(): void
+    {
+        $fixture = $this->createClaimFixture();
+
+        // Tahap 1: Persetujuan Klaim (submitted -> approved)
+        $approved = $this->workflow()->approve($fixture['claim'], $this->approvalPayload(), $fixture['admin']->id);
+        $this->assertTrue($approved);
+
+        // Status klaim disetujui, tapi barang masih dalam_proses_klaim (belum selesai)
+        $this->assertDatabaseHas('klaims', [
+            'id' => $fixture['claim']->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $fixture['barang']->id,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+        ]);
+
+        // Tahap 2: Serah Terima Barang (approved -> completed)
+        $handoverData = [
+            'nama_penerima' => 'Budi Santoso',
+            'nomor_identitas_penerima' => '3201123456789001',
+            'catatan_serah_terima' => 'Barang diserahkan dalam keadaan lengkap.',
+        ];
+        $completed = $this->workflow()->completeHandover($fixture['claim'], $fixture['admin']->id, $handoverData);
+        $this->assertTrue($completed);
+
+        $this->assertDatabaseHas('klaims', [
+            'id' => $fixture['claim']->id,
+            'status_verifikasi' => WorkflowStatus::CLAIM_COMPLETED,
+            'nama_penerima' => 'Budi Santoso',
+            'nomor_identitas_penerima' => '3201123456789001',
+            'catatan_serah_terima' => 'Barang diserahkan dalam keadaan lengkap.',
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $fixture['barang']->id,
+            'status_barang' => WorkflowStatus::FOUND_RETURNED,
+            'status_laporan' => WorkflowStatus::REPORT_COMPLETED,
+        ]);
     }
 
     /**
@@ -394,7 +436,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
             'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
             'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
         ], $claimOverrides), [
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ], [
             'status_pencocokan' => WorkflowStatus::MATCH_CLAIM_APPROVED,
         ]);

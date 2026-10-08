@@ -1,6 +1,7 @@
 @extends('layouts.main')
 @section('content')
     @php
+        /** @var \Illuminate\Support\ViewErrorBag $errors */
         $managerRoleLabel = \App\Support\RoleLabels::manager();
         $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
     @endphp

@@ -60,12 +60,18 @@ class Klaim extends Model
         'catatan_verifikasi_admin',
         'alasan_penolakan',
         'diverifikasi_at',
+        'nama_penerima',
+        'nomor_identitas_penerima',
+        'catatan_serah_terima',
+        'foto_serah_terima',
+        'diserahkan_at',
     ];
 
     protected $casts = [
         'bukti_foto' => 'array',
         'hasil_checklist' => 'array',
         'diverifikasi_at' => 'datetime',
+        'diserahkan_at' => 'datetime',
     ];
 
     /**

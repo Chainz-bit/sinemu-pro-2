@@ -60,10 +60,22 @@
                     </div>
 
                     @if($detail->type === 'temuan')
-                        <div class="report-detail-preclaim-note" role="note" aria-label="Informasi klaim">
-                            <strong>Verifikasi Kepemilikan Wajib</strong>
-                            <p>{{ $detail->preclaim_note ?? 'User tidak langsung dianggap pemilik. Ajukan klaim dan lengkapi bukti kepemilikan agar dapat diverifikasi ' . $managerRoleLabelLower . '.' }}</p>
-                        </div>
+                        @if(!empty($detail->has_approved_claim))
+                            <div class="report-detail-approved-banner alert alert-success d-flex align-items-center gap-3 p-3 my-3 rounded" role="alert" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #065f46;">
+                                <iconify-icon icon="mdi:check-decagram" style="font-size: 2.2rem; color: #10b981; flex-shrink: 0;"></iconify-icon>
+                                <div class="flex-grow-1">
+                                    <strong class="d-block" style="font-size: 1.05rem; font-weight: 700; color: #047857;">Klaim Anda Disetujui!</strong>
+                                    <p class="mb-0 mt-1" style="color: #065f46; font-size: 0.95rem; line-height: 1.45;">
+                                        Klaim Anda untuk barang ini telah disetujui. Silakan ikuti instruksi pengambilan di bawah atau hubungi pengelola.
+                                    </p>
+                                </div>
+                            </div>
+                        @else
+                            <div class="report-detail-preclaim-note" role="note" aria-label="Informasi klaim">
+                                <strong>Verifikasi Kepemilikan Wajib</strong>
+                                <p>{{ $detail->preclaim_note ?? 'User tidak langsung dianggap pemilik. Ajukan klaim dan lengkapi bukti kepemilikan agar dapat diverifikasi ' . $managerRoleLabelLower . '.' }}</p>
+                            </div>
+                        @endif
                     @endif
 
                     <div class="report-detail-actions">
@@ -72,7 +84,15 @@
                             Lihat Laporan Lain
                         </a>
                         @if($detail->type === 'temuan')
-                            @if(($detail->is_claimable ?? false) === true)
+                            @if(!empty($detail->has_approved_claim))
+                                <a href="{{ $detail->claim_action_url ?? route('user.claims.show', $detail->user_claim_id) }}" class="btn btn-success d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold">
+                                    <iconify-icon icon="mdi:ticket-confirmation-outline" style="font-size: 1.25rem;"></iconify-icon>
+                                    Instruksi Pengambilan
+                                </a>
+                                <a href="{{ route('user.claim-history') }}" class="btn btn-outline-secondary">
+                                    Riwayat Klaim
+                                </a>
+                            @elseif(($detail->is_claimable ?? false) === true)
                                 @auth
                                     <a href="{{ $detail->claim_action_url ?? route('home') }}" class="btn btn-outline-primary">
                                         {{ $detail->claim_action_label ?? 'Ajukan Klaim' }}

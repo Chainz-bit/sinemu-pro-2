@@ -87,6 +87,256 @@ class ClaimVerificationDetailTest extends TestCase
         $response->assertSee('Ada stiker kecil di sisi samping');
     }
 
+    public function test_claim_verification_detail_approved_claim_renders_handover_header_action_and_banner(): void
+    {
+        $admin = $this->createAdmin('handover-admin@example.com', 'handover-admin');
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Laptop Asus ROG',
+            'deskripsi' => 'Ditemukan di lab multimedia',
+            'lokasi_ditemukan' => 'Lab Multimedia',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $claim = Klaim::query()->create([
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+            'catatan' => 'Klaim telah disetujui, siap diserahkan',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.claim-verifications.show', $claim));
+
+        $response->assertOk();
+        $response->assertSee('TERVERIFIKASI');
+        $response->assertSee('hero-handover-trigger-btn');
+        $response->assertSee('btn-handover-prominent');
+        $response->assertSee('claim-handover-status-banner');
+        $response->assertSee('handover-modal-backdrop');
+        $response->assertDontSee('top-handover-trigger-btn');
+        $response->assertDontSee('open-handover-modal-btn');
+        $response->assertSee('Menunggu serah terima fisik barang');
+        $response->assertSee('Konfirmasi Serah Terima Barang');
+    }
+
+    public function test_complete_handover_action_updates_claim_and_item_to_completed(): void
+    {
+        $admin = $this->createAdmin('complete-admin@example.com', 'complete-admin');
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Handphone Samsung',
+            'deskripsi' => 'Ditemukan di kantin',
+            'lokasi_ditemukan' => 'Kantin',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $claim = Klaim::query()->create([
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+            'skor_validitas' => 100,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.claim-verifications.complete', $claim), [
+                'kode_tiket' => '#KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
+                'nama_penerima' => 'Budi Pemilik',
+                'nomor_identitas_penerima' => '3212010101990001',
+                'catatan_serah_terima' => 'Diserahkan langsung dengan KTM dan KTP asli.',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status');
+
+        $claim->refresh();
+        $this->assertSame(WorkflowStatus::CLAIM_COMPLETED, $claim->status_verifikasi);
+        $this->assertSame('Budi Pemilik', $claim->nama_penerima);
+        $this->assertSame('3212010101990001', $claim->nomor_identitas_penerima);
+        $this->assertSame(WorkflowStatus::FOUND_RETURNED, $claim->barang->status_barang);
+    }
+
+    public function test_handover_fails_when_ticket_code_is_missing(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Kunci Motor Honda',
+            'deskripsi' => 'Ditemukan di parkiran',
+            'lokasi_ditemukan' => 'Parkiran',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+        ]);
+
+        $claim = Klaim::query()->create([
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+            'skor_validitas' => 100,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.claim-verifications.complete', $claim), [
+                'nama_penerima' => 'Budi Pemilik',
+            ]);
+
+        $response->assertSessionHasErrors('kode_tiket');
+        $claim->refresh();
+        $this->assertSame(WorkflowStatus::CLAIM_APPROVED, $claim->status_verifikasi);
+    }
+
+    public function test_handover_fails_when_ticket_code_is_invalid(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Kunci Motor Honda',
+            'deskripsi' => 'Ditemukan di parkiran',
+            'lokasi_ditemukan' => 'Parkiran',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+        ]);
+
+        $claim = Klaim::query()->create([
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+            'skor_validitas' => 100,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.claim-verifications.complete', $claim), [
+                'kode_tiket' => 'KLM-99999',
+                'nama_penerima' => 'Budi Pemilik',
+            ]);
+
+        $response->assertSessionHasErrors(['kode_tiket']);
+        $claim->refresh();
+        $this->assertSame(WorkflowStatus::CLAIM_APPROVED, $claim->status_verifikasi);
+    }
+
+    public function test_handover_succeeds_with_ticket_code_without_hash_prefix(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Kunci Motor Honda',
+            'deskripsi' => 'Ditemukan di parkiran',
+            'lokasi_ditemukan' => 'Parkiran',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+        ]);
+
+        $claim = Klaim::query()->create([
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+            'skor_validitas' => 100,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.claim-verifications.complete', $claim), [
+                'kode_tiket' => 'KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
+                'nama_penerima' => 'Budi Pemilik',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status');
+
+        $claim->refresh();
+        $this->assertSame(WorkflowStatus::CLAIM_COMPLETED, $claim->status_verifikasi);
+    }
+
+    public function test_claim_verification_detail_displays_official_ticket_code_and_requester_info(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Aksesoris']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Dompet Kulit Hitam',
+            'deskripsi' => 'Ditemukan di kantin',
+            'lokasi_ditemukan' => 'Kantin',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+        ]);
+
+        $claim = Klaim::query()->create([
+            'barang_id' => $foundItem->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+            'kontak' => '081234567890',
+            'bukti_ciri_khusus' => 'Ada gantungan kunci berbentuk bintang',
+            'bukti_kepemilikan' => 'Ada struk pembelian di dalam dompet',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.claim-verifications.show', $claim));
+
+        $response->assertOk();
+        $expectedCode = '#KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT);
+        $response->assertSee($expectedCode);
+        $response->assertSee('KODE TIKET RESMI');
+        $response->assertSee('IDENTITAS PENGAJU & PANDUAN KROSCEK FISIK');
+        $response->assertSee('Ada gantungan kunci berbentuk bintang');
+        $response->assertSee('Ada struk pembelian di dalam dompet');
+    }
+
     public function test_claim_verification_detail_for_other_admin_claim_returns_forbidden(): void
     {
         $ownerAdmin = $this->createAdmin('owner-admin@example.com', 'owner-admin');
@@ -468,7 +718,7 @@ class ClaimVerificationDetailTest extends TestCase
         return $user;
     }
 
-    private function createAdmin(string $email, string $username): Admin
+    private function createAdmin(string $email = 'claim-admin@example.com', string $username = 'claim-admin'): Admin
     {
         $superAdmin = SuperAdmin::query()->create([
             'nama' => 'Super Admin ' . $username,

@@ -23,9 +23,9 @@
             </header>
             <div class="claim-status-guide-body d-flex flex-wrap gap-2">
                 <span class="status-chip status-dalam_peninjauan">Menunggu Tinjauan</span>
-                <span class="status-chip status-diproses">Sedang Diproses</span>
-                <span class="status-chip status-ditolak">Tidak Disetujui</span>
+                <span class="status-chip status-diproses">Terverifikasi (Siap Diambil)</span>
                 <span class="status-chip status-selesai">Selesai</span>
+                <span class="status-chip status-ditolak">Tidak Disetujui</span>
             </div>
         </section>
 
@@ -46,9 +46,10 @@
                         <select name="status" class="filter-btn dashboard-filter-select w-100" onchange="this.form.submit()" data-custom-select>
                             <option value="semua" @selected($statusFilter === 'semua')>Semua Status</option>
                             <option value="menunggu_tinjauan" @selected($statusFilter === 'menunggu_tinjauan')>Menunggu Tinjauan</option>
+                            <option value="terverifikasi" @selected($statusFilter === 'terverifikasi')>Terverifikasi</option>
                             <option value="sedang_diproses" @selected($statusFilter === 'sedang_diproses')>Sedang Diproses</option>
-                            <option value="tidak_disetujui" @selected($statusFilter === 'tidak_disetujui')>Tidak Disetujui</option>
                             <option value="selesai" @selected($statusFilter === 'selesai')>Selesai</option>
+                            <option value="tidak_disetujui" @selected($statusFilter === 'tidak_disetujui')>Tidak Disetujui</option>
                         </select>
                     </form>
                     <form method="GET" action="{{ route('user.claim-history') }}" class="dashboard-filter-form claim-history-filter-form col-12 col-md-auto mb-2 mb-md-0">
@@ -110,6 +111,12 @@
                                         {{ $claim->status_text }}
                                     </span>
                                     <small class="claim-status-detail">{{ $claim->status_detail }}</small>
+                                    @if($claim->status_key === 'terverifikasi')
+                                        <a href="{{ $claim->detail_url }}" class="claim-instruction-badge-link d-inline-flex align-items-center gap-1 mt-2 text-decoration-none fw-semibold" style="font-size: 11px; color: #0284c7;">
+                                            <iconify-icon icon="mdi:ticket-confirmation-outline"></iconify-icon>
+                                            Instruksi Pengambilan
+                                        </a>
+                                    @endif
                                 </td>
                                 <td class="mobile-stack-meta" data-label="Lokasi Pengambilan">{{ $claim->pickup_location }}</td>
                                 <td class="menu-cell mobile-stack-action" data-label="Aksi">
@@ -125,7 +132,7 @@
                                     </button>
 
                                     <div class="row-menu" id="claim-history-menu-{{ $claim->id }}-{{ $loop->index }}">
-                                        <a href="{{ $claim->detail_url }}">Lihat Detail</a>
+                                        <a href="{{ $claim->detail_url }}">{{ $claim->action_label ?? 'Lihat Detail' }}</a>
                                         <form method="POST"
                                               action="{{ route('user.claim-history.destroy', ['klaim' => $claim->id, 'search' => $search, 'status' => $statusFilter, 'type' => $typeFilter, 'page' => $claims->currentPage()]) }}"
                                               data-confirm-delete
@@ -165,7 +172,7 @@
                             </button>
 
                             <div class="row-menu" id="claim-history-mobile-menu-{{ $claim->id }}-{{ $loop->index }}">
-                                <a href="{{ $claim->detail_url }}">Lihat Detail</a>
+                                <a href="{{ $claim->detail_url }}">{{ $claim->action_label ?? 'Lihat Detail' }}</a>
                                 <form method="POST"
                                       action="{{ route('user.claim-history.destroy', ['klaim' => $claim->id, 'search' => $search, 'status' => $statusFilter, 'type' => $typeFilter, 'page' => $claims->currentPage()]) }}"
                                       data-confirm-delete
@@ -197,6 +204,12 @@
                                 <span>Status</span>
                                 <span class="status-chip {{ $claim->status_class }}">{{ $claim->status_text }}</span>
                                 <small>{{ $claim->status_detail }}</small>
+                                @if($claim->status_key === 'terverifikasi')
+                                    <a href="{{ $claim->detail_url }}" class="claim-instruction-badge-link d-inline-flex align-items-center gap-1 mt-1 text-decoration-none fw-semibold" style="font-size: 11px; color: #0284c7;">
+                                        <iconify-icon icon="mdi:ticket-confirmation-outline"></iconify-icon>
+                                        Instruksi Pengambilan
+                                    </a>
+                                @endif
                             </div>
                             <div>
                                 <span>Lokasi Pengambilan</span>

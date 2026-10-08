@@ -265,7 +265,7 @@ class UserDashboardTest extends TestCase
         $this->assertNotNull($foundReportItem);
         $this->assertNotNull($lostReportItem);
 
-        $this->assertSame('selesai', $claimItem->status);
+        $this->assertSame('terverifikasi', $claimItem->status);
         $this->assertSame('sedang_diproses', $foundReportItem->status);
         $this->assertSame('sedang_diproses', $lostReportItem->status);
 
@@ -274,14 +274,14 @@ class UserDashboardTest extends TestCase
             $items->pluck('type')->all()
         );
 
-        // Filter by 'selesai' to ensure claim is returned
-        $responseSelesai = $this->actingAs($user)->get(route('user.dashboard', [
+        // Filter by 'terverifikasi' to ensure approved claim is returned
+        $responseVerified = $this->actingAs($user)->get(route('user.dashboard', [
             'search' => 'Tablet Xiaomi',
-            'status' => 'selesai',
+            'status' => 'terverifikasi',
         ]));
-        $activitiesSelesai = $responseSelesai->viewData('latestActivities');
-        $this->assertSame(1, $activitiesSelesai->total());
-        $this->assertSame('claim', collect($activitiesSelesai->items())->first()->type);
+        $activitiesVerified = $responseVerified->viewData('latestActivities');
+        $this->assertSame(1, $activitiesVerified->total());
+        $this->assertSame('claim', collect($activitiesVerified->items())->first()->type);
 
         // Filter by 'sedang_diproses' to ensure lost and found reports are returned
         $responseDiproses = $this->actingAs($user)->get(route('user.dashboard', [

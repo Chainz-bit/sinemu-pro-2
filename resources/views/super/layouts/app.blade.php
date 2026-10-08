@@ -13,6 +13,7 @@
 </head>
 <body>
     @php
+        /** @var \Illuminate\Support\ViewErrorBag $errors */
         $sinemuFlashMessages = [];
         $statusMessage = session('status');
         if (!empty($statusMessage)) {

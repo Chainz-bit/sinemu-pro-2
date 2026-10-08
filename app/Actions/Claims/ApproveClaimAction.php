@@ -44,7 +44,7 @@ class ApproveClaimAction
         $klaim->update($payload);
 
         if ($klaim->barang) {
-            $klaim->barang->update(['status_barang' => 'sudah_diklaim']);
+            $klaim->barang->update(['status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS]);
         }
         if ($klaim->pencocokan) {
             $klaim->pencocokan->update(['status_pencocokan' => WorkflowStatus::MATCH_CLAIM_APPROVED]);

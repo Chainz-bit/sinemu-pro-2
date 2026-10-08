@@ -23,10 +23,13 @@ class ClaimEvidenceController extends Controller
         abort_unless(array_key_exists($index, $paths) && is_string($paths[$index]), 404);
 
         [$disk, $path] = $this->resolveStoragePath($paths[$index]);
-        abort_unless(Storage::disk($disk)->exists($path), 404);
 
-        $absolutePath = Storage::disk($disk)->path($path);
-        $mimeType = mime_content_type($absolutePath) ?: Storage::disk($disk)->mimeType($path) ?: 'application/octet-stream';
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $diskStorage */
+        $diskStorage = Storage::disk($disk);
+        abort_unless($diskStorage->exists($path), 404);
+
+        $absolutePath = $diskStorage->path($path);
+        $mimeType = mime_content_type($absolutePath) ?: ($diskStorage->mimeType($path) ?: 'application/octet-stream');
         abort_unless(in_array($mimeType, self::ALLOWED_MIME_TYPES, true), 404);
 
         return response()->file($absolutePath, [

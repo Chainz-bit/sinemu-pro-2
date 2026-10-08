@@ -107,9 +107,21 @@ class ClaimVerificationListingService
             return;
         }
 
-        $query->where(function ($builder) use ($search, $hasNamaColumn, $hasNameColumn): void {
+        $trimmed = trim($search);
+        $claimId = null;
+        if (preg_match('/^#?KLM-?0*([1-9]\d*)$/i', $trimmed, $matches)) {
+            $claimId = (int) $matches[1];
+        } elseif (preg_match('/^0*([1-9]\d*)$/', $trimmed, $matches)) {
+            $claimId = (int) $matches[1];
+        }
+
+        $query->where(function ($builder) use ($search, $claimId, $hasNamaColumn, $hasNameColumn): void {
             $builder->where('laporan_barang_hilangs.nama_barang', 'like', '%' . $search . '%')
                 ->orWhere('barangs.nama_barang', 'like', '%' . $search . '%');
+
+            if ($claimId !== null) {
+                $builder->orWhere('klaims.id', $claimId);
+            }
 
             if ($hasNamaColumn) {
                 $builder->orWhere('users.nama', 'like', '%' . $search . '%');

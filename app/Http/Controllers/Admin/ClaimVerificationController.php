@@ -18,6 +18,7 @@ use App\Services\User\Claims\ClaimProofStorageService;
 use App\Support\ManagerPortal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -131,15 +132,63 @@ class ClaimVerificationController extends Controller
         return redirect()->back()->with('status', 'Klaim berhasil ditolak.');
     }
 
-    public function complete(Klaim $klaim): RedirectResponse
+    public function complete(Request $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
         abort_if(!$this->workflowService->canComplete($klaim), 422, 'Klaim harus disetujui sebelum ditandai selesai.');
-        if (!$this->workflowService->complete($klaim, (int) ManagerPortal::id())) {
+
+        $expectedIdPad = str_pad((string) $klaim->id, 5, '0', STR_PAD_LEFT);
+        $expectedCode1 = '#KLM-' . $expectedIdPad;
+        $expectedCode2 = 'KLM-' . $expectedIdPad;
+
+        $request->validate([
+            'kode_tiket' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($expectedIdPad, $expectedCode1, $expectedCode2, $klaim) {
+                    $raw = strtoupper(trim((string) $value));
+                    $stripped = ltrim($raw, '#');
+                    $validMatches = [
+                        $expectedCode1,
+                        $expectedCode2,
+                        $expectedIdPad,
+                        (string) $klaim->id,
+                    ];
+                    if (!in_array($raw, $validMatches, true) && !in_array($stripped, [$expectedCode2, $expectedIdPad], true)) {
+                        $fail('Kode tiket tidak valid. Pastikan kode sesuai dengan tiket yang dibawa penerima.');
+                    }
+                },
+            ],
+            'nama_penerima' => ['nullable', 'string', 'max:255'],
+            'nomor_identitas_penerima' => ['nullable', 'string', 'max:100'],
+            'catatan_serah_terima' => ['nullable', 'string', 'max:2000'],
+            'foto_serah_terima' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ], [
+            'kode_tiket.required' => 'Kode tiket pengambilan wajib diisi.',
+        ]);
+
+        $handoverData = [
+            'kode_tiket' => $request->input('kode_tiket'),
+            'nama_penerima' => $request->input('nama_penerima'),
+            'nomor_identitas_penerima' => $request->input('nomor_identitas_penerima'),
+            'catatan_serah_terima' => $request->input('catatan_serah_terima'),
+        ];
+
+        if ($request->hasFile('foto_serah_terima')) {
+            $path = $request->file('foto_serah_terima')->store('bukti-serah-terima', 'public');
+            $handoverData['foto_serah_terima'] = $path;
+        }
+
+        if (!$this->workflowService->complete($klaim, (int) ManagerPortal::id(), $handoverData)) {
             return redirect()->back()->with('error', 'Klaim tidak dapat ditandai selesai karena konteks klaim sudah tidak valid.');
         }
 
-        return redirect()->back()->with('status', 'Klaim ditandai selesai.');
+        return redirect()->back()->with('status', 'Konfirmasi serah terima barang berhasil. Klaim ditandai selesai.');
+    }
+
+    public function completeHandover(Request $request, Klaim $klaim): RedirectResponse
+    {
+        return $this->complete($request, $klaim);
     }
 
     public function show(Klaim $klaim): View

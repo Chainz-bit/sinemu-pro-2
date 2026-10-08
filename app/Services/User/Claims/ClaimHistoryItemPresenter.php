@@ -26,7 +26,8 @@ class ClaimHistoryItemPresenter
             'status_key' => $statusKey,
             'status_detail' => $this->resolveStatusDetail($claim, $statusKey),
             'pickup_location' => $this->resolvePickupLocation($claim, $statusKey),
-            'detail_url' => $this->resolveDetailUrl($claim),
+            'detail_url' => $this->resolveDetailUrl($claim, $statusKey),
+            'action_label' => $this->resolveActionLabel($statusKey),
         ];
     }
 
@@ -43,7 +44,7 @@ class ClaimHistoryItemPresenter
 
         return match ($key) {
             'ditolak' => ['Tidak Disetujui', 'status-ditolak', 'tidak_disetujui'],
-            'disetujui' => ['Selesai', 'status-selesai', 'disetujui'],
+            'disetujui' => ['Terverifikasi', 'status-diproses', 'terverifikasi'],
             'selesai' => ['Selesai', 'status-selesai', 'selesai'],
             default => ['Menunggu Tinjauan', 'status-dalam_peninjauan', 'menunggu_tinjauan'],
         };
@@ -91,6 +92,8 @@ class ClaimHistoryItemPresenter
             return 'Barang sudah diserahkan dan proses klaim dinyatakan selesai.';
         }
 
+        $instruction = 'Silakan temui pengelola di lokasi layanan untuk mengambil barang Anda.';
+
         $pieces = array_values(array_filter([
             trim((string) ($claim->barang?->penanggung_jawab_pengambilan ?? '')) !== ''
                 ? ('Petugas: ' . trim((string) $claim->barang?->penanggung_jawab_pengambilan))
@@ -104,14 +107,21 @@ class ClaimHistoryItemPresenter
         ]));
 
         if ($pieces === []) {
-            return 'Klaim disetujui. Lihat detail barang untuk informasi pengambilan.';
+            return $instruction;
         }
 
-        return 'Klaim disetujui. ' . implode(' | ', $pieces);
+        return $instruction . ' (' . implode(' | ', $pieces) . ')';
     }
 
-    private function resolveDetailUrl(Klaim $claim): string
+    private function resolveDetailUrl(Klaim $claim, string $statusKey = ''): string
     {
+        if ($statusKey === 'terverifikasi'
+            || in_array((string) $claim->status_verifikasi, ['approved', 'completed'], true)
+            || (string) $claim->status_klaim === 'disetujui'
+        ) {
+            return route('user.claims.show', $claim->id);
+        }
+
         if (!is_null($claim->barang_id)) {
             return route('home.found-detail', $claim->barang_id);
         }
@@ -121,6 +131,15 @@ class ClaimHistoryItemPresenter
         }
 
         return route('home');
+    }
+
+    private function resolveActionLabel(string $statusKey): string
+    {
+        return match ($statusKey) {
+            'terverifikasi' => 'Instruksi Pengambilan',
+            'selesai' => 'Lihat Tiket',
+            default => 'Lihat Detail',
+        };
     }
 
     private function resolveItemImageUrl(string $fotoPath, string $defaultFolder): string

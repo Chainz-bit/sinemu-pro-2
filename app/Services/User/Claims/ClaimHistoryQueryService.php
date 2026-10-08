@@ -71,7 +71,20 @@ class ClaimHistoryQueryService
             return;
         }
 
-        if ($status === 'tidak_disetujui') {
+        if ($status === 'terverifikasi' || $status === 'sedang_diproses' || $status === 'disetujui') {
+            if ($hasStatusVerifikasi) {
+                $claimsQuery->where('status_verifikasi', WorkflowStatus::CLAIM_APPROVED);
+
+                return;
+            }
+
+            $claimsQuery->where('status_klaim', 'disetujui')
+                ->whereDoesntHave('barang', fn ($b) => $b->where('status_barang', WorkflowStatus::FOUND_RETURNED));
+
+            return;
+        }
+
+        if ($status === 'tidak_disetujui' || $status === 'ditolak') {
             $hasStatusVerifikasi
                 ? $claimsQuery->where('status_verifikasi', WorkflowStatus::CLAIM_REJECTED)
                 : $claimsQuery->where('status_klaim', 'ditolak');
@@ -79,23 +92,15 @@ class ClaimHistoryQueryService
             return;
         }
 
-        if ($status === 'sedang_diproses') {
-            $claimsQuery->whereRaw('1 = 0');
-
-            return;
-        }
-
         if ($status === 'selesai') {
             if ($hasStatusVerifikasi) {
-                $claimsQuery->whereIn('status_verifikasi', [
-                    WorkflowStatus::CLAIM_APPROVED,
-                    WorkflowStatus::CLAIM_COMPLETED,
-                ]);
+                $claimsQuery->where('status_verifikasi', WorkflowStatus::CLAIM_COMPLETED);
 
                 return;
             }
 
-            $claimsQuery->where('status_klaim', 'disetujui');
+            $claimsQuery->where('status_klaim', 'disetujui')
+                ->whereHas('barang', fn ($b) => $b->where('status_barang', WorkflowStatus::FOUND_RETURNED));
         }
     }
 

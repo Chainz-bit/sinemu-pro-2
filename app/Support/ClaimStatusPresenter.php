@@ -30,7 +30,7 @@ final class ClaimStatusPresenter
         return match ($key) {
             'selesai' => 'SELESAI',
             'ditolak' => 'DITOLAK',
-            'disetujui' => 'DISETUJUI',
+            'disetujui' => 'TERVERIFIKASI',
             default => 'MENUNGGU VERIFIKASI',
         };
     }

@@ -68,6 +68,20 @@
     $canRunAiMatch       = !is_null($klaim->barang_id);
     $aiRunMatchRoute     = manager_route('claim-verifications.run-ai-analysis', $klaim->id);
     $pelaporTelepon      = $klaim->user?->nomor_telepon ?? null;
+    $pelaporPhone        = trim((string) ($klaim->kontak ?: ($pelaporTelepon ?: '')));
+    $pelaporPhoneClean   = preg_replace('/[^0-9]/', '', $pelaporPhone) ?? '';
+    $pelaporWaUrl        = null;
+    $ticketCode          = '#KLM-' . str_pad((string) $klaim->id, 5, '0', STR_PAD_LEFT);
+    if ($pelaporPhoneClean !== '') {
+        $cleanWa = $pelaporPhoneClean;
+        if (str_starts_with($cleanWa, '0')) {
+            $cleanWa = '62' . substr($cleanWa, 1);
+        } elseif (!str_starts_with($cleanWa, '62')) {
+            $cleanWa = '62' . $cleanWa;
+        }
+        $waText = rawurlencode('Halo ' . $pelaporNama . ', kami dari posko pengelola SiNemu terkait tiket klaim ' . $ticketCode . ' (' . $namaBarang . ').');
+        $pelaporWaUrl = 'https://wa.me/' . $cleanWa . '?text=' . $waText;
+    }
     $isAiHighMatch       = ($aiScore !== null && (int) $aiScore >= 75)
         || in_array(strtolower((string) ($aiRecommendation ?? '')), ['tinggi', 'high', 'sangat_cocok'], true);
     $aiGaugeColor        = match (true) {
@@ -80,7 +94,7 @@
 
 @section('page-content')
     <section class="claim-detail-page">
-        <div class="claim-detail-header">
+        <div class="claim-detail-header d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
             <div>
                 <p class="claim-detail-breadcrumb">
                     <a href="{{ manager_route('claim-verifications') }}">Verifikasi Klaim</a>
@@ -95,6 +109,57 @@
                 </div>
             </div>
         </div>
+
+        {{-- Card Kode Tiket Resmi Pengambilan --}}
+        <div class="claim-ticket-card-wrapper mb-3">
+            <div class="claim-ticket-hero-card">
+                <div class="claim-ticket-hero-main">
+                    <div class="claim-ticket-tag-row">
+                        <span class="claim-ticket-tag">
+                            <iconify-icon icon="mdi:ticket-confirmation-outline" width="16"></iconify-icon>
+                            KODE TIKET RESMI
+                        </span>
+                        @if(($statusKey ?? 'menunggu') === 'disetujui')
+                            <span class="claim-ticket-ready-badge">
+                                <iconify-icon icon="mdi:clock-check-outline" width="14"></iconify-icon>
+                                Siap Diambil
+                            </span>
+                        @endif
+                    </div>
+                    <div class="claim-ticket-code-display-row">
+                        <span class="claim-ticket-code-text" id="official-ticket-code">{{ $ticketCode }}</span>
+                        <button type="button" class="btn-copy-ticket-inline" id="btn-copy-ticket-code" data-code="{{ $ticketCode }}" title="Salin kode tiket">
+                            <iconify-icon icon="mdi:content-copy" width="15"></iconify-icon>
+                            <span class="copy-label">Salin</span>
+                        </button>
+                    </div>
+                    <p class="claim-ticket-instruction-text">
+                        <iconify-icon icon="mdi:information-outline" width="15" style="vertical-align: -2px; color: #2563eb;"></iconify-icon>
+                        Cocokkan kode ini dengan tiket fisik/digital yang ditunjukkan oleh pengambil barang.
+                    </p>
+                </div>
+                @if(($statusKey ?? 'menunggu') === 'disetujui')
+                    <div class="claim-ticket-hero-cta">
+                        <button type="button" class="btn-handover-primary btn-handover-prominent" id="hero-handover-trigger-btn">
+                            <iconify-icon icon="mdi:handshake-outline" width="20"></iconify-icon>
+                            <span>Konfirmasi Serah Terima Barang</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        @if(($statusKey ?? 'menunggu') === 'disetujui')
+            <div class="claim-handover-status-banner mb-3">
+                <div class="claim-handover-banner-icon">
+                    <iconify-icon icon="mdi:information-outline" width="22"></iconify-icon>
+                </div>
+                <div class="claim-handover-banner-text">
+                    <h4 class="claim-handover-banner-title">Klaim telah disetujui. Menunggu serah terima fisik barang kepada pemilik.</h4>
+                    <p class="claim-handover-banner-desc">Barang temuan belum diserahkan ke pemilik. Pastikan penerima menunjukkan kartu identitas asli (KTP/KTM) dan tiket pengambilan resmi sebelum melakukan konfirmasi serah terima fisik.</p>
+                </div>
+            </div>
+        @endif
 
         <section class="claim-detail-layout">
             <article class="report-card claim-main-card">
@@ -112,6 +177,65 @@
                         <img src="{{ $fotoUrl }}" alt="{{ $namaBarang }}" loading="lazy" decoding="async">
                     </div>
                     <div class="claim-item-info">
+                        {{-- Ringkasan Identitas Pengaju & Panduan Kroscek Fisik --}}
+                        <article class="claim-requester-crosscheck-card">
+                            <div class="crosscheck-card-header">
+                                <div class="crosscheck-header-title">
+                                    <iconify-icon icon="mdi:account-check-outline" width="22" style="color: #2563eb;"></iconify-icon>
+                                    <div>
+                                        <small class="crosscheck-label-badge">IDENTITAS PENGAJU &amp; PANDUAN KROSCEK FISIK</small>
+                                        <h3 class="crosscheck-user-name">{{ $pelaporNama }}</h3>
+                                    </div>
+                                </div>
+                                <div class="crosscheck-contact-links">
+                                    <a href="{{ $emailContactHref }}" class="crosscheck-pill {{ $hasPelaporEmail ? '' : 'is-disabled' }}" title="Kirim Email">
+                                        <iconify-icon icon="mdi:email-outline" width="14"></iconify-icon>
+                                        <span>{{ $pelaporEmail }}</span>
+                                    </a>
+                                    @if($pelaporPhone !== '')
+                                        @if($pelaporWaUrl)
+                                            <a href="{{ $pelaporWaUrl }}" target="_blank" rel="noopener noreferrer" class="crosscheck-pill crosscheck-pill-wa" title="Hubungi via WhatsApp">
+                                                <iconify-icon icon="mdi:whatsapp" width="14"></iconify-icon>
+                                                <span>{{ $pelaporPhone }}</span>
+                                            </a>
+                                        @else
+                                            <span class="crosscheck-pill">
+                                                <iconify-icon icon="mdi:phone-outline" width="14"></iconify-icon>
+                                                <span>{{ $pelaporPhone }}</span>
+                                            </span>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="crosscheck-card-body">
+                                <div class="crosscheck-grid-details">
+                                    <div class="crosscheck-point-box">
+                                        <span class="crosscheck-point-title">
+                                            <iconify-icon icon="mdi:tag-outline" width="15" style="color: #0284c7;"></iconify-icon>
+                                            Ciri Khusus Menurut Pengaju
+                                        </span>
+                                        <p class="crosscheck-point-desc">{{ $ciriKhususPengaju !== '' ? $ciriKhususPengaju : 'Tidak dicantumkan oleh pengaju.' }}</p>
+                                    </div>
+                                    <div class="crosscheck-point-box">
+                                        <span class="crosscheck-point-title">
+                                            <iconify-icon icon="mdi:shield-check-outline" width="15" style="color: #16a34a;"></iconify-icon>
+                                            Bukti Kepemilikan yang Diajukan
+                                        </span>
+                                        <p class="crosscheck-point-desc">{{ $buktiKepemilikanPengaju !== '' ? $buktiKepemilikanPengaju : 'Tidak ada keterangan bukti khusus.' }}</p>
+                                    </div>
+                                </div>
+                                @if($detailIsiPengaju !== '')
+                                    <div class="crosscheck-point-box mt-2">
+                                        <span class="crosscheck-point-title">
+                                            <iconify-icon icon="mdi:format-list-bulleted" width="15" style="color: #6366f1;"></iconify-icon>
+                                            Detail Isi / Kelengkapan Barang
+                                        </span>
+                                        <p class="crosscheck-point-desc">{{ $detailIsiPengaju }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </article>
+
                         <div class="claim-info-grid">
                             <article class="claim-info-card">
                                 <small>Kategori</small>
@@ -580,23 +704,70 @@
                             <article class="report-card claim-side-card claim-panel-verification">
                                 <header>
                                     <h2>
-                                        <svg viewBox="0 0 20 20" fill="currentColor" class="panel-header-svg text-success" aria-hidden="true">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                        </svg>
+                                        <iconify-icon icon="mdi:clipboard-check-outline" width="18" style="color: #1e3a8a; vertical-align: middle; margin-right: 6px;"></iconify-icon>
                                         Tindakan Pengelola
                                     </h2>
                                 </header>
                                 <div class="claim-side-body">
-                                    <p class="success-callout-text">Klaim telah disetujui. Lakukan serah terima barang kepada pemilik dan tandai selesai.</p>
-                                    <form method="POST" action="{{ manager_route('claim-verifications.complete', $klaim->id) }}"
-                                        data-confirm-delete
-                                        data-confirm-title="Tandai Klaim Selesai"
-                                        data-confirm-message="Barang sudah diserahkan ke pemilik dan klaim akan ditutup sebagai selesai."
-                                        data-confirm-submit-label="Tandai Selesai"
-                                        data-confirm-submit-variant="primary">
-                                        @csrf
-                                        <button type="submit" class="claim-action-btn success w-100">Tandai Selesai / Serah Terima</button>
-                                    </form>
+                                    <div class="handover-side-status-box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #16a34a; border-radius: 8px; padding: 14px 16px;">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.03em;">Status Klaim</span>
+                                            <span style="display: inline-flex; align-items: center; gap: 4px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;">
+                                                <iconify-icon icon="mdi:check-circle" width="13"></iconify-icon>
+                                                Disetujui
+                                            </span>
+                                        </div>
+                                        <p style="margin: 0; color: #334155; font-size: 0.825rem; line-height: 1.5;">
+                                            Menunggu serah terima fisik barang. Gunakan tombol pada kartu <strong>Kode Tiket</strong> di atas untuk menyelesaikan berita acara penyerahan.
+                                        </p>
+                                    </div>
+                                </div>
+                            </article>
+                        @endif
+
+                        @if(($statusKey ?? 'menunggu') === 'selesai')
+                            <article class="report-card claim-side-card claim-panel-verification">
+                                <header>
+                                    <h2>
+                                        <svg viewBox="0 0 20 20" fill="currentColor" class="panel-header-svg text-success" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        Data Serah Terima
+                                    </h2>
+                                </header>
+                                <div class="claim-side-body">
+                                    <div class="handover-summary-box" style="font-size: 0.875rem; color: #334155;">
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block" style="font-size: 0.75rem;">Penerima Barang:</small>
+                                            <strong style="color: #0f172a;">{{ $klaim->nama_penerima ?: $pelaporNama }}</strong>
+                                        </div>
+                                        @if(!empty($klaim->nomor_identitas_penerima))
+                                            <div class="mb-2">
+                                                <small class="text-muted d-block" style="font-size: 0.75rem;">No. Identitas:</small>
+                                                <span>{{ $klaim->nomor_identitas_penerima }}</span>
+                                            </div>
+                                        @endif
+                                        @if(!empty($klaim->catatan_serah_terima))
+                                            <div class="mb-2">
+                                                <small class="text-muted d-block" style="font-size: 0.75rem;">Catatan Penyerahan:</small>
+                                                <span>{{ $klaim->catatan_serah_terima }}</span>
+                                            </div>
+                                        @endif
+                                        @if(!empty($klaim->diserahkan_at))
+                                            <div class="mb-2">
+                                                <small class="text-muted d-block" style="font-size: 0.75rem;">Waktu Penyerahan:</small>
+                                                <span>{{ $klaim->diserahkan_at->translatedFormat('d M Y, H:i') }} WIB</span>
+                                            </div>
+                                        @endif
+                                        @if(!empty($klaim->foto_serah_terima))
+                                            <div class="mt-2">
+                                                <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Dokumentasi Foto:</small>
+                                                <a href="{{ asset('storage/' . $klaim->foto_serah_terima) }}" target="_blank" rel="noopener noreferrer">
+                                                    <img src="{{ asset('storage/' . $klaim->foto_serah_terima) }}" alt="Foto Dokumentasi Serah Terima" style="max-width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; max-height: 140px; object-fit: cover;">
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </article>
                         @endif
@@ -605,6 +776,92 @@
             </aside>
         </section>
     </section>
+
+    @php
+        /** @var \Illuminate\Support\ViewErrorBag $errors */
+        $shouldOpenHandoverModal = $errors->has('kode_tiket') || $errors->has('nama_penerima') || $errors->has('nomor_identitas_penerima');
+        $expectedTicketNumber = str_pad((string) $klaim->id, 5, '0', STR_PAD_LEFT);
+    @endphp
+    <div class="handover-modal-backdrop"
+         id="handover-modal-backdrop"
+         data-auto-open="{{ $shouldOpenHandoverModal ? 'true' : 'false' }}"
+         data-expected-ticket="{{ $ticketCode }}"
+         data-expected-number="{{ $expectedTicketNumber }}"
+         data-claim-id="{{ $klaim->id }}"
+         style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1050; align-items: center; justify-content: center; padding: 16px;">
+        <div class="handover-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="handover-modal-title" style="background: #ffffff; width: 100%; max-width: 520px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); overflow: hidden;">
+            <header style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; background: #f8fafc;">
+                <div>
+                    <h3 id="handover-modal-title" style="margin: 0; font-size: 1.1rem; font-weight: 600; color: #0f172a;">Konfirmasi Serah Terima Barang</h3>
+                    <small style="color: #64748b; font-size: 0.8rem;">Catat penyerahan fisik barang temuan kepada pemilik</small>
+                </div>
+                <button type="button" id="close-handover-modal-btn" style="background: none; border: none; cursor: pointer; color: #94a3b8; padding: 4px; border-radius: 6px;" aria-label="Tutup modal">
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width: 20px; height: 20px;">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </header>
+
+            <form method="POST" action="{{ manager_route('claim-verifications.complete', $klaim->id) }}" enctype="multipart/form-data" id="handover-form">
+                @csrf
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                    {{-- Kode Tiket Pengambilan (Wajib) --}}
+                    <div>
+                        <label for="handover_kode_tiket" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-bottom: 4px;">
+                            <span>Kode Tiket Pengambilan <span style="color: #dc2626;">*</span></span>
+                            <span style="font-size: 0.75rem; color: #2563eb; font-weight: 600; font-family: monospace;">{{ $ticketCode }}</span>
+                        </label>
+                        <input type="text"
+                               id="handover_kode_tiket"
+                               name="kode_tiket"
+                               class="form-control"
+                               required
+                               autocomplete="off"
+                               placeholder="Contoh: KLM-00005 atau #KLM-00005"
+                               value="{{ old('kode_tiket') }}"
+                               style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; font-family: monospace; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;">
+                        <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 3px;">Ketik kode tiket yang tertera pada lembar bukti pengambilan milik penerima.</small>
+                        <div id="handover-ticket-feedback" style="display: none; font-size: 0.775rem; color: #dc2626; margin-top: 4px; font-weight: 500;"></div>
+                        @error('kode_tiket')
+                            <div style="font-size: 0.775rem; color: #dc2626; margin-top: 4px; font-weight: 500;">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="handover_nama_penerima" style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Nama Pengambil / Penerima</label>
+                        <input type="text" id="handover_nama_penerima" name="nama_penerima" class="form-control" value="{{ old('nama_penerima', $pelaporNama) }}" placeholder="Nama lengkap penerima" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.875rem;">
+                        <small style="color: #64748b; font-size: 0.75rem;">Default terisi sesuai nama pengaju klaim.</small>
+                    </div>
+
+                    <div>
+                        <label for="handover_nomor_identitas" style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Nomor Identitas (KTP / KTM / SIM)</label>
+                        <input type="text" id="handover_nomor_identitas" name="nomor_identitas_penerima" class="form-control" placeholder="Nomor KTP, KTM, atau SIM penerima" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.875rem;">
+                    </div>
+
+                    <div>
+                        <label for="handover_catatan" style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Catatan Serah Terima</label>
+                        <textarea id="handover_catatan" name="catatan_serah_terima" rows="2" class="form-control" placeholder="Contoh: Barang diserahkan dalam kondisi baik beserta kelengkapannya." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.875rem;"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="handover_foto" style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Foto Dokumentasi Serah Terima (Opsional)</label>
+                        <input type="file" id="handover_foto" name="foto_serah_terima" accept="image/*" class="form-control" style="width: 100%; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                        <small style="color: #64748b; font-size: 0.75rem;">Unggah foto dokumentasi saat penyerahan barang (JPG, PNG, atau WEBP, maks 5MB).</small>
+                    </div>
+                </div>
+
+                <footer style="padding: 12px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" id="cancel-handover-modal-btn" class="claim-action-btn neutral" style="padding: 8px 16px; font-size: 0.875rem; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; border-radius: 6px; cursor: pointer;">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn-handover-primary" id="submit-handover-btn" style="padding: 8px 18px; font-size: 0.875rem; border-radius: 6px;">
+                        <iconify-icon icon="mdi:check-circle-outline" width="18"></iconify-icon>
+                        <span>Konfirmasi & Selesaikan</span>
+                    </button>
+                </footer>
+            </form>
+        </div>
+    </div>
 
     <style>
         .ai-spinner {
@@ -746,6 +1003,116 @@
                     }
                 }
             });
+
+            // Handover modal handling
+            const handoverModal = document.getElementById('handover-modal-backdrop');
+            const heroModalBtn = document.getElementById('hero-handover-trigger-btn');
+            const closeModalBtn = document.getElementById('close-handover-modal-btn');
+            const cancelModalBtn = document.getElementById('cancel-handover-modal-btn');
+            const handoverForm = document.getElementById('handover-form');
+            const submitHandoverBtn = document.getElementById('submit-handover-btn');
+            const ticketInput = document.getElementById('handover_kode_tiket');
+            const ticketFeedback = document.getElementById('handover-ticket-feedback');
+            const copyTicketBtn = document.getElementById('btn-copy-ticket-code');
+            const expectedTicketCode = (handoverModal && handoverModal.dataset.expectedTicket) || '';
+            const expectedTicketNumber = (handoverModal && handoverModal.dataset.expectedNumber) || '';
+            const expectedClaimId = (handoverModal && handoverModal.dataset.claimId) || '';
+
+            if (copyTicketBtn) {
+                copyTicketBtn.addEventListener('click', function () {
+                    const code = copyTicketBtn.dataset.code || expectedTicketCode;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(code).then(function () {
+                            const label = copyTicketBtn.querySelector('.copy-label');
+                            if (label) {
+                                const orig = label.textContent;
+                                label.textContent = 'Tersalin!';
+                                setTimeout(function () { label.textContent = orig; }, 2000);
+                            }
+                        }).catch(function () {
+                            prompt('Salin kode tiket:', code);
+                        });
+                    } else {
+                        prompt('Salin kode tiket:', code);
+                    }
+                });
+            }
+
+            function openHandoverModal() {
+                if (handoverModal) {
+                    handoverModal.style.display = 'flex';
+                    if (ticketInput) {
+                        setTimeout(function () { ticketInput.focus(); }, 100);
+                    }
+                }
+            }
+            function closeHandoverModal() {
+                if (handoverModal) handoverModal.style.display = 'none';
+            }
+
+            if (heroModalBtn) heroModalBtn.addEventListener('click', openHandoverModal);
+            if (closeModalBtn) closeModalBtn.addEventListener('click', closeHandoverModal);
+            if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeHandoverModal);
+
+            if (handoverModal) {
+                handoverModal.addEventListener('click', function (e) {
+                    if (e.target === handoverModal) closeHandoverModal();
+                });
+            }
+
+            function normalizeTicket(code) {
+                return (code || '').trim().toUpperCase().replace(/^#/, '');
+            }
+
+            function isTicketValid(inputVal) {
+                const norm = normalizeTicket(inputVal);
+                return norm === normalizeTicket(expectedTicketCode)
+                    || norm === expectedTicketNumber
+                    || norm === expectedClaimId;
+            }
+
+            if (ticketInput) {
+                ticketInput.addEventListener('input', function () {
+                    ticketInput.style.borderColor = '#cbd5e1';
+                    if (ticketFeedback) {
+                        ticketFeedback.style.display = 'none';
+                        ticketFeedback.textContent = '';
+                    }
+                });
+            }
+
+            if (handoverForm && submitHandoverBtn) {
+                handoverForm.addEventListener('submit', function (e) {
+                    if (ticketInput) {
+                        const entered = ticketInput.value.trim();
+                        if (!entered) {
+                            e.preventDefault();
+                            alert('Kode tiket pengambilan wajib diisi.');
+                            ticketInput.focus();
+                            return;
+                        }
+
+                        if (!isTicketValid(entered)) {
+                            e.preventDefault();
+                            if (ticketFeedback) {
+                                ticketFeedback.style.display = 'block';
+                                ticketFeedback.textContent = 'Kode tiket tidak valid. Pastikan kode sesuai dengan tiket yang dibawa penerima.';
+                            }
+                            ticketInput.style.borderColor = '#dc2626';
+                            alert('Kode tiket tidak valid. Pastikan kode sesuai dengan tiket yang dibawa penerima.');
+                            ticketInput.focus();
+                            return;
+                        }
+                    }
+
+                    submitHandoverBtn.disabled = true;
+                    submitHandoverBtn.innerHTML = '<span class="ai-spinner" style="margin-right: 6px;"></span> Memproses Serah Terima...';
+                });
+            }
+
+            if (handoverModal && handoverModal.dataset.autoOpen === 'true') {
+                openHandoverModal();
+            }
         });
     </script>
 @endsection

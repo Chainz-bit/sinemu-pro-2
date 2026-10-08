@@ -65,6 +65,7 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
         Route::post('verifikasi-klaim/{klaim}/approve', [ClaimVerificationController::class, 'approve'])->name('claim-verifications.approve');
         Route::post('verifikasi-klaim/{klaim}/reject', [ClaimVerificationController::class, 'reject'])->name('claim-verifications.reject');
         Route::post('verifikasi-klaim/{klaim}/complete', [ClaimVerificationController::class, 'complete'])->name('claim-verifications.complete');
+        Route::post('verifikasi-klaim/{klaim}/handover', [ClaimVerificationController::class, 'completeHandover'])->name('claim-verifications.handover');
         Route::post('verifikasi-klaim/{klaim}/run-ai-match', [ClaimVerificationController::class, 'runAiMatch'])->name('claim-verifications.run-ai-match');
         Route::post('verifikasi-klaim/{klaim}/run-ai-analysis', [ClaimVerificationController::class, 'runAiAnalysis'])->name('claim-verifications.run-ai-analysis');
 
@@ -87,7 +88,7 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
         Route::get('pengaturan/log-aktivitas', [SettingsController::class, 'logs'])->name('settings.logs');
 
         Route::get('notifications', function () {
-            return redirect()->route(\App\Support\ManagerPortal::dashboardRoute());
+            return redirect()->route(ManagerPortal::dashboardRoute());
         })->name('notifications.index');
         Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
         Route::post('notifications/{notification}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');

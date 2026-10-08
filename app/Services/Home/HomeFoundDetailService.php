@@ -5,13 +5,13 @@ namespace App\Services\Home;
 use App\Models\Barang;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class HomeFoundDetailService
 {
     public function __construct(
         private readonly HomeMediaAssetService $mediaAssetService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{pageTitle:string,detail:object}
@@ -57,9 +57,32 @@ class HomeFoundDetailService
             ],
         };
 
+        $userApprovedClaim = null;
+        if (Auth::check()) {
+            $userApprovedClaim = $barang
+                ->klaims()
+                ->where('user_id', Auth::id())
+                ->where(function ($query) {
+                    $query
+                        ->whereIn('status_verifikasi', [WorkflowStatus::CLAIM_APPROVED, WorkflowStatus::CLAIM_COMPLETED])
+                        ->orWhere('status_klaim', 'disetujui');
+                })
+                ->latest('id')
+                ->first();
+        }
+
+        $hasApprovedClaim = !is_null($userApprovedClaim);
+
         $claimActionUrl = route('user.claims.create', ['barang_id' => $barang->id]);
         $claimActionLabel = 'Ajukan Klaim';
-        if ($statusBarang === 'dalam_proses_klaim') {
+
+        if ($hasApprovedClaim) {
+            $claimActionUrl = route('user.claims.show', $userApprovedClaim->id);
+            $claimActionLabel = 'Instruksi Pengambilan';
+            $statusMeta['label'] = 'Klaim Disetujui (Siap Diambil)';
+            $statusMeta['class'] = 'is-approved-pickup';
+            $statusMeta['subtitle'] = 'Klaim Anda untuk barang ini telah disetujui. Silakan ikuti instruksi pengambilan di bawah atau hubungi pengelola.';
+        } elseif ($statusBarang === 'dalam_proses_klaim') {
             $claimActionUrl = route('user.claim-history');
             $claimActionLabel = 'Lihat Status Klaim';
         } elseif ($statusBarang === 'sudah_diklaim') {
@@ -89,6 +112,8 @@ class HomeFoundDetailService
             'image_url' => $this->mediaAssetService->resolveItemImageUrl((string) ($barang->foto_barang ?? ''), 'barang-temuan'),
             'subtitle' => $statusMeta['subtitle'],
             'is_claimable' => $statusMeta['claimable'],
+            'has_approved_claim' => $hasApprovedClaim,
+            'user_claim_id' => $userApprovedClaim?->id,
             'claim_action_url' => $claimActionUrl,
             'claim_action_label' => $claimActionLabel,
             'preclaim_note' => 'Kecocokan barang tidak otomatis membuktikan kepemilikan. Anda wajib mengajukan klaim dengan bukti kepemilikan untuk diverifikasi ' . \App\Support\RoleLabels::managerLower() . '.',

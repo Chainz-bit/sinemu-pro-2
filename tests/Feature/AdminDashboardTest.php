@@ -208,7 +208,7 @@ class AdminDashboardTest extends TestCase
         $this->assertStringContainsString('Tablet Xiaomi', $tableBody);
         $this->assertStringNotContainsString('Dokumen Penting', $tableBody);
         $this->assertStringNotContainsString('Payung Hitam', $tableBody);
-        $this->assertStringContainsString('DISETUJUI', $tableBody);
+        $this->assertStringContainsString('TERVERIFIKASI', $tableBody);
     }
 
     public function test_dashboard_report_update_validates_payload_by_type(): void
@@ -400,12 +400,12 @@ class AdminDashboardTest extends TestCase
     {
         $admin = $this->createAdmin();
         $user = $this->createUser();
-        $adminRegion = \App\Models\Wilayah::query()->create([
+        $adminRegion = Wilayah::query()->create([
             'nama_wilayah' => 'Wilayah Dashboard Admin',
             'lat' => -6.32,
             'lng' => 108.32,
         ]);
-        $otherRegion = \App\Models\Wilayah::query()->create([
+        $otherRegion = Wilayah::query()->create([
             'nama_wilayah' => 'Wilayah Dashboard Lain',
             'lat' => -6.42,
             'lng' => 108.42,

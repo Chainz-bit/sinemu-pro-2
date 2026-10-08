@@ -39,20 +39,21 @@ class UserDashboardClaimFeedService
                 $statusPayload = [
                     'status' => match ($claimKey) {
                         'menunggu' => 'menunggu_tinjauan',
-                        'disetujui' => 'selesai',
+                        'disetujui' => 'terverifikasi',
+                        'selesai' => 'selesai',
                         'ditolak' => 'tidak_disetujui',
-                        default => 'selesai',
+                        default => 'menunggu_tinjauan',
                     },
                     'status_class' => match ($claimKey) {
                         'ditolak' => 'status-ditolak',
                         'selesai' => 'status-selesai',
-                        'disetujui' => 'status-selesai',
+                        'disetujui' => 'status-diproses',
                         default => 'status-dalam_peninjauan',
                     },
                     'status_text' => match ($claimKey) {
                         'ditolak' => 'Tidak Disetujui',
                         'selesai' => 'Selesai',
-                        'disetujui' => 'Selesai',
+                        'disetujui' => 'Terverifikasi',
                         default => 'Menunggu Tinjauan',
                     },
                 ];
@@ -60,25 +61,31 @@ class UserDashboardClaimFeedService
                 $itemName = (string) ($claim->barang?->nama_barang ?? $claim->laporanHilang?->nama_barang ?? 'Klaim Barang');
                 $location = (string) ($claim->barang?->lokasi_ditemukan ?? $claim->laporanHilang?->lokasi_hilang ?? 'Lokasi tidak tersedia');
                 $activityAt = strtotime((string) ($claim->updated_at ?? $claim->created_at));
+                $instruction = $claimKey === 'disetujui'
+                    ? 'Silakan temui pengelola di lokasi layanan untuk mengambil barang Anda.'
+                    : null;
 
                 return (object) [
                     'type' => 'claim',
                     'report_id' => null,
                     'item_name' => $itemName,
-                    'item_detail' => 'Klaim Barang - ' . $location,
+                    'item_detail' => $instruction
+                        ? 'Klaim Barang - ' . $location . ' • ' . $instruction
+                        : 'Klaim Barang - ' . $location,
                     'incident_date' => (string) optional($claim->created_at)->toDateString(),
                     'created_at' => $claim->created_at,
                     'activity_at' => $activityAt,
                     'status' => $statusPayload['status'],
                     'status_class' => $statusPayload['status_class'],
                     'status_text' => $statusPayload['status_text'],
+                    'instruction' => $instruction,
                     'avatar' => 'K',
                     'avatar_class' => 'avatar-claim',
                     'image_url' => $this->resolveItemImageUrl(
                         (string) ($claim->barang?->foto_barang ?? $claim->laporanHilang?->foto_barang ?? ''),
                         $claim->barang ? 'barang-temuan' : 'barang-hilang'
                     ),
-                    'detail_url' => $this->resolveClaimActionUrl($claim),
+                    'detail_url' => $this->resolveClaimActionUrl($claim, $statusPayload['status']),
                     'action_label' => $this->resolveActionLabel($statusPayload['status']),
                     'can_delete' => false,
                     'delete_url' => null,
@@ -91,13 +98,21 @@ class UserDashboardClaimFeedService
         return match ($status) {
             'tidak_disetujui' => 'Lihat Detail',
             'selesai' => 'Lihat Hasil',
+            'terverifikasi' => 'Ambil Barang',
             'menunggu_tinjauan' => 'Lihat Status',
             default => 'Lihat Detail',
         };
     }
 
-    private function resolveClaimActionUrl(Klaim $claim): string
+    private function resolveClaimActionUrl(Klaim $claim, string $status = ''): string
     {
+        if (in_array($status, ['terverifikasi', 'selesai'], true)
+            || in_array((string) $claim->status_verifikasi, ['approved', 'completed'], true)
+            || (string) $claim->status_klaim === 'disetujui'
+        ) {
+            return route('user.claims.show', $claim->id);
+        }
+
         if (!is_null($claim->barang_id)) {
             return route('home.found-detail', $claim->barang_id);
         }

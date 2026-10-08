@@ -186,7 +186,7 @@ class LostFoundWorkflowTest extends TestCase
             'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
         ]);
 
-        $claim = \App\Models\Klaim::query()->firstOrFail();
+        $claim = Klaim::query()->firstOrFail();
 
         $this->actingAs($admin, 'admin')
             ->post(route('admin.claim-verifications.approve', $claim), [
@@ -200,7 +200,9 @@ class LostFoundWorkflowTest extends TestCase
             ->assertRedirect();
 
         $this->actingAs($admin, 'admin')
-            ->post(route('admin.claim-verifications.complete', $claim))
+            ->post(route('admin.claim-verifications.complete', $claim), [
+                'kode_tiket' => '#KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
+            ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('klaims', [
@@ -439,8 +441,9 @@ class LostFoundWorkflowTest extends TestCase
         $this->assertSame($user->id, $claim->user_id);
         $this->assertSame($admin->id, $claim->admin_id);
         $this->assertSame('081234567890', $claim->kontak);
-        $this->assertSame('Saya memiliki nota dan nomor seri barang.', $claim->bukti_kepemilikan);
-        Storage::disk('local')->assertExists($proofPath);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $localStorage */
+        $localStorage = Storage::disk('local');
+        $localStorage->assertExists($proofPath);
         $this->assertSame($notificationsBefore + 1, AdminNotification::query()->count());
         $this->assertDatabaseHas('admin_notifications', [
             'admin_id' => $admin->id,

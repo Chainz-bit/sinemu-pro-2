@@ -1,5 +1,9 @@
 @extends('layouts.auth')
 
+@php
+    /** @var \Illuminate\Support\ViewErrorBag $errors */
+@endphp
+
 @section('content')
     <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#eef1f5;padding:1rem;">
         <div style="width:min(460px,100%);background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:1.25rem;">

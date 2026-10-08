@@ -94,7 +94,7 @@ class ClaimVerificationDetailPageService
     {
         return match ($statusKey) {
             'menunggu' => 'Menunggu Verifikasi',
-            'disetujui' => 'Disetujui',
+            'disetujui' => 'Terverifikasi',
             'ditolak' => 'Ditolak',
             default => 'Selesai',
         };

@@ -33,7 +33,7 @@
 >
     <div class="profile-menu-wrap">
         <button type="button" class="admin-card profile-menu-trigger" aria-expanded="false" aria-controls="profile-menu">
-            <img src="{{ $sidebarProfileAvatar }}" alt="Super Admin" onerror="this.onerror=null;this.src='{{ asset('img/profil.jpg') }}';">
+            <img src="{{ $sidebarProfileAvatar }}" alt="Super Admin" data-fallback="{{ asset('img/profil.jpg') }}" onerror="this.onerror=null;this.src=this.dataset.fallback;">
             <div class="profile-meta">
                 <strong>{{ $superAdmin?->nama ?? 'Super Admin' }}</strong>
                 <small>Pengelola Sistem</small>

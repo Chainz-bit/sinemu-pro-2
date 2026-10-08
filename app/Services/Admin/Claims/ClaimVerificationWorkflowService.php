@@ -69,18 +69,29 @@ class ClaimVerificationWorkflowService
         return true;
     }
 
-    public function complete(Klaim $klaim, int $adminId): bool
+    /**
+     * @param array<string,mixed> $handoverData
+     */
+    public function complete(Klaim $klaim, int $adminId, array $handoverData = []): bool
     {
         $klaim = $this->freshClaim($klaim);
         if (!$klaim || !$this->canComplete($klaim) || !$this->canCompleteContext($klaim, $adminId)) {
             return false;
         }
 
-        DB::transaction(function () use ($klaim, $adminId): void {
-            $this->completeClaimAction->execute($klaim, $adminId);
+        DB::transaction(function () use ($klaim, $adminId, $handoverData): void {
+            $this->completeClaimAction->execute($klaim, $adminId, $handoverData);
         });
 
         return true;
+    }
+
+    /**
+     * @param array<string,mixed> $handoverData
+     */
+    public function completeHandover(Klaim $klaim, int $adminId, array $handoverData = []): bool
+    {
+        return $this->complete($klaim, $adminId, $handoverData);
     }
 
     public function canApprove(Klaim $klaim): bool
@@ -139,13 +150,18 @@ class ClaimVerificationWorkflowService
             return false;
         }
 
+        $validBarangStatuses = [
+            WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            WorkflowStatus::FOUND_CLAIMED,
+        ];
+
         if ($klaim->pencocokan !== null) {
-            return $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIMED
+            return in_array($klaim->barang?->status_barang, $validBarangStatuses, true)
                 && $klaim->pencocokan->status_pencocokan === WorkflowStatus::MATCH_CLAIM_APPROVED
                 && !$this->hasCompletedClaimForSameItem($klaim);
         }
 
-        return $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIMED
+        return in_array($klaim->barang?->status_barang, $validBarangStatuses, true)
             && !$this->hasCompletedClaimForSameItem($klaim);
     }
 
