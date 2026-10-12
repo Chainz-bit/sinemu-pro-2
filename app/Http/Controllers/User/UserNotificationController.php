@@ -38,7 +38,7 @@ class UserNotificationController extends Controller
         $userId = (int) Auth::guard('web')->id();
         abort_if((int) $notification->user_id !== $userId, 403);
 
-        if (!is_null($notification->read_at)) {
+        if (! is_null($notification->read_at)) {
             $notification->update(['read_at' => null]);
         }
 

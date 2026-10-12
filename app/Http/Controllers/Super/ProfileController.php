@@ -16,8 +16,7 @@ class ProfileController extends Controller
     public function __construct(
         private readonly SuperProfileQueryService $queryService,
         private readonly SuperProfileCommandService $commandService
-    ) {
-    }
+    ) {}
 
     public function index(): View
     {
@@ -55,7 +54,7 @@ class ProfileController extends Controller
     {
         /** @var SuperAdmin|null $superAdmin */
         $superAdmin = Auth::guard('super_admin')->user();
-        abort_if(!$superAdmin, 403);
+        abort_if(! $superAdmin, 403);
 
         return $superAdmin;
     }

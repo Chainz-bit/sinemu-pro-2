@@ -3,6 +3,7 @@
 namespace App\Services\Admin\Claims;
 
 use App\Models\Klaim;
+use App\Models\Pencocokan;
 use App\Support\ClaimStatusPresenter;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Facades\Schema;
@@ -24,7 +25,7 @@ class ClaimVerificationDetailPageService
         // Auto-link atau buat record pencocokan jika belum terhubung
         if ($pencocokan === null && $barang !== null) {
             if ($klaim->laporan_hilang_id !== null) {
-                $pencocokan = \App\Models\Pencocokan::firstOrCreate(
+                $pencocokan = Pencocokan::firstOrCreate(
                     [
                         'laporan_hilang_id' => (int) $klaim->laporan_hilang_id,
                         'barang_id' => (int) $barang->id,
@@ -36,10 +37,10 @@ class ClaimVerificationDetailPageService
                 );
             } else {
                 if ($klaim->pencocokan_id) {
-                    $pencocokan = \App\Models\Pencocokan::find($klaim->pencocokan_id);
+                    $pencocokan = Pencocokan::find($klaim->pencocokan_id);
                 }
-                if (!$pencocokan) {
-                    $pencocokan = \App\Models\Pencocokan::create([
+                if (! $pencocokan) {
+                    $pencocokan = Pencocokan::create([
                         'laporan_hilang_id' => null,
                         'barang_id' => (int) $barang->id,
                         'status_pencocokan' => 'pending',
@@ -64,31 +65,30 @@ class ClaimVerificationDetailPageService
         $pelapor = $klaim->user;
 
         return [
-            'statusKey'           => $statusKey,
-            'statusLabel'         => $this->resolveClaimStatusLabel($statusKey),
-            'statusClass'         => ClaimStatusPresenter::cssClass($statusKey),
-            'namaBarang'          => $barang?->nama_barang ?? $laporanHilang?->nama_barang ?? 'Barang tidak ditemukan',
-            'kategoriNama'        => $barang?->kategori?->nama_kategori ?? 'Tidak tersedia',
-            'lokasi'              => $barang?->lokasi_ditemukan ?? $laporanHilang?->lokasi_hilang ?? '-',
-            'tanggalLaporan'      => $barang?->tanggal_ditemukan ?? $laporanHilang?->tanggal_hilang ?? $klaim->created_at,
-            'deskripsi'           => $barang?->deskripsi ?? $laporanHilang?->keterangan ?? 'Belum ada deskripsi.',
-            'fotoUrl'             => $this->resolveItemImageUrl((string) ($barang?->foto_barang ?? $laporanHilang?->foto_barang ?? '')),
-            'statusBarangLabel'   => $statusBarangLabel,
-            'statusBarangClass'   => $statusBarangClass,
-            'pelaporNama'         => $pelapor?->nama ?? $pelapor?->name ?? 'Pengguna',
-            'pelaporEmail'        => $pelapor?->email ?? '-',
+            'statusKey' => $statusKey,
+            'statusLabel' => $this->resolveClaimStatusLabel($statusKey),
+            'statusClass' => ClaimStatusPresenter::cssClass($statusKey),
+            'namaBarang' => $barang?->nama_barang ?? $laporanHilang?->nama_barang ?? 'Barang tidak ditemukan',
+            'kategoriNama' => $barang?->kategori?->nama_kategori ?? 'Tidak tersedia',
+            'lokasi' => $barang?->lokasi_ditemukan ?? $laporanHilang?->lokasi_hilang ?? '-',
+            'tanggalLaporan' => $barang?->tanggal_ditemukan ?? $laporanHilang?->tanggal_hilang ?? $klaim->created_at,
+            'deskripsi' => $barang?->deskripsi ?? $laporanHilang?->keterangan ?? 'Belum ada deskripsi.',
+            'fotoUrl' => $this->resolveItemImageUrl((string) ($barang?->foto_barang ?? $laporanHilang?->foto_barang ?? '')),
+            'statusBarangLabel' => $statusBarangLabel,
+            'statusBarangClass' => $statusBarangClass,
+            'pelaporNama' => $pelapor?->nama ?? $pelapor?->name ?? 'Pengguna',
+            'pelaporEmail' => $pelapor?->email ?? '-',
             // AI Matching data
-            'aiScore'             => $pencocokan?->ai_similarity_score,
-            'aiRecommendation'    => $pencocokan?->ai_recommendation,
+            'aiScore' => $pencocokan?->ai_similarity_score,
+            'aiRecommendation' => $pencocokan?->ai_recommendation,
             'aiRecommendationLabel' => $pencocokan?->aiRecommendationLabel() ?? 'Belum Dianalisis',
             'aiRecommendationClass' => $pencocokan?->aiRecommendationClass() ?? 'ai-badge--none',
-            'aiReasoning'         => $pencocokan?->ai_reasoning,
-            'aiMatchedAt'         => $pencocokan?->ai_matched_at,
-            'aiModelUsed'         => $pencocokan?->ai_model_used,
-            'hasPencocokan'       => $pencocokan !== null,
+            'aiReasoning' => $pencocokan?->ai_reasoning,
+            'aiMatchedAt' => $pencocokan?->ai_matched_at,
+            'aiModelUsed' => $pencocokan?->ai_model_used,
+            'hasPencocokan' => $pencocokan !== null,
         ];
     }
-
 
     private function resolveClaimStatusLabel(string $statusKey): string
     {
@@ -136,6 +136,6 @@ class ClaimVerificationDetailPageService
             return route('media.image', ['folder' => $folder, 'path' => $subPath]);
         }
 
-        return asset('storage/' . $cleanPath);
+        return asset('storage/'.$cleanPath);
     }
 }

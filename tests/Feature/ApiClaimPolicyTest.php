@@ -309,7 +309,7 @@ class ApiClaimPolicyTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $barangOverrides
+     * @param  array<string,mixed>  $barangOverrides
      * @return array{claimer:User,finder:User,admin:Admin,laporan:LaporanBarangHilang,barang:Barang,pencocokan:?Pencocokan}
      */
     private function createClaimFixture(array $barangOverrides = [], bool $withMatch = true): array

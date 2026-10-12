@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Barang;
-use App\Models\Klaim;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Models\SuperAdmin;
 use App\Models\User;
@@ -189,7 +189,7 @@ class ClaimVerificationListingTest extends TestCase
         $claim2 = $this->createClaimForAdmin($admin, $user, $kategori, 'Laptop Lenovo ThinkPad');
 
         // Search with #KLM-0000X
-        $ticketCodeFull = '#KLM-' . str_pad((string) $claim1->id, 5, '0', STR_PAD_LEFT);
+        $ticketCodeFull = '#KLM-'.str_pad((string) $claim1->id, 5, '0', STR_PAD_LEFT);
         $resFull = $this->actingAs($admin, 'admin')->get(route('admin.claim-verifications', [
             'search' => $ticketCodeFull,
         ]));
@@ -199,7 +199,7 @@ class ClaimVerificationListingTest extends TestCase
         $this->assertStringNotContainsString('Laptop Lenovo ThinkPad', $tableFull);
 
         // Search with KLM-0000X
-        $ticketCodeNoHash = 'KLM-' . str_pad((string) $claim1->id, 5, '0', STR_PAD_LEFT);
+        $ticketCodeNoHash = 'KLM-'.str_pad((string) $claim1->id, 5, '0', STR_PAD_LEFT);
         $resNoHash = $this->actingAs($admin, 'admin')->get(route('admin.claim-verifications', [
             'search' => $ticketCodeNoHash,
         ]));
@@ -239,7 +239,8 @@ class ClaimVerificationListingTest extends TestCase
         $this->assertStringContainsString('Laptop Milik Admin Ini', $tableBody);
         $this->assertStringNotContainsString('Laptop Admin Lain', $tableBody);
 
-        $this->actingAs($admin, 'admin')
+        $this
+            ->actingAs($admin, 'admin')
             ->delete(route('admin.claim-verifications.destroy', $otherClaim))
             ->assertForbidden();
 
@@ -316,8 +317,8 @@ class ClaimVerificationListingTest extends TestCase
     {
         $superAdmin = SuperAdmin::query()->create([
             'nama' => 'Super Admin Claim',
-            'email' => 'super-' . $email,
-            'username' => 'super-' . $username,
+            'email' => 'super-'.$email,
+            'username' => 'super-'.$username,
             'password' => Hash::make('password123'),
         ]);
 

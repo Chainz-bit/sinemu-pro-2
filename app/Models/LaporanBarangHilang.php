@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Support\WorkflowStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -128,11 +130,11 @@ class LaporanBarangHilang extends Model
         ];
 
         return in_array(
-                strtolower(trim((string) ($this->status_laporan ?? ''))),
-                $allowedStatuses,
-                true
-            )
-            && !is_null($this->verified_by_admin_id);
+            strtolower(trim((string) ($this->status_laporan ?? ''))),
+            $allowedStatuses,
+            true
+        )
+            && ! is_null($this->verified_by_admin_id);
     }
 
     public function canBeDeletedByAdmin(): bool
@@ -155,7 +157,7 @@ class LaporanBarangHilang extends Model
 
     public function canBeEditedByAdmin(): bool
     {
-        if (!in_array(
+        if (! in_array(
             strtolower(trim((string) ($this->status_laporan ?? ''))),
             self::adminEditableStatuses(),
             true
@@ -163,13 +165,13 @@ class LaporanBarangHilang extends Model
             return false;
         }
 
-        return !$this->relationHasRecords('klaims')
-            && !$this->relationHasRecords('pencocokans');
+        return ! $this->relationHasRecords('klaims')
+            && ! $this->relationHasRecords('pencocokans');
     }
 
     private function relationHasRecords(string $relation): bool
     {
-        $countKey = $relation . '_count';
+        $countKey = $relation.'_count';
         if (array_key_exists($countKey, $this->attributes)) {
             return (int) $this->attributes[$countKey] > 0;
         }
@@ -181,27 +183,27 @@ class LaporanBarangHilang extends Model
         return $this->{$relation}()->exists();
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function region()
+    public function region(): BelongsTo
     {
         return $this->belongsTo(Wilayah::class, 'region_id');
     }
 
-    public function kategori()
+    public function kategori(): BelongsTo
     {
         return $this->belongsTo(Kategori::class);
     }
 
-    public function klaims()
+    public function klaims(): HasMany
     {
         return $this->hasMany(Klaim::class, 'laporan_hilang_id');
     }
 
-    public function pencocokans()
+    public function pencocokans(): HasMany
     {
         return $this->hasMany(Pencocokan::class, 'laporan_hilang_id');
     }

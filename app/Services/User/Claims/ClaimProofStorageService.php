@@ -36,13 +36,13 @@ class ClaimProofStorageService
     }
 
     /**
-     * @param array<int,array{disk:string,path:string}> $proofs
+     * @param  array<int,array{disk:string,path:string}>  $proofs
      */
     public function deleteProofs(array $proofs): void
     {
         foreach ($proofs as $proof) {
             try {
-                if (!Storage::disk($proof['disk'])->delete($proof['path'])) {
+                if (! Storage::disk($proof['disk'])->delete($proof['path'])) {
                     Log::error('Evidence klaim gagal dihapus setelah record klaim dihapus.', $proof);
                 }
             } catch (Throwable $exception) {

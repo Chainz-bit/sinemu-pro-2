@@ -8,12 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('laporan_barang_hilangs')) {
+        if (! Schema::hasTable('laporan_barang_hilangs')) {
             return;
         }
 
         Schema::table('laporan_barang_hilangs', function (Blueprint $table) {
-            if (!Schema::hasColumn('laporan_barang_hilangs', 'nomor_seri')) {
+            if (! Schema::hasColumn('laporan_barang_hilangs', 'nomor_seri')) {
                 $table->string('nomor_seri', 150)->nullable()->after('merek_barang');
             }
         });
@@ -21,7 +21,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('laporan_barang_hilangs')) {
+        if (! Schema::hasTable('laporan_barang_hilangs')) {
             return;
         }
 

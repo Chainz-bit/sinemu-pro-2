@@ -27,7 +27,7 @@ class MediaController extends Controller
         abort_if($path === '' || str_contains($path, '..'), 404);
         abort_unless(in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), self::ALLOWED_EXTENSIONS, true), 404);
 
-        $relativePath = $folder . '/' . $path;
+        $relativePath = $folder.'/'.$path;
 
         abort_unless(Storage::disk('public')->exists($relativePath), 404);
 

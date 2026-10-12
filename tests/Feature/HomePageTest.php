@@ -12,7 +12,6 @@ use App\Models\Wilayah;
 use App\Support\IndramayuDistricts;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -662,7 +661,7 @@ class HomePageTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $overrides
+     * @param  array<string,mixed>  $overrides
      */
     private function createAdmin(?int $regionId = null, array $overrides = []): Admin
     {
@@ -685,7 +684,7 @@ class HomePageTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $overrides
+     * @param  array<string,mixed>  $overrides
      * @return array<string,mixed>
      */
     private function superAdminManagerPayload(array $overrides = []): array
@@ -722,8 +721,8 @@ class HomePageTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region?->id,
-            'nama' => 'Admin ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',

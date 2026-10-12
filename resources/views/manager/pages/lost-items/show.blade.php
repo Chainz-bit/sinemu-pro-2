@@ -200,7 +200,7 @@
                 <article class="report-card lost-detail-panel lost-panel-status">
                     <header><h2>Status Laporan</h2></header>
                     <div class="lost-detail-panel-body">
-                        <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
+                        <x-status-badge :status="$laporanBarangHilang->status_laporan ?? $statusClass" type="report" size="md" :label="$statusLabel" />
 
                         @if($canVerifyReport)
                             <div class="lost-verify-box">

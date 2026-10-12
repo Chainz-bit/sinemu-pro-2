@@ -1,10 +1,10 @@
 <?php
 
+use App\Models\SuperAdmin;
 use App\Services\Support\ClaimEvidenceAuditService;
 use App\Services\Support\ClaimEvidenceMigrationService;
 use App\Services\Support\LegacyScopeAuditService;
 use App\Services\Support\UploadFileAuditService;
-use App\Models\SuperAdmin;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
@@ -66,6 +66,7 @@ Artisan::command('super-admin:create
         foreach ($validator->errors()->all() as $message) {
             $this->error($message);
         }
+
         return self::FAILURE;
     }
 
@@ -74,8 +75,9 @@ Artisan::command('super-admin:create
         ->orWhere('username', $username)
         ->first();
 
-    if ($existing && !$force) {
+    if ($existing && ! $force) {
         $this->error('Super admin dengan email/username tersebut sudah ada. Gunakan --force untuk update.');
+
         return self::FAILURE;
     }
 
@@ -95,14 +97,14 @@ Artisan::command('super-admin:create
         $action = 'created';
     }
 
-    $this->info('Super admin berhasil di-' . $action . '.');
-    $this->line('ID       : ' . $superAdmin->id);
-    $this->line('Nama     : ' . $superAdmin->nama);
-    $this->line('Email    : ' . $superAdmin->email);
-    $this->line('Username : ' . $superAdmin->username);
+    $this->info('Super admin berhasil di-'.$action.'.');
+    $this->line('ID       : '.$superAdmin->id);
+    $this->line('Nama     : '.$superAdmin->nama);
+    $this->line('Email    : '.$superAdmin->email);
+    $this->line('Username : '.$superAdmin->username);
 
     if ($randomPassword) {
-        $this->warn('Password acak: ' . $passwordPlain);
+        $this->warn('Password acak: '.$passwordPlain);
     }
 
     return self::SUCCESS;
@@ -115,15 +117,16 @@ Artisan::command('sinemu:audit-legacy-scope
 
     $this->info('SINEMU legacy scope audit');
     $this->line('Mode: read-only, tidak mengubah data.');
-    $this->line('Sample limit: ' . $sampleLimit);
+    $this->line('Sample limit: '.$sampleLimit);
     $this->newLine();
 
     foreach ($audit['tables'] as $table => $result) {
-        $this->line('[' . $table . ']');
+        $this->line('['.$table.']');
 
         if (($result['exists'] ?? false) !== true) {
             $this->warn('exists: no');
             $this->newLine();
+
             continue;
         }
 
@@ -133,11 +136,12 @@ Artisan::command('sinemu:audit-legacy-scope
             }
 
             if (is_array($value)) {
-                $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                $this->line($key.': '.json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
                 continue;
             }
 
-            $this->line($key . ': ' . ($value === null ? 'n/a' : (string) $value));
+            $this->line($key.': '.($value === null ? 'n/a' : (string) $value));
         }
 
         $this->newLine();
@@ -145,13 +149,13 @@ Artisan::command('sinemu:audit-legacy-scope
 
     $this->line('[mapping_fields]');
     foreach ($audit['mapping_fields'] as $field) {
-        $this->line('- ' . $field);
+        $this->line('- '.$field);
     }
 
     $this->newLine();
     $this->line('[recommendations]');
     foreach ($audit['recommendations'] as $recommendation) {
-        $this->line('- ' . $recommendation);
+        $this->line('- '.$recommendation);
     }
 
     return self::SUCCESS;
@@ -164,16 +168,17 @@ Artisan::command('sinemu:audit-upload-files
 
     $this->info('SINEMU upload file audit');
     $this->line('Mode: read-only, tidak mengubah file atau data.');
-    $this->line('Sample limit: ' . $sampleLimit);
+    $this->line('Sample limit: '.$sampleLimit);
     $this->newLine();
 
     foreach ($audit as $key => $value) {
         if (is_array($value)) {
-            $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->line($key.': '.json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
             continue;
         }
 
-        $this->line($key . ': ' . (string) $value);
+        $this->line($key.': '.(string) $value);
     }
 
     return self::SUCCESS;
@@ -186,16 +191,17 @@ Artisan::command('sinemu:audit-claim-evidence-files
 
     $this->info('SINEMU claim evidence file audit');
     $this->line('Mode: read-only, tidak mengubah file atau data.');
-    $this->line('Sample limit: ' . $sampleLimit);
+    $this->line('Sample limit: '.$sampleLimit);
     $this->newLine();
 
     foreach ($audit as $key => $value) {
         if (is_array($value)) {
-            $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->line($key.': '.json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
             continue;
         }
 
-        $this->line($key . ': ' . (string) $value);
+        $this->line($key.': '.(string) $value);
     }
 
     return self::SUCCESS;
@@ -208,7 +214,7 @@ Artisan::command('sinemu:migrate-claim-evidence-to-private
     {--claim-id= : Migrasikan satu klaim tertentu}
     {--sample=20 : Jumlah contoh path/warning yang ditampilkan}', function (ClaimEvidenceMigrationService $migrationService) {
     $execute = (bool) $this->option('execute');
-    $dryRun = (bool) $this->option('dry-run') || !$execute;
+    $dryRun = (bool) $this->option('dry-run') || ! $execute;
     $limitOption = $this->option('limit');
     $claimIdOption = $this->option('claim-id');
     $sampleLimit = max(1, min((int) $this->option('sample'), 100));
@@ -217,14 +223,14 @@ Artisan::command('sinemu:migrate-claim-evidence-to-private
     $claimId = is_null($claimIdOption) || $claimIdOption === '' ? null : max(1, (int) $claimIdOption);
 
     $summary = $migrationService->migrate(
-        execute: $execute && !$dryRun,
+        execute: $execute && ! $dryRun,
         limit: $limit,
         claimId: $claimId,
         sampleLimit: $sampleLimit
     );
 
     $this->info('SINEMU claim evidence migration to private storage');
-    $this->line(($execute && !$dryRun) ? 'EXECUTE MODE' : 'DRY RUN MODE');
+    $this->line(($execute && ! $dryRun) ? 'EXECUTE MODE' : 'DRY RUN MODE');
     $this->line('Legacy public files are not deleted by this command.');
     $this->newLine();
 
@@ -234,14 +240,15 @@ Artisan::command('sinemu:migrate-claim-evidence-to-private
         }
 
         if (is_array($value)) {
-            $this->line($key . ': ' . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->line($key.': '.json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
             continue;
         }
 
-        $this->line($key . ': ' . (string) $value);
+        $this->line($key.': '.(string) $value);
     }
 
-    if (!$execute || $dryRun) {
+    if (! $execute || $dryRun) {
         $this->newLine();
         $this->warn('Use --execute to apply migration.');
     }

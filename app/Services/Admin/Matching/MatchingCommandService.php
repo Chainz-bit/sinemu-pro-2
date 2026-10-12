@@ -7,19 +7,19 @@ use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Services\UserNotificationService;
 use App\States\Matching\MatchStateResolver;
+use App\Support\ManagerPortal;
+use App\Support\RoleLabels;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class MatchingCommandService
 {
     public function __construct(
         private readonly MatchStateResolver $matchStateResolver
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      * @return array{ok:bool,message:string}
      */
     public function confirm(int $adminId, array $validated): array
@@ -43,10 +43,10 @@ class MatchingCommandService
                 return ['ok' => true, 'already_confirmed' => true, 'message' => 'Pencocokan sudah dikonfirmasi.'];
             }
 
-            if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan') && (string) $laporan->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
+            if ((string) $laporan->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
                 return ['ok' => false, 'message' => 'Laporan barang hilang harus disetujui sebelum dicocokkan.'];
             }
-            if (Schema::hasColumn('barangs', 'status_laporan') && (string) $barang->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
+            if ((string) $barang->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
                 return ['ok' => false, 'message' => 'Laporan barang temuan harus disetujui sebelum dicocokkan.'];
             }
 
@@ -72,7 +72,7 @@ class MatchingCommandService
                 return ['ok' => false, 'message' => 'Barang temuan ini masih terikat pada pencocokan aktif lain.'];
             }
 
-            if (!$this->matchStateResolver->resolve($existingPair)->canConfirm()) {
+            if (! $this->matchStateResolver->resolve($existingPair)->canConfirm()) {
                 return ['ok' => false, 'message' => 'Pasangan ini tidak berada pada state yang dapat dikonfirmasi.'];
             }
 
@@ -89,12 +89,8 @@ class MatchingCommandService
                 ]
             );
 
-            if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-                $laporan->update(['status_laporan' => WorkflowStatus::REPORT_MATCHED]);
-            }
-            if (Schema::hasColumn('barangs', 'status_laporan')) {
-                $barang->update(['status_laporan' => WorkflowStatus::REPORT_MATCHED]);
-            }
+            $laporan->update(['status_laporan' => WorkflowStatus::REPORT_MATCHED]);
+            $barang->update(['status_laporan' => WorkflowStatus::REPORT_MATCHED]);
 
             return [
                 'ok' => true,
@@ -112,19 +108,19 @@ class MatchingCommandService
             return ['ok' => true, 'message' => (string) $result['message']];
         }
 
-        /** @var \App\Models\LaporanBarangHilang $laporan */
+        /** @var LaporanBarangHilang $laporan */
         $laporan = $result['laporan'];
-        /** @var \App\Models\Barang $barang */
+        /** @var Barang $barang */
         $barang = $result['barang'];
-        /** @var \App\Models\Pencocokan $pencocokan */
+        /** @var Pencocokan $pencocokan */
         $pencocokan = $result['pencocokan'];
 
-        if (!is_null($laporan->user_id)) {
+        if (! is_null($laporan->user_id)) {
             UserNotificationService::notifyUser(
                 userId: (int) $laporan->user_id,
                 type: 'pencocokan_ditemukan',
                 title: 'Ada Kecocokan Barang',
-                message: ucfirst(\App\Support\RoleLabels::managerLower()) . ' menemukan barang temuan yang diduga cocok dengan laporan Anda: ' . $laporan->nama_barang . '. Lanjutkan dengan proses klaim.',
+                message: ucfirst(RoleLabels::managerLower()).' menemukan barang temuan yang diduga cocok dengan laporan Anda: '.$laporan->nama_barang.'. Lanjutkan dengan proses klaim.',
                 actionUrl: route('home.found-detail', $barang->id),
                 meta: [
                     'pencocokan_id' => $pencocokan->id,
@@ -134,12 +130,12 @@ class MatchingCommandService
             );
         }
 
-        if (!is_null($barang->user_id) && (int) $barang->user_id !== (int) $laporan->user_id) {
+        if (! is_null($barang->user_id) && (int) $barang->user_id !== (int) $laporan->user_id) {
             UserNotificationService::notifyUser(
                 userId: (int) $barang->user_id,
                 type: 'pencocokan_ditemukan',
                 title: 'Barang Temuan Diduga Cocok',
-                message: ucfirst(\App\Support\RoleLabels::managerLower()) . ' menandai barang temuan Anda sebagai diduga cocok dengan laporan barang hilang: ' . $barang->nama_barang . '.',
+                message: ucfirst(RoleLabels::managerLower()).' menandai barang temuan Anda sebagai diduga cocok dengan laporan barang hilang: '.$barang->nama_barang.'.',
                 actionUrl: route('home.lost-detail', $laporan->id),
                 meta: [
                     'pencocokan_id' => $pencocokan->id,
@@ -153,7 +149,7 @@ class MatchingCommandService
     }
 
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      * @return array{ok:bool,message:string}
      */
     public function dismiss(int $adminId, array $validated): array
@@ -167,10 +163,10 @@ class MatchingCommandService
 
             $this->ensureAdminCanAccessPair($laporan, $barang);
 
-            if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan') && (string) $laporan->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
+            if ((string) $laporan->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
                 return ['ok' => false, 'message' => 'Laporan barang hilang harus disetujui sebelum proses pencocokan.'];
             }
-            if (Schema::hasColumn('barangs', 'status_laporan') && (string) $barang->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
+            if ((string) $barang->status_laporan !== WorkflowStatus::REPORT_APPROVED) {
                 return ['ok' => false, 'message' => 'Laporan barang temuan harus disetujui sebelum proses pencocokan.'];
             }
 
@@ -190,7 +186,7 @@ class MatchingCommandService
                 ->where('barang_id', $barangId)
                 ->lockForUpdate()
                 ->first();
-            if (!$this->matchStateResolver->resolve($existingPair)->canDismiss()) {
+            if (! $this->matchStateResolver->resolve($existingPair)->canDismiss()) {
                 return ['ok' => false, 'message' => 'Pasangan ini tidak berada pada state yang dapat ditandai tidak cocok.'];
             }
 
@@ -202,7 +198,7 @@ class MatchingCommandService
                 [
                     'admin_id' => $adminId,
                     'status_pencocokan' => WorkflowStatus::MATCH_CANCELLED,
-                    'catatan' => $validated['catatan'] ?? 'Ditandai tidak cocok oleh ' . \App\Support\RoleLabels::managerLower() . '.',
+                    'catatan' => $validated['catatan'] ?? 'Ditandai tidak cocok oleh '.RoleLabels::managerLower().'.',
                     'matched_at' => now(),
                 ]
             );
@@ -219,14 +215,8 @@ class MatchingCommandService
 
     private function ensureAdminCanAccessPair(LaporanBarangHilang $laporan, Barang $barang): void
     {
-        $admin = \App\Support\ManagerPortal::user();
-        abort_if(!$admin || empty($admin->region_id), 403, ucfirst(\App\Support\RoleLabels::managerLower()) . ' belum memiliki wilayah akses.');
-
-        abort_unless(
-            Schema::hasColumn('laporan_barang_hilangs', 'region_id') && Schema::hasColumn('barangs', 'region_id'),
-            403,
-            'Data wilayah belum tersedia untuk proses pencocokan.'
-        );
+        $admin = ManagerPortal::user();
+        abort_if(! $admin || empty($admin->region_id), 403, ucfirst(RoleLabels::managerLower()).' belum memiliki wilayah akses.');
 
         $adminRegionId = (int) $admin->region_id;
         $laporanRegionId = (int) ($laporan->region_id ?? 0);

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Admin;
+use App\Models\SuperAdmin;
 use App\Models\User;
 
 return [
@@ -37,20 +39,20 @@ return [
     |
     */
 
-'guards' => [
-    'web' => [
-        'driver' => 'session',
-        'provider' => 'users',
+    'guards' => [
+        'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+        'super_admin' => [
+            'driver' => 'session',
+            'provider' => 'super_admins',
+        ],
     ],
-    'admin' => [
-        'driver' => 'session',
-        'provider' => 'admins',
-    ],
-    'super_admin' => [
-        'driver' => 'session',
-        'provider' => 'super_admins',
-    ],
-],
     /*
     |--------------------------------------------------------------------------
     | User Providers
@@ -69,18 +71,18 @@ return [
     */
 
     'providers' => [
-    'users' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\User::class,
-    ],
-    'admins' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\Admin::class,
-    ],
-    'super_admins' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\SuperAdmin::class,
-    ],
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => User::class,
+        ],
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => Admin::class,
+        ],
+        'super_admins' => [
+            'driver' => 'eloquent',
+            'model' => SuperAdmin::class,
+        ],
 
         // 'users' => [
         //     'driver' => 'database',

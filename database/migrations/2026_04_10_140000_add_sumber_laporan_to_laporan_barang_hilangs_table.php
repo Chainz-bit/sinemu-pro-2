@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('laporan_barang_hilangs')) {
+        if (! Schema::hasTable('laporan_barang_hilangs')) {
             return;
         }
 
         Schema::table('laporan_barang_hilangs', function (Blueprint $table) {
-            if (!Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
+            if (! Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
                 $table->enum('sumber_laporan', ['lapor_hilang', 'klaim'])
                     ->default('lapor_hilang')
                     ->after('keterangan');
@@ -29,7 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (!Schema::hasTable('laporan_barang_hilangs')) {
+        if (! Schema::hasTable('laporan_barang_hilangs')) {
             return;
         }
 

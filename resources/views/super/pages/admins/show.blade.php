@@ -68,9 +68,7 @@
                         @endif
                     </div>
                 </div>
-                <span class="status-chip admin-detail-status {{ \App\Support\AdminVerificationStatusPresenter::badgeClass($statusKey) }}">
-                    {{ $statusLabel }}
-                </span>
+                <x-status-badge :status="$statusKey" type="admin" size="md" class="admin-detail-status" />
             </div>
 
             <div class="admin-detail-body">

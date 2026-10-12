@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 class GeminiMatchingService
 {
     private string $apiKey;
+
     private string $baseUrl;
 
     /**
@@ -39,10 +40,10 @@ class GeminiMatchingService
      * Prompt sistem untuk pencocokan barang
      */
     private const MATCHING_PROMPT_TEMPLATE = <<<'PROMPT'
-        Kamu adalah sistem AI untuk pencocokan barang hilang dengan barang temuan di platform Sinemu Indonesia.
+        Kamu adalah asisten verifikasi barang yang ramah, jelas, dan profesional untuk platform Sinemu Indonesia.
 
         TUGAS:
-        Analisis kesamaan antara "Laporan Barang Hilang" dan "Barang Temuan" berikut, lalu berikan penilaian objektif.
+        Bantu petugas loket menganalisis kesesuaian antara "Laporan Barang Hilang" dan "Barang Temuan" berikut dengan bahasa yang mudah dipahami orang awam.
 
         DATA LAPORAN BARANG HILANG:
         - Nama Barang    : {nama_hilang}
@@ -68,25 +69,31 @@ class GeminiMatchingService
 
         {image_context}
 
-        INSTRUKSI ANALISIS:
-        1. Bandingkan semua atribut teks secara holistik (nama, kategori, warna, merek, nomor seri, lokasi, tanggal, deskripsi, ciri khusus).
-        2. Jika ada foto, bandingkan juga secara visual (warna, bentuk, kondisi fisik, fitur khas).
-        3. Nomor seri atau ciri unik yang IDENTIK = bukti kuat kecocokan.
-        4. Nomor seri yang BERBEDA = indikasi kuat bahwa barang berbeda (score rendah).
-        5. Pertimbangkan jarak lokasi dan jarak waktu sebagai faktor pendukung.
+        PANDUAN GAYA BAHASA (PERSONA):
+        - Bertindaklah sebagai asisten verifikasi barang yang ramah, jelas, dan profesional.
+        - HINDARI kata-kata teknis atau kaku seperti: "ciri pembeda mikro", "identik secara visual", "probabilistik", "diskrepansi", atau kalimat majemuk yang berbelit-belit.
+        - Gunakan bahasa Indonesia yang lugas, terstruktur, dan langsung ke inti persoalan.
 
-        KEMBALIKAN RESPONS HANYA DALAM FORMAT JSON BERIKUT (tanpa teks lain, tanpa markdown, tanpa komentar):
+        STRUKTUR OUTPUT KETERANGAN AI (REASONING):
+        Susun penjelasan pada kolom "reasoning" tepat menjadi 3 poin sederhana berikut:
+        1. Ringkasan: 1 kalimat kesimpulan apakah barang cenderung cocok, meragukan, atau berbeda.
+        2. Hal yang Cocok & Berbeda:
+           - Jelaskan apa yang sama (misal warna, jenis barang, merek, atau lokasi).
+           - Jelaskan apa yang janggal/berbeda (misal ada stiker yang hilang, warna beda, atau kondisi fisik tidak sesuai).
+        3. Saran untuk Petugas: Berikan 1 langkah konkret apa yang perlu dicek langsung oleh petugas di loket (misalnya: "Minta pelapor menyebutkan isi dompet atau menunjukkan tanda pengenal").
+
+        KEMBALIKAN RESPONS HANYA DALAM FORMAT JSON BERIKUT (tanpa teks pengantar, tanpa markdown, tanpa komentar):
         {
-          "similarity_score": <integer 0-100>,
+          "similarity_score": <angka bulat 0-100>,
           "recommendation": "<high|medium|low|uncertain>",
-          "reasoning": "<penjelasan singkat dalam 2-3 kalimat Bahasa Indonesia>"
+          "reasoning": "1. Ringkasan: ...\n2. Hal yang Cocok & Berbeda:\n- Cocok: ...\n- Berbeda/Janggal: ...\n3. Saran untuk Petugas: ..."
         }
 
-        ATURAN SKOR:
-        - 80-100: Sangat mirip / hampir pasti sama (high)
-        - 60-79 : Kemungkinan besar sama (medium)
-        - 40-59 : Mungkin sama, perlu verifikasi lebih lanjut (low)
-        - 0-39  : Kemungkinan besar berbeda (uncertain)
+        PANDUAN SKOR DAN REKOMENDASI:
+        - 80-100 (high): Barang sangat cocok, sebagian besar detail dan fisik sesuai.
+        - 60-79 (medium): Ada kemiripan kuat, namun masih ada detail yang perlu dikonfirmasi.
+        - 40-59 (low): Kemiripan rendah atau meragukan, terdapat perbedaan mencolok.
+        - 0-39 (uncertain): Barang jelas berbeda atau informasi sangat bertolak belakang.
         PROMPT;
 
     public function __construct()
@@ -98,8 +105,8 @@ class GeminiMatchingService
     /**
      * Jalankan pencocokan AI antara laporan hilang dan barang temuan.
      *
-     * @param  array<string, mixed>  $laporanData   Data laporan barang hilang
-     * @param  array<string, mixed>  $barangData    Data barang temuan
+     * @param  array<string, mixed>  $laporanData  Data laporan barang hilang
+     * @param  array<string, mixed>  $barangData  Data barang temuan
      * @return array{
      *   success: bool,
      *   similarity_score: int|null,
@@ -141,7 +148,7 @@ class GeminiMatchingService
      */
     private function buildPrompt(array $laporan, array $barang): string
     {
-        $hasImages = !empty($laporan['foto_barang']) || !empty($barang['foto_barang']);
+        $hasImages = ! empty($laporan['foto_barang']) || ! empty($barang['foto_barang']);
         $imageContext = $hasImages
             ? 'Foto kedua barang disertakan. Gunakan visual untuk memperkuat analisis.'
             : 'Tidak ada foto yang tersedia. Analisis berdasarkan data teks saja.';
@@ -220,7 +227,7 @@ class GeminiMatchingService
 
         try {
             $disk = 'public';
-            if (!Storage::disk('public')->exists($normalised)) {
+            if (! Storage::disk('public')->exists($normalised)) {
                 if (Storage::disk('local')->exists($normalised)) {
                     $disk = 'local';
                 } else {
@@ -294,8 +301,8 @@ class GeminiMatchingService
                 ],
             ],
             'generationConfig' => [
-                'temperature' => 0.1,  // rendah untuk konsistensi analitik
-                'topP' => 0.9,
+                'temperature' => 0.0,
+                'topP' => 0.1,
                 'maxOutputTokens' => 2048,
                 'responseMimeType' => 'application/json',  // minta JSON murni
                 'thinkingConfig' => [
@@ -315,15 +322,18 @@ class GeminiMatchingService
 
                 if ($response->status() === 404) {
                     Log::info("GeminiMatchingService: model tidak ditemukan [{$model}]");
+
                     return null;  // coba model berikutnya
                 }
 
                 if ($response->status() === 503) {
                     if ($attempt < $maxRetries) {
                         sleep(2);
+
                         continue;
                     }
                     Log::warning("GeminiMatchingService: model overloaded [{$model}]");
+
                     return null;
                 }
 
@@ -333,6 +343,7 @@ class GeminiMatchingService
                         'status' => $response->status(),
                         'body' => substr($response->body(), 0, 500),
                     ]);
+
                     return null;
                 }
 
@@ -342,6 +353,7 @@ class GeminiMatchingService
                     'model' => $model,
                     'error' => $e->getMessage(),
                 ]);
+
                 return null;
             }
         }
@@ -361,37 +373,80 @@ class GeminiMatchingService
 
         if (empty($rawText)) {
             Log::warning('GeminiMatchingService: respons kosong dari API', ['model' => $model]);
+
             return null;
         }
 
-        // Bersihkan: kadang Gemini masih membungkus dengan ```json ... ```
-        $cleanJson = trim($rawText);
-        $cleanJson = preg_replace('/^```(?:json)?\s*/i', '', $cleanJson);
-        $cleanJson = preg_replace('/\s*```$/', '', $cleanJson ?? '');
-        $cleanJson = trim($cleanJson ?? '');
+        // Ekstraksi blok JSON menggunakan regex agar tahan terhadap teks pengantar atau markdown blocks
+        if (preg_match('/\{[\s\S]*\}/', (string) $rawText, $matches)) {
+            $cleanJson = $matches[0];
+        } else {
+            $cleanJson = trim((string) $rawText);
+            $cleanJson = preg_replace('/^```(?:json)?\s*/i', '', $cleanJson);
+            $cleanJson = preg_replace('/\s*```$/', '', (string) $cleanJson);
+            $cleanJson = trim((string) $cleanJson);
+        }
 
         $decoded = json_decode($cleanJson, true);
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             Log::warning('GeminiMatchingService: gagal decode JSON', [
                 'model' => $model,
-                'raw' => substr($rawText, 0, 300),
+                'raw' => substr((string) $rawText, 0, 300),
             ]);
+
             return null;
         }
 
         $score = isset($decoded['similarity_score']) ? (int) $decoded['similarity_score'] : null;
         $recommendation = isset($decoded['recommendation']) ? strtolower(trim((string) $decoded['recommendation'])) : null;
-        $reasoning = isset($decoded['reasoning']) ? trim((string) $decoded['reasoning']) : null;
+
+        $rawReasoning = $decoded['reasoning'] ?? null;
+        if (is_array($rawReasoning)) {
+            $parts = [];
+            if (! empty($rawReasoning['ringkasan'])) {
+                $parts[] = '1. Ringkasan: '.trim((string) $rawReasoning['ringkasan']);
+            }
+            if (! empty($rawReasoning['hal_cocok_dan_berbeda'])) {
+                $cocokBerbeda = is_array($rawReasoning['hal_cocok_dan_berbeda'])
+                    ? implode("\n", array_map(fn ($k, $v) => is_numeric($k) ? "- {$v}" : "- {$k}: {$v}", array_keys($rawReasoning['hal_cocok_dan_berbeda']), $rawReasoning['hal_cocok_dan_berbeda']))
+                    : trim((string) $rawReasoning['hal_cocok_dan_berbeda']);
+                $parts[] = "2. Hal yang Cocok & Berbeda:\n".$cocokBerbeda;
+            }
+            if (! empty($rawReasoning['saran_petugas']) || ! empty($rawReasoning['saran_untuk_petugas'])) {
+                $saran = $rawReasoning['saran_petugas'] ?? $rawReasoning['saran_untuk_petugas'];
+                $parts[] = '3. Saran untuk Petugas: '.trim((string) $saran);
+            }
+            $reasoning = ! empty($parts) ? implode("\n", $parts) : json_encode($rawReasoning, JSON_UNESCAPED_UNICODE);
+        } else {
+            $reasoning = is_string($rawReasoning) ? trim($rawReasoning) : null;
+        }
+
+        // Fallback jika model mengembalikan field terpisah di root object
+        if (empty($reasoning) && (! empty($decoded['ringkasan']) || ! empty($decoded['saran_petugas']))) {
+            $parts = [];
+            if (! empty($decoded['ringkasan'])) {
+                $parts[] = '1. Ringkasan: '.trim((string) $decoded['ringkasan']);
+            }
+            if (! empty($decoded['hal_cocok_dan_berbeda'])) {
+                $parts[] = '2. Hal yang Cocok & Berbeda: '.(is_array($decoded['hal_cocok_dan_berbeda']) ? implode(', ', $decoded['hal_cocok_dan_berbeda']) : trim((string) $decoded['hal_cocok_dan_berbeda']));
+            }
+            if (! empty($decoded['saran_petugas']) || ! empty($decoded['saran_untuk_petugas'])) {
+                $saran = $decoded['saran_petugas'] ?? $decoded['saran_untuk_petugas'];
+                $parts[] = '3. Saran untuk Petugas: '.trim((string) $saran);
+            }
+            $reasoning = implode("\n", $parts);
+        }
 
         // Validasi nilai
         if ($score === null || $score < 0 || $score > 100) {
             Log::warning('GeminiMatchingService: skor tidak valid', ['score' => $score, 'model' => $model]);
+
             return null;
         }
 
         $allowedRecommendations = ['high', 'medium', 'low', 'uncertain'];
-        if (!in_array($recommendation, $allowedRecommendations, true)) {
+        if (! in_array($recommendation, $allowedRecommendations, true)) {
             // Tetapkan berdasarkan skor jika rekomendasi tidak valid
             $recommendation = match (true) {
                 $score >= 80 => 'high',
@@ -433,6 +488,7 @@ class GeminiMatchingService
     private function str(mixed $value): string
     {
         $trimmed = trim((string) ($value ?? ''));
+
         return $trimmed !== '' ? $trimmed : '-';
     }
 

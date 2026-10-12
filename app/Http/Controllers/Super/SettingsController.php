@@ -57,9 +57,9 @@ class SettingsController extends Controller
         $search = $request->search();
         if ($search !== '') {
             $query->where(function (Builder $builder) use ($search) {
-                $builder->where('nama', 'like', '%' . $search . '%')
-                    ->orWhere('instansi', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%');
+                $builder->where('nama', 'like', '%'.$search.'%')
+                    ->orWhere('instansi', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
             });
         }
 
@@ -97,7 +97,7 @@ class SettingsController extends Controller
     {
         /** @var SuperAdmin|null $superAdmin */
         $superAdmin = Auth::guard('super_admin')->user();
-        abort_if(!$superAdmin, 403);
+        abort_if(! $superAdmin, 403);
 
         return $superAdmin;
     }

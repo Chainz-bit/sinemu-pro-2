@@ -56,10 +56,10 @@ class SuperProfileTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin?->id,
             'nama' => $name,
-            'email' => str($name)->slug('-') . '@example.com',
+            'email' => str($name)->slug('-').'@example.com',
             'username' => (string) str($name)->slug('-'),
             'password' => Hash::make('password123'),
-            'instansi' => 'Instansi ' . $name,
+            'instansi' => 'Instansi '.$name,
             'kecamatan' => 'Sindang',
             'alamat_lengkap' => 'Jl. Profile No. 1',
             'status_verifikasi' => $status,

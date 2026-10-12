@@ -365,16 +365,16 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $claimOverrides
-     * @param array<string,mixed> $barangOverrides
-     * @param array<string,mixed> $matchOverrides
+     * @param  array<string,mixed>  $claimOverrides
+     * @param  array<string,mixed>  $barangOverrides
+     * @param  array<string,mixed>  $matchOverrides
      * @return array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}
      */
     private function createClaimFixture(array $claimOverrides = [], array $barangOverrides = [], array $matchOverrides = []): array
     {
         $admin = $this->createAdmin();
-        $user = $this->createUser('claim-policy-user-' . str()->uuid());
-        $finder = $this->createUser('claim-policy-finder-' . str()->uuid());
+        $user = $this->createUser('claim-policy-user-'.str()->uuid());
+        $finder = $this->createUser('claim-policy-finder-'.str()->uuid());
         $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
 
         $lostReport = LaporanBarangHilang::query()->create([
@@ -427,7 +427,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $claimOverrides
+     * @param  array<string,mixed>  $claimOverrides
      * @return array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}
      */
     private function createApprovedClaimFixture(array $claimOverrides = []): array
@@ -443,7 +443,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     }
 
     /**
-     * @param array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim} $fixture
+     * @param  array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}  $fixture
      */
     private function createCompletedClaimForSameItem(array $fixture): Klaim
     {
@@ -460,7 +460,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     }
 
     /**
-     * @param array{lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim} $fixture
+     * @param  array{lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}  $fixture
      * @return array<string,string|null>
      */
     private function snapshot(array $fixture): array
@@ -517,18 +517,18 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     {
         $superAdmin = SuperAdmin::query()->create([
             'nama' => 'Super Workflow',
-            'email' => 'super-workflow-' . str()->uuid() . '@example.test',
-            'username' => 'super-workflow-' . str()->uuid(),
+            'email' => 'super-workflow-'.str()->uuid().'@example.test',
+            'username' => 'super-workflow-'.str()->uuid(),
             'password' => Hash::make('password123'),
         ]);
-        $region = Wilayah::query()->create(['nama_wilayah' => 'Wilayah Workflow ' . str()->uuid()]);
+        $region = Wilayah::query()->create(['nama_wilayah' => 'Wilayah Workflow '.str()->uuid()]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
             'nama' => 'Admin Workflow',
-            'email' => 'admin-workflow-' . str()->uuid() . '@example.test',
-            'username' => 'admin-workflow-' . str()->uuid(),
+            'email' => 'admin-workflow-'.str()->uuid().'@example.test',
+            'username' => 'admin-workflow-'.str()->uuid(),
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
@@ -543,7 +543,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
             'name' => 'User Workflow',
             'nama' => 'User Workflow',
             'username' => $username,
-            'email' => $username . '@example.test',
+            'email' => $username.'@example.test',
             'nomor_telepon' => '08123456789',
             'password' => Hash::make('password123'),
         ]);

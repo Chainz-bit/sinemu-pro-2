@@ -57,7 +57,7 @@
                         <th>Pelapor</th>
                         <th>Tanggal Klaim</th>
                         <th>Lokasi Penyimpanan</th>
-                        <th>Status</th>
+                        <th class="min-w-[160px]">Status</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -124,17 +124,15 @@
                             <td>{{ $claim->pelapor_nama }}</td>
                             <td>{{ \Illuminate\Support\Carbon::parse($claim->created_at)->format('d M Y') }}</td>
                             <td>{{ $claim->lokasi }}</td>
-                            <td>
+                            <td class="align-middle">
                                 @php
                                     $statusKey = \App\Support\ClaimStatusPresenter::key(
                                         (string) $claim->status_klaim,
                                         (string) ($claim->status_verifikasi ?? ''),
                                         (string) ($claim->status_barang_temuan ?? '')
                                     );
-                                    $statusLabel = \App\Support\ClaimStatusPresenter::label($statusKey);
-                                    $statusClass = \App\Support\ClaimStatusPresenter::cssClass($statusKey);
                                 @endphp
-                                <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
+                                <x-status-badge :status="$statusKey" type="claim" />
                             </td>
                             <td class="menu-cell">
                                 <button type="button" class="row-menu-trigger" data-menu-target="menu-claim-{{ $index }}" aria-label="Aksi">

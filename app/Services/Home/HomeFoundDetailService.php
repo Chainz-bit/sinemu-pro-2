@@ -3,6 +3,7 @@
 namespace App\Services\Home;
 
 use App\Models\Barang;
+use App\Support\RoleLabels;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -71,7 +72,7 @@ class HomeFoundDetailService
                 ->first();
         }
 
-        $hasApprovedClaim = !is_null($userApprovedClaim);
+        $hasApprovedClaim = ! is_null($userApprovedClaim);
 
         $claimActionUrl = route('user.claims.create', ['barang_id' => $barang->id]);
         $claimActionLabel = 'Ajukan Klaim';
@@ -93,7 +94,7 @@ class HomeFoundDetailService
             $claimActionLabel = 'Lihat Riwayat Klaim';
         }
 
-        $penanggungJawab = $barang->admin?->instansi ?? $barang->admin?->nama ?? \App\Support\RoleLabels::manager();
+        $penanggungJawab = $barang->admin?->instansi ?? $barang->admin?->nama ?? RoleLabels::manager();
         $detail = (object) [
             'id' => (int) $barang->id,
             'type' => 'temuan',
@@ -116,7 +117,7 @@ class HomeFoundDetailService
             'user_claim_id' => $userApprovedClaim?->id,
             'claim_action_url' => $claimActionUrl,
             'claim_action_label' => $claimActionLabel,
-            'preclaim_note' => 'Kecocokan barang tidak otomatis membuktikan kepemilikan. Anda wajib mengajukan klaim dengan bukti kepemilikan untuk diverifikasi ' . \App\Support\RoleLabels::managerLower() . '.',
+            'preclaim_note' => 'Kecocokan barang tidak otomatis membuktikan kepemilikan. Anda wajib mengajukan klaim dengan bukti kepemilikan untuk diverifikasi '.RoleLabels::managerLower().'.',
         ];
 
         return [

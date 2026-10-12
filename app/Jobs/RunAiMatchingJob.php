@@ -35,8 +35,7 @@ class RunAiMatchingJob implements ShouldQueue
 
     public function __construct(
         private readonly int $klaimId
-    ) {
-    }
+    ) {}
 
     /**
      * Jalankan job: ambil data klaim, laporan hilang, barang temuan,
@@ -46,24 +45,26 @@ class RunAiMatchingJob implements ShouldQueue
     {
         $klaim = Klaim::with([
             'laporanHilang:id,kategori_id,nama_barang,kategori_barang,warna_barang,merek_barang,nomor_seri,'
-                . 'lokasi_hilang,tanggal_hilang,keterangan,ciri_khusus,foto_barang',
+                .'lokasi_hilang,tanggal_hilang,keterangan,ciri_khusus,foto_barang',
             'laporanHilang.kategori:id,nama_kategori',
             'barang:id,kategori_id,nama_barang,warna_barang,merek_barang,nomor_seri,'
-                . 'lokasi_ditemukan,tanggal_ditemukan,deskripsi,ciri_khusus,foto_barang',
+                .'lokasi_ditemukan,tanggal_ditemukan,deskripsi,ciri_khusus,foto_barang',
             'barang.kategori:id,nama_kategori',
             'pencocokan:id,laporan_hilang_id,barang_id',
         ])->find($this->klaimId);
 
         if ($klaim === null) {
             Log::warning("RunAiMatchingJob: Klaim #{$this->klaimId} tidak ditemukan.");
+
             return;
         }
 
         $laporan = $klaim->laporanHilang;
-        $barang  = $klaim->barang;
+        $barang = $klaim->barang;
 
         if ($laporan === null || $barang === null) {
             Log::warning("RunAiMatchingJob: Laporan hilang atau barang temuan tidak lengkap untuk Klaim #{$this->klaimId}.");
+
             return;
         }
 
@@ -80,10 +81,11 @@ class RunAiMatchingJob implements ShouldQueue
         // Jalankan pencocokan AI
         $result = $matchingService->match($laporanData, $barangData);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             Log::error("RunAiMatchingJob: Gagal menjalankan AI matching untuk Klaim #{$this->klaimId}.", [
                 'error' => $result['error'],
             ]);
+
             return;
         }
 
@@ -93,22 +95,22 @@ class RunAiMatchingJob implements ShouldQueue
         if ($pencocokan instanceof Pencocokan) {
             $pencocokan->update([
                 'ai_similarity_score' => $result['similarity_score'],
-                'ai_recommendation'   => $result['recommendation'],
-                'ai_reasoning'        => $result['reasoning'],
-                'ai_matched_at'       => now(),
-                'ai_model_used'       => $result['model_used'],
+                'ai_recommendation' => $result['recommendation'],
+                'ai_reasoning' => $result['reasoning'],
+                'ai_matched_at' => now(),
+                'ai_model_used' => $result['model_used'],
             ]);
 
             Log::info("RunAiMatchingJob: AI matching selesai untuk Klaim #{$this->klaimId}.", [
-                'score'          => $result['similarity_score'],
+                'score' => $result['similarity_score'],
                 'recommendation' => $result['recommendation'],
-                'model'          => $result['model_used'],
+                'model' => $result['model_used'],
             ]);
         } else {
             // Belum ada pencocokan resmi — simpan langsung ke klaim sebagai cache sementara
             // (pencocokan belum dibuat oleh admin; AI score disimpan ke klaim itu sendiri)
             Log::info("RunAiMatchingJob: Tidak ada pencocokan terkait untuk Klaim #{$this->klaimId}. "
-                . 'AI score tidak disimpan ke pencocokans.');
+                .'AI score tidak disimpan ke pencocokans.');
         }
     }
 

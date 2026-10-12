@@ -17,8 +17,7 @@ class AdminVerificationController extends Controller
     public function __construct(
         private readonly AdminVerificationQueryService $adminVerificationQueryService,
         private readonly AdminApprovalService $adminApprovalService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {

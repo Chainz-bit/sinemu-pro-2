@@ -18,40 +18,40 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('pencocokans')) {
+        if (! Schema::hasTable('pencocokans')) {
             return; // tabel belum ada, lewati (seharusnya tidak terjadi)
         }
 
         Schema::table('pencocokans', function (Blueprint $table) {
-            if (!Schema::hasColumn('pencocokans', 'ai_similarity_score')) {
+            if (! Schema::hasColumn('pencocokans', 'ai_similarity_score')) {
                 $table->unsignedTinyInteger('ai_similarity_score')
                     ->nullable()
                     ->after('catatan')
                     ->comment('Skor kemiripan AI (0–100)');
             }
 
-            if (!Schema::hasColumn('pencocokans', 'ai_recommendation')) {
+            if (! Schema::hasColumn('pencocokans', 'ai_recommendation')) {
                 $table->string('ai_recommendation', 20)
                     ->nullable()
                     ->after('ai_similarity_score')
                     ->comment('Rekomendasi AI: high | medium | low | uncertain');
             }
 
-            if (!Schema::hasColumn('pencocokans', 'ai_reasoning')) {
+            if (! Schema::hasColumn('pencocokans', 'ai_reasoning')) {
                 $table->text('ai_reasoning')
                     ->nullable()
                     ->after('ai_recommendation')
                     ->comment('Penjelasan singkat dari AI');
             }
 
-            if (!Schema::hasColumn('pencocokans', 'ai_matched_at')) {
+            if (! Schema::hasColumn('pencocokans', 'ai_matched_at')) {
                 $table->timestamp('ai_matched_at')
                     ->nullable()
                     ->after('ai_reasoning')
                     ->comment('Waktu terakhir AI menjalankan pencocokan');
             }
 
-            if (!Schema::hasColumn('pencocokans', 'ai_model_used')) {
+            if (! Schema::hasColumn('pencocokans', 'ai_model_used')) {
                 $table->string('ai_model_used', 60)
                     ->nullable()
                     ->after('ai_matched_at')
@@ -62,7 +62,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('pencocokans')) {
+        if (! Schema::hasTable('pencocokans')) {
             return;
         }
 

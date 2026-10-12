@@ -17,7 +17,7 @@ class SingleVerifikasiKlaimSeeder extends Seeder
         $admin = Admin::query()->first();
         $user = User::query()->first();
 
-        if (!$admin || !$user) {
+        if (! $admin || ! $user) {
             return;
         }
 
@@ -31,7 +31,7 @@ class SingleVerifikasiKlaimSeeder extends Seeder
             ->whereIn('status_barang', ['tersedia', 'dalam_proses_klaim'])
             ->first();
 
-        if (!$laporan || !$barang) {
+        if (! $laporan || ! $barang) {
             return;
         }
 

@@ -409,11 +409,11 @@ class ClaimEvidenceSecurityTest extends TestCase
             Storage::disk($disk)->put($path, $this->pngBytes());
         }
 
-        $user = $this->createUser('evidence-user-' . $sequence . '@example.com', 'evidence-user-' . $sequence);
+        $user = $this->createUser('evidence-user-'.$sequence.'@example.com', 'evidence-user-'.$sequence);
         $admin = $this->createAdmin(
-            'evidence-admin-' . $sequence . '@example.com',
-            'evidence-admin-' . $sequence,
-            'Wilayah Evidence ' . $sequence
+            'evidence-admin-'.$sequence.'@example.com',
+            'evidence-admin-'.$sequence,
+            'Wilayah Evidence '.$sequence
         );
         $kategori = Kategori::query()->create(['nama_kategori' => 'Dokumen']);
         $lostReport = LaporanBarangHilang::query()->create([
@@ -484,10 +484,10 @@ class ClaimEvidenceSecurityTest extends TestCase
         string $regionName = 'Wilayah Evidence'
     ): Admin {
         $superAdmin = SuperAdmin::query()->firstOrCreate(
-            ['email' => 'super-' . $email],
+            ['email' => 'super-'.$email],
             [
                 'nama' => 'Super Evidence',
-                'username' => 'super-' . $username,
+                'username' => 'super-'.$username,
                 'password' => Hash::make('password123'),
             ]
         );

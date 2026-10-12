@@ -276,7 +276,7 @@ class ClaimDeletionSecurityTest extends TestCase
     }
 
     /**
-     * @param array{user:User,admin:Admin,laporan:LaporanBarangHilang,barang:Barang,pencocokan:Pencocokan,klaim:Klaim,proofPath:string} $fixture
+     * @param  array{user:User,admin:Admin,laporan:LaporanBarangHilang,barang:Barang,pencocokan:Pencocokan,klaim:Klaim,proofPath:string}  $fixture
      */
     private function assertActiveDeletionIsRejected($response, array $fixture): void
     {

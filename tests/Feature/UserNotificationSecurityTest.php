@@ -128,11 +128,11 @@ class UserNotificationSecurityTest extends TestCase
     private function createUser(string $username): User
     {
         $user = User::query()->create([
-            'name' => 'User ' . $username,
-            'nama' => 'User ' . $username,
+            'name' => 'User '.$username,
+            'nama' => 'User '.$username,
             'username' => $username,
-            'email' => $username . '@example.com',
-            'nomor_telepon' => '0812' . random_int(10000000, 99999999),
+            'email' => $username.'@example.com',
+            'nomor_telepon' => '0812'.random_int(10000000, 99999999),
             'password' => 'password123',
         ]);
 

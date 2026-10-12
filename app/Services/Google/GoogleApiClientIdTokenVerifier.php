@@ -3,6 +3,7 @@
 namespace App\Services\Google;
 
 use Google\Client as GoogleClient;
+
 class GoogleApiClientIdTokenVerifier implements GoogleIdTokenVerifier
 {
     /**

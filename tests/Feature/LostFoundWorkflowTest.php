@@ -15,6 +15,7 @@ use App\Models\UserNotification;
 use App\Models\Wilayah;
 use App\Services\Admin\Matching\MatchingService;
 use App\Support\WorkflowStatus;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -201,7 +202,7 @@ class LostFoundWorkflowTest extends TestCase
 
         $this->actingAs($admin, 'admin')
             ->post(route('admin.claim-verifications.complete', $claim), [
-                'kode_tiket' => '#KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
+                'kode_tiket' => '#KLM-'.str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
             ])
             ->assertRedirect();
 
@@ -441,7 +442,7 @@ class LostFoundWorkflowTest extends TestCase
         $this->assertSame($user->id, $claim->user_id);
         $this->assertSame($admin->id, $claim->admin_id);
         $this->assertSame('081234567890', $claim->kontak);
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $localStorage */
+        /** @var FilesystemAdapter $localStorage */
         $localStorage = Storage::disk('local');
         $localStorage->assertExists($proofPath);
         $this->assertSame($notificationsBefore + 1, AdminNotification::query()->count());
@@ -883,8 +884,7 @@ class LostFoundWorkflowTest extends TestCase
         string $email = 'user@example.com',
         string $username = 'user-uji',
         string $phone = '081111111111'
-    ): User
-    {
+    ): User {
         $user = User::query()->create([
             'name' => 'User Uji',
             'nama' => 'User Uji',

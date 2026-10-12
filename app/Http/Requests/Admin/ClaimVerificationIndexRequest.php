@@ -9,9 +9,11 @@ use Illuminate\Validation\Rule;
 class ClaimVerificationIndexRequest extends FormRequest
 {
     public const STATUS_WAITING = 'menunggu';
+
     public const STATUS_DONE = 'selesai';
 
     public const SORT_NEWEST = 'terbaru';
+
     public const SORT_OLDEST = 'terlama';
 
     public const ALLOWED_SORTS = [

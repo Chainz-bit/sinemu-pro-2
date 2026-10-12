@@ -210,7 +210,7 @@
                         <h2>Status Saat Ini</h2>
                     </header>
                     <div class="found-detail-panel-body">
-                        <span class="status-chip {{ $reportStatusClass }}">{{ $reportStatusLabel }}</span>
+                        <x-status-badge :status="$barang->status_laporan ?? $reportStatusClass" type="report" size="md" :label="$reportStatusLabel" />
 
                         @if($canVerifyReport)
                             <div class="found-verify-box">
@@ -279,7 +279,7 @@
                             </div>
                         @endif
 
-                        <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
+                        <x-status-badge :status="$barang->status_barang ?? $statusClass" type="found_item" size="md" :label="$statusLabel" />
 
                         @if($canUpdateItemStatus)
                             <form method="POST" action="{{ manager_route('found-items.update-status', $barang->id) }}" class="status-edit-form" id="status-update-form" data-confirm-delete data-confirm-title="Konfirmasi Perbarui Status" data-confirm-submit-label="Perbarui" data-confirm-submit-variant="primary" data-confirm-message="Perbarui status barang temuan ini? Pastikan data sudah sesuai sebelum menyimpan.">
@@ -390,7 +390,7 @@
                             <div class="activity-item" style="padding-bottom: 0.65rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 0.5rem;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
                                     <p style="margin: 0;"><strong>{{ $klaimUser }}</strong></p>
-                                    <span class="status-chip {{ $klaimStatusClass }}" style="font-size: 0.6875rem; padding: 2px 6px;">{{ $klaimStatusLabel }}</span>
+                                    <x-status-badge :status="$klaimStatusKey" type="claim" size="sm" :label="$klaimStatusLabel" />
                                 </div>
                                 <small style="display: block; color: #64748b; font-size: 0.75rem; margin-bottom: 4px;">Diajukan: {{ $klaimDate }} WIB</small>
                                 <a href="{{ manager_route('claim-verifications.show', $klaim->id) }}" class="filter-btn found-action-btn found-action-btn-outline" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; padding: 3px 8px; text-decoration: none;">

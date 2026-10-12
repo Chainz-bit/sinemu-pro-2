@@ -139,8 +139,8 @@ class HomeLocationTest extends TestCase
     {
         return SuperAdmin::query()->create([
             'nama' => 'Super Admin Lokasi',
-            'email' => 'super-location-' . Str::uuid() . '@example.com',
-            'username' => 'super-location-' . Str::random(8),
+            'email' => 'super-location-'.Str::uuid().'@example.com',
+            'username' => 'super-location-'.Str::random(8),
             'password' => Hash::make('password123'),
         ]);
     }
@@ -150,8 +150,8 @@ class HomeLocationTest extends TestCase
         return Admin::query()->create(array_merge([
             'super_admin_id' => $superAdmin->id,
             'nama' => 'Admin Lokasi',
-            'email' => 'admin-location-' . Str::uuid() . '@example.com',
-            'username' => 'admin-location-' . Str::random(8),
+            'email' => 'admin-location-'.Str::uuid().'@example.com',
+            'username' => 'admin-location-'.Str::random(8),
             'password' => Hash::make('password123'),
             'instansi' => 'Lokasi SiNemu',
             'kecamatan' => 'Sindang',
@@ -165,7 +165,7 @@ class HomeLocationTest extends TestCase
     private function createRegion(?float $lat = -6.322000, ?float $lng = 108.324000): Wilayah
     {
         return Wilayah::query()->create([
-            'nama_wilayah' => 'Kecamatan ' . Str::random(10),
+            'nama_wilayah' => 'Kecamatan '.Str::random(10),
             'lat' => $lat,
             'lng' => $lng,
         ]);

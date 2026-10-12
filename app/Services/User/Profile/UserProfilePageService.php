@@ -11,8 +11,7 @@ class UserProfilePageService
         private readonly ProfileAvatarService $avatarService,
         private readonly UserProfileActivityService $activityService,
         private readonly UserProfileStatsService $statsService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string,mixed>

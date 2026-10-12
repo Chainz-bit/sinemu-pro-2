@@ -21,7 +21,7 @@ class ClaimFormPageService
 
         // 1. Dukungan Targeted Item: jika request memiliki parameter barang_id spesifik,
         // cukup ambil 1 data barang temuan tersebut secara langsung tanpa me-load puluhan barang lain.
-        if (!is_null($requestedBarangId) && $requestedBarangId > 0) {
+        if (! is_null($requestedBarangId) && $requestedBarangId > 0) {
             $targetedItem = $this->getTargetedFoundItem($userId, $requestedBarangId);
             if ($targetedItem !== null) {
                 return [
@@ -36,7 +36,7 @@ class ClaimFormPageService
         $foundItems = $this->getClaimableFoundItems($userId);
 
         $selectedBarangId = null;
-        if (!is_null($requestedBarangId) && $foundItems->contains(fn (Barang $barang) => (int) $barang->id === $requestedBarangId)) {
+        if (! is_null($requestedBarangId) && $foundItems->contains(fn (Barang $barang) => (int) $barang->id === $requestedBarangId)) {
             $selectedBarangId = $requestedBarangId;
         } elseif ($foundItems->isNotEmpty()) {
             $selectedBarangId = (int) $foundItems->first()->id;

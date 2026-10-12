@@ -12,7 +12,7 @@ class UserDashboardFoundFeedService
 {
     public function build(int $userId, bool $hasFoundUserColumn, bool $hasFoundReportStatusColumn): Collection
     {
-        if (!$hasFoundUserColumn) {
+        if (! $hasFoundUserColumn) {
             return collect();
         }
 
@@ -44,7 +44,7 @@ class UserDashboardFoundFeedService
                     'type' => 'found_report',
                     'report_id' => (int) $item->id,
                     'item_name' => (string) $item->nama_barang,
-                    'item_detail' => 'Laporan Temuan - ' . (string) $item->lokasi_ditemukan,
+                    'item_detail' => 'Laporan Temuan - '.(string) $item->lokasi_ditemukan,
                     'incident_date' => (string) $item->tanggal_ditemukan,
                     'created_at' => $item->created_at,
                     'activity_at' => $activityAt,
@@ -81,16 +81,16 @@ class UserDashboardFoundFeedService
 
         [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
         if (in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
-            $relative = $folder . '/' . $subPath;
+            $relative = $folder.'/'.$subPath;
 
             return Storage::disk('public')->exists($relative)
-                ? asset('storage/' . $relative)
+                ? asset('storage/'.$relative)
                 : route('media.image', ['folder' => $folder, 'path' => $subPath]);
         }
 
-        $relative = $defaultFolder . '/' . ltrim($cleanPath, '/');
+        $relative = $defaultFolder.'/'.ltrim($cleanPath, '/');
         if (Storage::disk('public')->exists($relative)) {
-            return asset('storage/' . $relative);
+            return asset('storage/'.$relative);
         }
 
         return '';

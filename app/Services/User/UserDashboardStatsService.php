@@ -5,7 +5,6 @@ namespace App\Services\User;
 use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Support\WorkflowStatus;
-use Illuminate\Support\Facades\Schema;
 
 class UserDashboardStatsService
 {

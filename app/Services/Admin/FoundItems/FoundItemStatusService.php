@@ -2,9 +2,12 @@
 
 namespace App\Services\Admin\FoundItems;
 
+use App\Models\Admin;
 use App\Models\Barang;
 use App\Models\BarangStatusHistory;
 use App\Services\UserNotificationService;
+use App\Support\ManagerPortal;
+use App\Support\RoleLabels;
 use App\Support\WorkflowStatus;
 
 class FoundItemStatusService
@@ -16,13 +19,13 @@ class FoundItemStatusService
      */
     public function updateStatus(Barang $barang, array $validated): array
     {
-        /** @var \App\Models\Admin|null $admin */
-        $admin = \App\Support\ManagerPortal::user();
+        /** @var Admin|null $admin */
+        $admin = ManagerPortal::user();
 
         $oldStatus = strtolower(trim((string) $barang->status_barang));
         $newStatus = strtolower(trim((string) $validated['status_barang']));
 
-        if (!$barang->canHaveStatusUpdatedByAdmin() || !$barang->isAllowedManualStatusTarget($newStatus)) {
+        if (! $barang->canHaveStatusUpdatedByAdmin() || ! $barang->isAllowedManualStatusTarget($newStatus)) {
             return ['ok' => false, 'message' => self::LOCKED_STATUS_MESSAGE];
         }
 
@@ -57,7 +60,7 @@ class FoundItemStatusService
                     userId: (int) $userId,
                     type: 'status_barang_temuan',
                     title: 'Status Barang Temuan Diperbarui',
-                    message: ucfirst(\App\Support\RoleLabels::managerLower()) . ' memperbarui status ' . $barang->nama_barang . ' menjadi ' . $statusLabel . '.',
+                    message: ucfirst(RoleLabels::managerLower()).' memperbarui status '.$barang->nama_barang.' menjadi '.$statusLabel.'.',
                     actionUrl: route('user.dashboard'),
                     meta: ['barang_id' => $barang->id]
                 );

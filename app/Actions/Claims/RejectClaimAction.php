@@ -4,13 +4,14 @@ namespace App\Actions\Claims;
 
 use App\Models\Klaim;
 use App\Services\UserNotificationService;
+use App\Support\ClaimVerificationConfig;
+use App\Support\RoleLabels;
 use App\Support\WorkflowStatus;
-use Illuminate\Support\Facades\Schema;
 
 class RejectClaimAction
 {
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      */
     public function execute(Klaim $klaim, array $validated, int $adminId): void
     {
@@ -19,39 +20,27 @@ class RejectClaimAction
         $payload = [
             'status_klaim' => 'ditolak',
             'admin_id' => $adminId,
+            'status_verifikasi' => WorkflowStatus::CLAIM_REJECTED,
+            'hasil_checklist' => $verification['checklist'],
+            'skor_validitas' => $verification['score'],
+            'catatan_verifikasi_admin' => $validated['catatan_verifikasi_admin'] ?? null,
+            'alasan_penolakan' => $validated['alasan_penolakan'],
+            'diverifikasi_at' => now(),
         ];
-        if (Schema::hasColumn('klaims', 'status_verifikasi')) {
-            $payload['status_verifikasi'] = WorkflowStatus::CLAIM_REJECTED;
-        }
-        if (Schema::hasColumn('klaims', 'hasil_checklist')) {
-            $payload['hasil_checklist'] = $verification['checklist'];
-        }
-        if (Schema::hasColumn('klaims', 'skor_validitas')) {
-            $payload['skor_validitas'] = $verification['score'];
-        }
-        if (Schema::hasColumn('klaims', 'catatan_verifikasi_admin')) {
-            $payload['catatan_verifikasi_admin'] = $validated['catatan_verifikasi_admin'] ?? null;
-        }
-        if (Schema::hasColumn('klaims', 'alasan_penolakan')) {
-            $payload['alasan_penolakan'] = $validated['alasan_penolakan'];
-        }
-        if (Schema::hasColumn('klaims', 'diverifikasi_at')) {
-            $payload['diverifikasi_at'] = now();
-        }
         $klaim->update($payload);
 
-        if ($klaim->barang && $klaim->barang->status_barang === 'dalam_proses_klaim') {
-            $klaim->barang->update(['status_barang' => 'tersedia']);
+        if ($klaim->barang && $klaim->barang->status_barang === WorkflowStatus::FOUND_CLAIM_IN_PROGRESS) {
+            $klaim->barang->update(['status_barang' => WorkflowStatus::FOUND_AVAILABLE]);
         }
         if ($klaim->pencocokan) {
             $klaim->pencocokan->update(['status_pencocokan' => WorkflowStatus::MATCH_CLAIM_REJECTED]);
         }
 
-        $this->notifyUser($klaim, 'klaim_ditolak', 'Klaim Ditolak', ucfirst(\App\Support\RoleLabels::managerLower()) . ' menolak klaim untuk ');
+        $this->notifyUser($klaim, 'klaim_ditolak', 'Klaim Ditolak', ucfirst(RoleLabels::managerLower()).' menolak klaim untuk ');
     }
 
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      * @return array{score:int,checklist:array<string,bool>}
      */
     private function buildVerificationResult(array $validated): array
@@ -64,23 +53,8 @@ class RejectClaimAction
             'kecocokan_data_laporan' => ($validated['kecocokan_data_laporan'] ?? 0) == 1,
         ];
 
-        $weights = [
-            'identitas_pelapor_valid' => 20,
-            'detail_barang_valid' => 25,
-            'kronologi_valid' => 20,
-            'bukti_visual_valid' => 20,
-            'kecocokan_data_laporan' => 15,
-        ];
-
-        $score = 0;
-        foreach ($weights as $key => $weight) {
-            if (($checklist[$key] ?? false) === true) {
-                $score += $weight;
-            }
-        }
-
         return [
-            'score' => $score,
+            'score' => ClaimVerificationConfig::calculateScore($checklist),
             'checklist' => $checklist,
         ];
     }
@@ -96,7 +70,7 @@ class RejectClaimAction
             userId: (int) $klaim->user_id,
             type: $type,
             title: $title,
-            message: $prefixMessage . $namaBarang . '.',
+            message: $prefixMessage.$namaBarang.'.',
             actionUrl: route('user.claim-history'),
             meta: ['klaim_id' => $klaim->id]
         );

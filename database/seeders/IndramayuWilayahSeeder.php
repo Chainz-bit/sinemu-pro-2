@@ -2,6 +2,4 @@
 
 namespace Database\Seeders;
 
-class IndramayuWilayahSeeder extends WilayahSeeder
-{
-}
+class IndramayuWilayahSeeder extends WilayahSeeder {}

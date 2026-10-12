@@ -5,23 +5,21 @@ namespace App\Http\Controllers\Super;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Super\StoreAdminAccountRequest;
 use App\Http\Requests\Super\UpdateAdminAccountRequest;
-use App\Services\Super\Admins\AdminVerificationQueryService;
 use App\Models\Admin;
 use App\Models\Wilayah;
+use App\Services\Super\Admins\AdminVerificationQueryService;
 use App\Support\IndramayuDistricts;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AdminDirectoryController extends Controller
 {
     public function __construct(
         private readonly AdminVerificationQueryService $adminVerificationQueryService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -132,7 +130,7 @@ class AdminDirectoryController extends Controller
             'verified_at' => in_array($status, ['active', 'rejected'], true) ? ($admin->verified_at ?? now()) : null,
         ];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $payload['password'] = Hash::make((string) $validated['password']);
         }
 
@@ -156,7 +154,7 @@ class AdminDirectoryController extends Controller
 
         return redirect()
             ->route('super.admins.index')
-            ->with('status', 'Akun pengelola barang ' . $adminName . ' berhasil dihapus.');
+            ->with('status', 'Akun pengelola barang '.$adminName.' berhasil dihapus.');
     }
 
     /**
@@ -186,10 +184,6 @@ class AdminDirectoryController extends Controller
 
     private function resolveRegionId(string $kecamatan): ?int
     {
-        if (!Schema::hasTable('wilayahs') || !Schema::hasColumn('admins', 'region_id')) {
-            return null;
-        }
-
         $wilayah = IndramayuDistricts::wilayahItem($kecamatan);
 
         return (int) Wilayah::query()->firstOrCreate(

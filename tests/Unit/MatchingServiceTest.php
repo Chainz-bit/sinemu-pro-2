@@ -6,15 +6,15 @@ use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\LaporanBarangHilang;
 use App\Services\Admin\Matching\MatchingCandidateQueryService;
-use App\Services\Admin\Matching\MatchingService;
 use App\Services\Admin\Matching\MatchingScoreService;
+use App\Services\Admin\Matching\MatchingService;
 use Tests\TestCase;
 
 class MatchingServiceTest extends TestCase
 {
     public function test_score_is_high_for_strongly_similar_items(): void
     {
-        $scoreService = new MatchingScoreService();
+        $scoreService = new MatchingScoreService;
         $service = new MatchingService(new MatchingCandidateQueryService($scoreService), $scoreService);
 
         $laporan = new LaporanBarangHilang([
@@ -49,7 +49,7 @@ class MatchingServiceTest extends TestCase
 
     public function test_score_is_low_for_unrelated_items(): void
     {
-        $scoreService = new MatchingScoreService();
+        $scoreService = new MatchingScoreService;
         $service = new MatchingService(new MatchingCandidateQueryService($scoreService), $scoreService);
 
         $laporan = new LaporanBarangHilang([

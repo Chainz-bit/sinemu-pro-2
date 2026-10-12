@@ -15,8 +15,7 @@ class RiwayatKlaimController extends Controller
     public function __construct(
         private readonly ClaimHistoryService $claimHistoryService,
         private readonly ClaimProofStorageService $claimProofStorageService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -36,8 +35,7 @@ class RiwayatKlaimController extends Controller
     public function destroy(Klaim $klaim)
     {
         abort_unless(Auth::check(), 403);
-        $user = Auth::user();
-        abort_unless((int) $klaim->user_id === (int) $user->id, 403);
+        $this->authorize('delete', $klaim);
 
         if (! $klaim->canBeDeleted()) {
             return redirect()->back()->with('error', 'Klaim yang masih aktif tidak dapat dihapus.');

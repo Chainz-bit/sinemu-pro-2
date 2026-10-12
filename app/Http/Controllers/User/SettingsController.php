@@ -54,8 +54,8 @@ class SettingsController extends Controller
         $search = $request->search();
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
-                $builder->where('title', 'like', '%' . $search . '%')
-                    ->orWhere('message', 'like', '%' . $search . '%');
+                $builder->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('message', 'like', '%'.$search.'%');
             });
         }
 
@@ -95,7 +95,7 @@ class SettingsController extends Controller
     {
         /** @var User|null $user */
         $user = Auth::user();
-        abort_if(!$user, 403);
+        abort_if(! $user, 403);
 
         return $user;
     }

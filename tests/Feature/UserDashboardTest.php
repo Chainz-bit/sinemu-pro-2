@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Barang;
-use App\Models\Klaim;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Models\SuperAdmin;
 use App\Models\User;
@@ -37,7 +37,7 @@ class UserDashboardTest extends TestCase
         $content = $response->getContent();
 
         $this->assertStringContainsString(
-            '<a class="sidebar-brand" href="' . route('home') . '" aria-label="Kembali ke halaman utama">',
+            '<a class="sidebar-brand" href="'.route('home').'" aria-label="Kembali ke halaman utama">',
             $content
         );
         $this->assertMatchesRegularExpression('/<div class="profile-menu" id="profile-menu">(.*?)<\/div>/s', $content);

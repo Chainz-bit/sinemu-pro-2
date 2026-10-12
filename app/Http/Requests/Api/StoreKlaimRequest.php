@@ -11,7 +11,7 @@ class StoreKlaimRequest extends ApiFormRequest
      */
     public function rules(): array
     {
-        $rules = (new SubmitClaimRequest())->rules();
+        $rules = (new SubmitClaimRequest)->rules();
 
         unset($rules['barang_id']);
 

@@ -7,8 +7,8 @@ use App\Http\Requests\Admin\SettingsLogIndexRequest;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
 use App\Models\Admin;
 use App\Models\AdminNotification;
+use App\Support\ManagerPortal;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
@@ -16,8 +16,8 @@ class SettingsController extends Controller
     public function index(): View
     {
         /** @var Admin|null $admin */
-        $admin = \App\Support\ManagerPortal::user();
-        abort_if(!$admin, 403);
+        $admin = ManagerPortal::user();
+        abort_if(! $admin, 403);
 
         return view('manager::pages.settings.index', compact('admin'));
     }
@@ -25,21 +25,21 @@ class SettingsController extends Controller
     public function update(UpdateSettingsRequest $request): RedirectResponse
     {
         /** @var Admin|null $admin */
-        $admin = \App\Support\ManagerPortal::user();
-        abort_if(!$admin, 403);
+        $admin = ManagerPortal::user();
+        abort_if(! $admin, 403);
 
         $admin->forceFill($request->validated())->save();
 
         return redirect()
-            ->route(\App\Support\ManagerPortal::routeName('settings'))
+            ->route(ManagerPortal::routeName('settings'))
             ->with('status', 'Pengaturan sistem berhasil diperbarui.');
     }
 
     public function logs(SettingsLogIndexRequest $request): View
     {
         /** @var Admin|null $admin */
-        $admin = \App\Support\ManagerPortal::user();
-        abort_if(!$admin, 403);
+        $admin = ManagerPortal::user();
+        abort_if(! $admin, 403);
 
         $query = AdminNotification::query()
             ->where('admin_id', $admin->id)
@@ -65,8 +65,8 @@ class SettingsController extends Controller
         $search = $request->search();
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
-                $builder->where('title', 'like', '%' . $search . '%')
-                    ->orWhere('message', 'like', '%' . $search . '%');
+                $builder->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('message', 'like', '%'.$search.'%');
             });
         }
 
@@ -86,7 +86,7 @@ class SettingsController extends Controller
             ->orderBy('type')
             ->pluck('type')
             ->filter(function ($type) use ($typeOptions) {
-                return !array_key_exists((string) $type, $typeOptions);
+                return ! array_key_exists((string) $type, $typeOptions);
             });
 
         foreach ($extraTypes as $extraType) {

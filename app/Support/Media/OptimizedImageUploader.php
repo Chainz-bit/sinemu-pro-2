@@ -14,17 +14,17 @@ class OptimizedImageUploader
         Storage::disk('public')->makeDirectory($directory);
 
         // Fallback aman bila GD tidak tersedia.
-        if (!extension_loaded('gd')) {
+        if (! extension_loaded('gd')) {
             return $file->store($directory, 'public');
         }
 
         $realPath = $file->getRealPath();
-        if (!$realPath) {
+        if (! $realPath) {
             return $file->store($directory, 'public');
         }
 
         $imageInfo = @getimagesize($realPath);
-        if (!$imageInfo || !isset($imageInfo[2])) {
+        if (! $imageInfo || ! isset($imageInfo[2])) {
             return $file->store($directory, 'public');
         }
 
@@ -35,7 +35,7 @@ class OptimizedImageUploader
             default => false,
         };
 
-        if (!$source) {
+        if (! $source) {
             return $file->store($directory, 'public');
         }
 
@@ -43,6 +43,7 @@ class OptimizedImageUploader
         $sourceHeight = imagesy($source);
         if ($sourceWidth <= 0 || $sourceHeight <= 0) {
             imagedestroy($source);
+
             return $file->store($directory, 'public');
         }
 
@@ -75,7 +76,7 @@ class OptimizedImageUploader
         imagedestroy($source);
         imagedestroy($target);
 
-        if (!$saved) {
+        if (! $saved) {
             return $file->store($directory, 'public');
         }
 

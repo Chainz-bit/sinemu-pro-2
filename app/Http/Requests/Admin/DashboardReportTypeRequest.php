@@ -8,7 +8,9 @@ use Illuminate\Validation\Rule;
 class DashboardReportTypeRequest extends FormRequest
 {
     public const TYPE_LOST = 'hilang';
+
     public const TYPE_FOUND = 'temuan';
+
     public const TYPE_CLAIM = 'klaim';
 
     /**

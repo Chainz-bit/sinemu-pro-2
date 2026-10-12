@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\ManagerPortal;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DismissMatchRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return \App\Support\ManagerPortal::check();
+        return ManagerPortal::check();
     }
 
     /**

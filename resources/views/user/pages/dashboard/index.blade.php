@@ -98,14 +98,14 @@
                         <tr>
                             <th>Detail Aktivitas</th>
                             <th class="d-none d-md-table-cell">Tanggal Aktivitas</th>
-                            <th class="d-none d-md-table-cell">Status</th>
+                            <th class="d-none d-md-table-cell min-w-[150px]">Status</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($latestActivities as $activity)
                             <tr class="mobile-stack-row">
-                                <td class="mobile-stack-primary" data-label="Detail Aktivitas">
+                                <td class="mobile-stack-primary align-middle" data-label="Detail Aktivitas">
                                     <div class="item-cell">
                                         <div class="item-avatar {{ $activity->avatar_class ?? '' }}">
                                             @if(!empty($activity->image_url))
@@ -119,7 +119,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="mobile-stack-meta" data-label="Tanggal">
+                                <td class="mobile-stack-meta align-middle" data-label="Tanggal">
                                     <div class="date-cell">
                                         <strong>
                                             {{ !empty($activity->incident_date) ? \Carbon\Carbon::parse($activity->incident_date)->format('d M Y') : '-' }}
@@ -129,10 +129,8 @@
                                         </small>
                                     </div>
                                 </td>
-                                <td class="mobile-stack-status" data-label="Status">
-                                    <span class="status-chip {{ $activity->status_class ?? 'status-dalam_peninjauan' }}">
-                                        {{ $activity->status_text ?? '-' }}
-                                    </span>
+                                <td class="mobile-stack-status align-middle min-w-[150px]" data-label="Status">
+                                    <x-status-badge :status="$activity->status ?? $activity->status_text" :label="$activity->status_text ?? null" />
                                     @if(!empty($activity->instruction))
                                         <small class="claim-instruction-hint d-block mt-1 text-muted" style="font-size: 0.76rem; line-height: 1.25;">
                                             {{ $activity->instruction }}
@@ -145,7 +143,7 @@
                                         @endif
                                     @endif
                                 </td>
-                                <td class="menu-cell mobile-stack-action" data-label="Aksi">
+                                <td class="menu-cell mobile-stack-action align-middle" data-label="Aksi">
                                     <button type="button" class="row-menu-trigger" data-menu-target="user-menu-{{ $loop->index }}" aria-label="Aksi">
                                         <svg viewBox="0 0 24 24" aria-hidden="true">
                                             <circle cx="12" cy="5" r="2" fill="currentColor"></circle>

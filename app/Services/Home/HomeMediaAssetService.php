@@ -27,7 +27,7 @@ class HomeMediaAssetService
         [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
 
         if (in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
-            $relative = $folder . '/' . $subPath;
+            $relative = $folder.'/'.$subPath;
             $dataUri = $this->buildImageDataUri($relative);
             if ($dataUri !== null) {
                 return $dataUri;
@@ -36,40 +36,42 @@ class HomeMediaAssetService
                 ? (string) @filemtime(Storage::disk('public')->path($relative))
                 : null;
             $url = Storage::disk('public')->exists($relative)
-                ? asset('storage/' . $relative)
+                ? asset('storage/'.$relative)
                 : route('media.image', ['folder' => $folder, 'path' => $subPath]);
 
-            return $version ? ($url . '?v=' . $version) : $url;
+            return $version ? ($url.'?v='.$version) : $url;
         }
 
         if ($subPath !== '') {
-            $relative = $defaultFolder . '/' . $cleanPath;
+            $relative = $defaultFolder.'/'.$cleanPath;
             if (Storage::disk('public')->exists($relative)) {
                 $dataUri = $this->buildImageDataUri($relative);
                 if ($dataUri !== null) {
                     return $dataUri;
                 }
                 $version = (string) @filemtime(Storage::disk('public')->path($relative));
-                $url = asset('storage/' . $relative);
-                return $version ? ($url . '?v=' . $version) : $url;
+                $url = asset('storage/'.$relative);
+
+                return $version ? ($url.'?v='.$version) : $url;
             }
 
             return asset('img/login-image.png');
         }
 
         if (Storage::disk('public')->exists($cleanPath)) {
-            return asset('storage/' . $cleanPath);
+            return asset('storage/'.$cleanPath);
         }
 
-        if (Storage::disk('public')->exists($defaultFolder . '/' . $cleanPath)) {
-            $relative = $defaultFolder . '/' . $cleanPath;
+        if (Storage::disk('public')->exists($defaultFolder.'/'.$cleanPath)) {
+            $relative = $defaultFolder.'/'.$cleanPath;
             $dataUri = $this->buildImageDataUri($relative);
             if ($dataUri !== null) {
                 return $dataUri;
             }
             $version = (string) @filemtime(Storage::disk('public')->path($relative));
-            $url = asset('storage/' . $relative);
-            return $version ? ($url . '?v=' . $version) : $url;
+            $url = asset('storage/'.$relative);
+
+            return $version ? ($url.'?v='.$version) : $url;
         }
 
         return asset('img/login-image.png');
@@ -149,7 +151,7 @@ class HomeMediaAssetService
                 return $dataUri;
             }
 
-            return asset('storage/' . $normalized);
+            return asset('storage/'.$normalized);
         }
 
         return $defaultAvatar;
@@ -157,13 +159,13 @@ class HomeMediaAssetService
 
     private function buildImageDataUri(string $relativePath): ?string
     {
-        if (!Storage::disk('public')->exists($relativePath)) {
+        if (! Storage::disk('public')->exists($relativePath)) {
             return null;
         }
 
         $absolutePath = Storage::disk('public')->path($relativePath);
         $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
-        if (!is_string($mimeType) || !str_starts_with($mimeType, 'image/')) {
+        if (! is_string($mimeType) || ! str_starts_with($mimeType, 'image/')) {
             $extension = strtolower(pathinfo($relativePath, PATHINFO_EXTENSION));
             $mimeType = match ($extension) {
                 'webp' => 'image/webp',
@@ -182,6 +184,6 @@ class HomeMediaAssetService
             return null;
         }
 
-        return 'data:' . $mimeType . ';base64,' . base64_encode($binary);
+        return 'data:'.$mimeType.';base64,'.base64_encode($binary);
     }
 }

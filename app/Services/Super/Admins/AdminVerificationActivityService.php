@@ -7,9 +7,7 @@ use Illuminate\Support\Collection;
 
 class AdminVerificationActivityService
 {
-    public function __construct(private readonly AdminVerificationScopeQueryService $scopeQueryService)
-    {
-    }
+    public function __construct(private readonly AdminVerificationScopeQueryService $scopeQueryService) {}
 
     /**
      * @return Collection<int,Admin>

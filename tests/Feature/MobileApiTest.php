@@ -749,18 +749,16 @@ class MobileApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed>|null $payload
+     * @param  array<string, mixed>|null  $payload
      */
     private function fakeGoogleToken(?array $payload): void
     {
         $this->app->instance(GoogleIdTokenVerifier::class, new class($payload) implements GoogleIdTokenVerifier
         {
             /**
-             * @param array<string, mixed>|null $payload
+             * @param  array<string, mixed>|null  $payload
              */
-            public function __construct(private readonly ?array $payload)
-            {
-            }
+            public function __construct(private readonly ?array $payload) {}
 
             /**
              * @return array<string, mixed>|null

@@ -8,12 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('klaims')) {
+        if (! Schema::hasTable('klaims')) {
             return;
         }
 
         Schema::table('klaims', function (Blueprint $table) {
-            if (!Schema::hasColumn('klaims', 'bukti_foto')) {
+            if (! Schema::hasColumn('klaims', 'bukti_foto')) {
                 $table->text('bukti_foto')->nullable()->after('catatan');
             }
         });
@@ -21,7 +21,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('klaims')) {
+        if (! Schema::hasTable('klaims')) {
             return;
         }
 
@@ -32,4 +32,3 @@ return new class extends Migration
         });
     }
 };
-

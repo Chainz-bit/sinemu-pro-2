@@ -20,14 +20,12 @@ class ClaimController extends Controller
         private readonly ClaimSubmissionService $submissionService,
         private readonly ClaimFormPageService $formPageService,
         private readonly ClaimInstructionService $instructionService
-    )
-    {
-    }
+    ) {}
 
     public function show(Klaim $klaim): View
     {
         abort_unless(Auth::check(), 403);
-        abort_unless((int) $klaim->user_id === (int) Auth::id(), 403);
+        $this->authorize('view', $klaim);
 
         $instructionData = $this->instructionService->buildInstructionData($klaim);
 
@@ -53,10 +51,10 @@ class ClaimController extends Controller
     {
         $userId = (int) ($request->user()?->id ?? 0);
         $barangId = (int) $request->input('barang_id');
-        $lockKey = 'submit_klaim_' . $userId . '_' . md5((string) $barangId);
+        $lockKey = 'submit_klaim_'.$userId.'_'.md5((string) $barangId);
         $lock = Cache::lock($lockKey, 10);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             return back()->with('warning', 'Pengajuan klaim Anda sedang diproses, harap tunggu sebentar.');
         }
 
@@ -65,7 +63,7 @@ class ClaimController extends Controller
                 $request->validated(),
                 $request->file('bukti_foto', [])
             );
-            if (!$result['ok']) {
+            if (! $result['ok']) {
                 return back()->with('error', $result['message']);
             }
 

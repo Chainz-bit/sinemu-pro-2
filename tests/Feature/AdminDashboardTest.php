@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Barang;
-use App\Models\Klaim;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Models\SuperAdmin;
@@ -639,7 +639,7 @@ class AdminDashboardTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createFoundItemForPublish(Admin $admin, User $user, Kategori $kategori, array $overrides = []): Barang
     {
@@ -659,7 +659,7 @@ class AdminDashboardTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createLostReportForPublish(Admin $admin, User $user, array $overrides = []): LaporanBarangHilang
     {
@@ -735,8 +735,8 @@ class AdminDashboardTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',

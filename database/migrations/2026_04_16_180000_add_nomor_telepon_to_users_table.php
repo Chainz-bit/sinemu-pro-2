@@ -8,12 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('users')) {
+        if (! Schema::hasTable('users')) {
             return;
         }
 
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'nomor_telepon')) {
+            if (! Schema::hasColumn('users', 'nomor_telepon')) {
                 $table->string('nomor_telepon', 50)->nullable()->after('email');
             }
         });
@@ -21,7 +21,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('users') || !Schema::hasColumn('users', 'nomor_telepon')) {
+        if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'nomor_telepon')) {
             return;
         }
 
@@ -30,4 +30,3 @@ return new class extends Migration
         });
     }
 };
-

@@ -6,15 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApproveClaimRequest;
 use App\Http\Requests\Admin\ClaimVerificationIndexRequest;
 use App\Http\Requests\Admin\RejectClaimRequest;
-use App\Jobs\RunAiMatchingJob;
 use App\Models\Admin;
 use App\Models\Klaim;
 use App\Models\Pencocokan;
-use App\Services\GeminiMatchingService;
 use App\Services\Admin\Claims\ClaimVerificationDetailPageService;
 use App\Services\Admin\Claims\ClaimVerificationListingService;
 use App\Services\Admin\Claims\ClaimVerificationWorkflowService;
+use App\Services\GeminiMatchingService;
 use App\Services\User\Claims\ClaimProofStorageService;
+use App\Support\ClaimVerificationConfig;
 use App\Support\ManagerPortal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -30,8 +30,7 @@ class ClaimVerificationController extends Controller
         private readonly ClaimVerificationDetailPageService $detailPageService,
         private readonly ClaimVerificationWorkflowService $workflowService,
         private readonly ClaimProofStorageService $claimProofStorageService
-    ) {
-    }
+    ) {}
 
     public function index(ClaimVerificationIndexRequest $request): View|StreamedResponse
     {
@@ -55,7 +54,7 @@ class ClaimVerificationController extends Controller
         $this->ensureClaimOwnedByAdmin($klaim);
         $adminId = (int) ManagerPortal::id();
 
-        if (!$this->workflowService->canApprove($klaim)) {
+        if (! $this->workflowService->canApprove($klaim)) {
             return redirect()->back()->with('error', 'Status klaim saat ini tidak memenuhi syarat untuk disetujui.');
         }
 
@@ -70,30 +69,30 @@ class ClaimVerificationController extends Controller
         ];
 
         // Validasi: seluruh 5 poin checklist harus bernilai "Ya" (1)
-        $allYes = (int) $data['identitas_pelapor_valid'] === 1
-            && (int) $data['detail_barang_valid'] === 1
-            && (int) $data['kronologi_valid'] === 1
-            && (int) $data['bukti_visual_valid'] === 1
-            && (int) $data['kecocokan_data_laporan'] === 1;
+        $allYes = (int) $data['identitas_pelapor_valid'] === 1 &&
+            (int) $data['detail_barang_valid'] === 1 &&
+            (int) $data['kronologi_valid'] === 1 &&
+            (int) $data['bukti_visual_valid'] === 1 &&
+            (int) $data['kecocokan_data_laporan'] === 1;
 
-        if (!$allYes) {
+        if (! $allYes) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->with('error', 'Klaim tidak dapat disetujui karena ada poin checklist bernilai "Tidak".');
         }
 
-        // Validasi: jika klaim memiliki hasil analisis AI, skor AI harus minimal 75
+        // Validasi: jika klaim memiliki hasil analisis AI, skor AI harus minimal 75 atau memenuhi syarat manual override
         $klaim->loadMissing('pencocokan');
         $aiScore = $klaim->pencocokan?->ai_similarity_score;
-        if ($aiScore !== null && (int) $aiScore < 75) {
+        if (! ClaimVerificationConfig::isEligibleForManualOverride($aiScore, $data['catatan_verifikasi_admin'])) {
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Klaim tidak dapat disetujui otomatis karena skor AI di bawah 75.');
+                ->with('error', 'Klaim tidak dapat disetujui otomatis karena skor AI di bawah '.ClaimVerificationConfig::MINIMUM_AI_SCORE.'. Masukkan catatan verifikasi manual minimal '.ClaimVerificationConfig::MINIMUM_OVERRIDE_NOTE_LENGTH.' karakter.');
         }
 
-        if (!$this->workflowService->approve($klaim, $data, $adminId)) {
+        if (! $this->workflowService->approve($klaim, $data, $adminId)) {
             return redirect()
                 ->back()
                 ->withInput()
@@ -108,7 +107,7 @@ class ClaimVerificationController extends Controller
         $this->ensureClaimOwnedByAdmin($klaim);
         $adminId = (int) ManagerPortal::id();
 
-        if (!$this->workflowService->canReject($klaim)) {
+        if (! $this->workflowService->canReject($klaim)) {
             return redirect()->back()->with('error', 'Status klaim saat ini tidak memenuhi syarat untuk ditolak.');
         }
 
@@ -122,7 +121,7 @@ class ClaimVerificationController extends Controller
             'alasan_penolakan' => $request->input('alasan_penolakan'),
         ];
 
-        if (!$this->workflowService->reject($klaim, $data, $adminId)) {
+        if (! $this->workflowService->reject($klaim, $data, $adminId)) {
             return redirect()
                 ->back()
                 ->withInput()
@@ -135,11 +134,11 @@ class ClaimVerificationController extends Controller
     public function complete(Request $request, Klaim $klaim): RedirectResponse
     {
         $this->ensureClaimOwnedByAdmin($klaim);
-        abort_if(!$this->workflowService->canComplete($klaim), 422, 'Klaim harus disetujui sebelum ditandai selesai.');
+        abort_if(! $this->workflowService->canComplete($klaim), 422, 'Klaim harus disetujui sebelum ditandai selesai.');
 
         $expectedIdPad = str_pad((string) $klaim->id, 5, '0', STR_PAD_LEFT);
-        $expectedCode1 = '#KLM-' . $expectedIdPad;
-        $expectedCode2 = 'KLM-' . $expectedIdPad;
+        $expectedCode1 = '#KLM-'.$expectedIdPad;
+        $expectedCode2 = 'KLM-'.$expectedIdPad;
 
         $request->validate([
             'kode_tiket' => [
@@ -154,7 +153,7 @@ class ClaimVerificationController extends Controller
                         $expectedIdPad,
                         (string) $klaim->id,
                     ];
-                    if (!in_array($raw, $validMatches, true) && !in_array($stripped, [$expectedCode2, $expectedIdPad], true)) {
+                    if (! in_array($raw, $validMatches, true) && ! in_array($stripped, [$expectedCode2, $expectedIdPad], true)) {
                         $fail('Kode tiket tidak valid. Pastikan kode sesuai dengan tiket yang dibawa penerima.');
                     }
                 },
@@ -179,7 +178,7 @@ class ClaimVerificationController extends Controller
             $handoverData['foto_serah_terima'] = $path;
         }
 
-        if (!$this->workflowService->complete($klaim, (int) ManagerPortal::id(), $handoverData)) {
+        if (! $this->workflowService->complete($klaim, (int) ManagerPortal::id(), $handoverData)) {
             return redirect()->back()->with('error', 'Klaim tidak dapat ditandai selesai karena konteks klaim sudah tidak valid.');
         }
 
@@ -213,7 +212,7 @@ class ClaimVerificationController extends Controller
 
     public function destroy(Klaim $klaim): RedirectResponse
     {
-        abort_if(!ManagerPortal::check(), 403);
+        abort_if(! ManagerPortal::check(), 403);
         $this->ensureClaimOwnedByAdmin($klaim);
 
         if (! $klaim->canBeDeleted()) {
@@ -243,6 +242,7 @@ class ClaimVerificationController extends Controller
             if (request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 422);
             }
+
             return redirect()->back()->with('error', $message);
         }
 
@@ -253,17 +253,18 @@ class ClaimVerificationController extends Controller
         ]);
 
         $barang = $klaim->barang;
-        if (!$barang) {
+        if (! $barang) {
             $message = 'Barang temuan tidak ditemukan.';
             if (request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 404);
             }
+
             return redirect()->back()->with('error', $message);
         }
 
         // Cari atau buat record pencocokan jika belum terhubung
         $pencocokan = $klaim->pencocokan;
-        if (!$pencocokan) {
+        if (! $pencocokan) {
             if ($klaim->laporan_hilang_id) {
                 $pencocokan = Pencocokan::firstOrCreate(
                     [
@@ -302,18 +303,18 @@ class ClaimVerificationController extends Controller
             );
         } else {
             $fotoBukti = null;
-            if (!empty($klaim->bukti_foto)) {
+            if (! empty($klaim->bukti_foto)) {
                 $fotoBukti = is_array($klaim->bukti_foto) ? ($klaim->bukti_foto[0] ?? null) : $klaim->bukti_foto;
             }
 
             $laporanData = [
-                'nama_barang' => 'Klaim Mandiri: ' . ($barang->nama_barang ?? 'Barang'),
+                'nama_barang' => 'Klaim Mandiri: '.($barang->nama_barang ?? 'Barang'),
                 'nama_kategori' => $barang->kategori?->nama_kategori ?? '-',
                 'lokasi_hilang' => $klaim->bukti_lokasi_spesifik ?: ($barang->lokasi_ditemukan ?: '-'),
                 'tanggal_hilang' => $klaim->bukti_waktu_hilang ?: ($klaim->created_at?->format('Y-m-d') ?: '-'),
-                'keterangan' => 'Bukti Kepemilikan: ' . ($klaim->bukti_kepemilikan ?: '-') .
-                    ($klaim->bukti_detail_isi ? "\nDetail Isi: " . $klaim->bukti_detail_isi : '') .
-                    ($klaim->catatan ? "\nCatatan Pelapor: " . $klaim->catatan : ''),
+                'keterangan' => 'Bukti Kepemilikan: '.($klaim->bukti_kepemilikan ?: '-')
+                    .($klaim->bukti_detail_isi ? "\nDetail Isi: ".$klaim->bukti_detail_isi : '')
+                    .($klaim->catatan ? "\nCatatan Pelapor: ".$klaim->catatan : ''),
                 'ciri_khusus' => $klaim->bukti_ciri_khusus ?: '-',
                 'foto_barang' => $fotoBukti,
             ];
@@ -322,28 +323,29 @@ class ClaimVerificationController extends Controller
         // Eksekusi GeminiMatchingService secara on-demand
         $result = $matchingService->match($laporanData, $barangData);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             $errorMessage = $result['error'] ?? 'Gagal menjalankan analisis AI.';
             if (request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => $errorMessage], 500);
             }
+
             return redirect()->back()->with('error', $errorMessage);
         }
 
         // Simpan hasil ke tabel pencocokans
         $pencocokan->update([
             'ai_similarity_score' => $result['similarity_score'],
-            'ai_recommendation'   => $result['recommendation'],
-            'ai_reasoning'        => $result['reasoning'],
-            'ai_matched_at'       => now(),
-            'ai_model_used'       => $result['model_used'],
+            'ai_recommendation' => $result['recommendation'],
+            'ai_reasoning' => $result['reasoning'],
+            'ai_matched_at' => now(),
+            'ai_model_used' => $result['model_used'],
         ]);
 
         $score = (int) $result['similarity_score'];
         $gaugeColor = match (true) {
-            $score >= 75 => '#16a34a',
+            $score >= ClaimVerificationConfig::MINIMUM_AI_SCORE => '#16a34a',
             $score >= 50 => '#d97706',
-            default      => '#64748b',
+            default => '#64748b',
         };
 
         if (request()->expectsJson()) {
@@ -357,7 +359,7 @@ class ClaimVerificationController extends Controller
                     'recommendation_class' => $pencocokan->aiRecommendationClass(),
                     'reasoning' => $result['reasoning'],
                     'model_used' => $result['model_used'] ?? '',
-                    'matched_at' => $pencocokan->ai_matched_at?->translatedFormat('d M Y, H:i') . ' WIB',
+                    'matched_at' => $pencocokan->ai_matched_at?->translatedFormat('d M Y, H:i').' WIB',
                     'gauge_color' => $gaugeColor,
                     'gauge_offset' => (int) round(157 - ($score / 100) * 157),
                 ],
@@ -384,18 +386,19 @@ class ClaimVerificationController extends Controller
 
             $canAccess = false;
             if ($admin instanceof Admin && $admin->region_id) {
-                $barangRegionId    = $klaim->barang?->region_id;
-                $laporanRegionId   = $klaim->laporanHilang?->region_id;
+                $barangRegionId = $klaim->barang?->region_id;
+                $laporanRegionId = $klaim->laporanHilang?->region_id;
 
-                $barangMatches  = !is_null($barangRegionId) && (int) $barangRegionId === (int) $admin->region_id;
+                $barangMatches = ! is_null($barangRegionId) && (int) $barangRegionId === (int) $admin->region_id;
                 $laporanMatches = is_null($laporanRegionId) || (int) $laporanRegionId === (int) $admin->region_id;
 
                 $canAccess = $barangMatches && $laporanMatches;
             }
 
-            abort_if(!$canAccess, 403);
+            abort_if(! $canAccess, 403);
 
             $klaim->forceFill(['admin_id' => $adminId])->save();
+
             return;
         }
 

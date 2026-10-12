@@ -7,7 +7,6 @@ use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 class MatchingCandidateQueryService
 {
@@ -24,8 +23,7 @@ class MatchingCandidateQueryService
 
     public function __construct(
         private readonly MatchingScoreService $scoreService
-    ) {
-    }
+    ) {}
 
     public function findCandidatesForLostReport(LaporanBarangHilang $laporan, int $limit = 8): Collection
     {
@@ -40,17 +38,13 @@ class MatchingCandidateQueryService
 
         $query = Barang::query()->with('kategori:id,nama_kategori');
 
-        if (Schema::hasColumn('barangs', 'region_id')) {
-            if (empty($laporan->region_id)) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->where('region_id', (int) $laporan->region_id);
-            }
+        if (empty($laporan->region_id)) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->where('region_id', (int) $laporan->region_id);
         }
 
-        if (Schema::hasColumn('barangs', 'status_laporan')) {
-            $query->where('status_laporan', WorkflowStatus::REPORT_APPROVED);
-        }
+        $query->where('status_laporan', WorkflowStatus::REPORT_APPROVED);
 
         $query->whereIn('status_barang', [
             WorkflowStatus::FOUND_AVAILABLE,
@@ -99,21 +93,14 @@ class MatchingCandidateQueryService
 
         $query = LaporanBarangHilang::query();
 
-        if (Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
-            if (empty($barang->region_id)) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->where('region_id', (int) $barang->region_id);
-            }
+        if (empty($barang->region_id)) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->where('region_id', (int) $barang->region_id);
         }
 
-        if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-            $query->where('status_laporan', WorkflowStatus::REPORT_APPROVED);
-        }
-
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
-            $query->where('sumber_laporan', 'lapor_hilang');
-        }
+        $query->where('status_laporan', WorkflowStatus::REPORT_APPROVED);
+        $query->where('sumber_laporan', 'lapor_hilang');
 
         $query->whereDoesntHave('pencocokans', function ($matchQuery) use ($barang): void {
             $matchQuery

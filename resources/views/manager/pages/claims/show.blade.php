@@ -168,7 +168,7 @@
                         <span class="claim-chip-label">Status Klaim</span>
                         <h2>{{ $namaBarang }}</h2>
                     </div>
-                    <span class="status-chip {{ $statusClass }}">{{ strtoupper($statusLabel) }}</span>
+                    <x-status-badge :status="$statusKey" size="md" :label="strtoupper($statusLabel)" />
                 </header>
 
                 <div class="claim-main-grid">
@@ -293,11 +293,11 @@
                     <div class="claim-side-body">
                         <div class="claim-status-current">
                             <small>Status Saat Ini</small>
-                            <span class="status-chip {{ $statusClass }}">{{ strtoupper($statusLabel) }}</span>
+                            <x-status-badge :status="$statusKey" size="sm" :label="strtoupper($statusLabel)" />
                         </div>
                         <div class="claim-status-current">
                             <small>Status Barang Terkait</small>
-                            <span class="status-chip {{ $statusBarangClass }}">{{ strtoupper($statusBarangLabel) }}</span>
+                            <x-status-badge :status="$statusBarangKey ?? $statusBarangClass" type="found_item" size="sm" :label="strtoupper($statusBarangLabel)" />
                         </div>
                         <div class="claim-note-box claim-note-next-step">
                             <small>Langkah Lanjut {{ $managerRoleLabel }}</small>
@@ -502,9 +502,6 @@
                                                 </span>
                                                 <small class="ai-matched-at" id="ai-matched-at-display">
                                                     {{ $aiMatchedAt ? ('Dianalisis ' . $aiMatchedAt->translatedFormat('d M Y, H:i') . ' WIB') : '' }}
-                                                </small>
-                                                <small class="ai-model-label" id="ai-model-display">
-                                                    {{ $aiModelUsed !== '' ? ('Model: ' . $aiModelUsed) : '' }}
                                                 </small>
                                             </div>
                                         </div>
@@ -907,7 +904,6 @@
             const aiBadge = document.getElementById('ai-recommendation-badge');
             const aiReasoningText = document.getElementById('ai-reasoning-text');
             const aiMatchedAtDisplay = document.getElementById('ai-matched-at-display');
-            const aiModelDisplay = document.getElementById('ai-model-display');
 
             if (!aiForm || !aiBtn) return;
 
@@ -961,9 +957,6 @@
 
                     if (aiMatchedAtDisplay) {
                         aiMatchedAtDisplay.textContent = 'Dianalisis ' + data.data.matched_at;
-                    }
-                    if (aiModelDisplay && data.data.model_used) {
-                        aiModelDisplay.textContent = 'Model: ' + data.data.model_used;
                     }
 
                     if (aiReasoningText) {

@@ -30,7 +30,7 @@ class ClaimHistoryQueryService
     }
 
     /**
-     * @param Builder<Klaim> $claimsQuery
+     * @param  Builder<Klaim>  $claimsQuery
      */
     private function applySearch(Builder $claimsQuery, string $search): void
     {
@@ -41,18 +41,18 @@ class ClaimHistoryQueryService
         $claimsQuery->where(function ($builder) use ($search) {
             $builder->whereHas('barang', function ($barangQuery) use ($search) {
                 $barangQuery
-                    ->where('nama_barang', 'like', '%' . $search . '%')
-                    ->orWhere('lokasi_ditemukan', 'like', '%' . $search . '%');
+                    ->where('nama_barang', 'like', '%'.$search.'%')
+                    ->orWhere('lokasi_ditemukan', 'like', '%'.$search.'%');
             })->orWhereHas('laporanHilang', function ($lostQuery) use ($search) {
                 $lostQuery
-                    ->where('nama_barang', 'like', '%' . $search . '%')
-                    ->orWhere('lokasi_hilang', 'like', '%' . $search . '%');
+                    ->where('nama_barang', 'like', '%'.$search.'%')
+                    ->orWhere('lokasi_hilang', 'like', '%'.$search.'%');
             });
         });
     }
 
     /**
-     * @param Builder<Klaim> $claimsQuery
+     * @param  Builder<Klaim>  $claimsQuery
      */
     private function applyStatus(Builder $claimsQuery, string $status, bool $hasStatusVerifikasi): void
     {
@@ -105,7 +105,7 @@ class ClaimHistoryQueryService
     }
 
     /**
-     * @param Builder<Klaim> $claimsQuery
+     * @param  Builder<Klaim>  $claimsQuery
      */
     private function applyType(Builder $claimsQuery, string $type): void
     {

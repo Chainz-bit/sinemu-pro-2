@@ -5,7 +5,6 @@ namespace App\Services\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
 
 class UserDashboardService
 {
@@ -16,19 +15,18 @@ class UserDashboardService
         private readonly UserDashboardClaimFeedService $claimFeedService,
         private readonly UserDashboardFoundFeedService $foundFeedService,
         private readonly UserDashboardLostFeedService $lostFeedService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{totalLaporHilang:int,totalPengajuanKlaim:int,menungguVerifikasi:int,latestActivities:LengthAwarePaginator}
      */
     public function buildDashboardData(int $userId, string $search, string $statusFilter, int $page): array
     {
-        $hasSourceColumn = Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan');
-        $hasFoundUserColumn = Schema::hasColumn('barangs', 'user_id');
-        $hasReportStatusColumn = Schema::hasColumn('laporan_barang_hilangs', 'status_laporan');
-        $hasFoundReportStatusColumn = Schema::hasColumn('barangs', 'status_laporan');
-        $hasClaimVerificationColumn = Schema::hasColumn('klaims', 'status_verifikasi');
+        $hasSourceColumn = true;
+        $hasFoundUserColumn = true;
+        $hasReportStatusColumn = true;
+        $hasFoundReportStatusColumn = true;
+        $hasClaimVerificationColumn = true;
 
         $stats = Cache::remember(
             $this->statsCacheKey($userId),
@@ -152,11 +150,11 @@ class UserDashboardService
 
     private function statsCacheKey(int $userId): string
     {
-        return 'user_dashboard:stats:' . $userId;
+        return 'user_dashboard:stats:'.$userId;
     }
 
     private function activitiesCacheKey(int $userId): string
     {
-        return 'user_dashboard:activities:' . $userId;
+        return 'user_dashboard:activities:'.$userId;
     }
 }

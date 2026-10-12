@@ -12,8 +12,7 @@ class AdminVerificationQueryService
         private readonly AdminVerificationListingService $listingService,
         private readonly AdminVerificationSummaryService $summaryService,
         private readonly AdminVerificationActivityService $activityService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

@@ -27,7 +27,7 @@ class LoginController extends Controller
 
         $admin = Admin::query()->where($loginField, $loginInput)->first();
 
-        if (!$admin || !Hash::check($validated['password'], $admin->password)) {
+        if (! $admin || ! Hash::check($validated['password'], $admin->password)) {
             return back()
                 ->withInput($request->only('login', 'remember'))
                 ->withErrors(['login' => 'Email/username atau kata sandi tidak sesuai.']);

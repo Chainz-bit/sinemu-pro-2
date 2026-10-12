@@ -24,8 +24,7 @@ class SupportDataController extends Controller
     public function wilayahs(): AnonymousResourceCollection
     {
         $wilayahs = Wilayah::query()
-            ->whereHas('admins', static fn($query) =>
-            $query->where('status_verifikasi', Admin::STATUS_ACTIVE))
+            ->whereHas('admins', static fn ($query) => $query->where('status_verifikasi', Admin::STATUS_ACTIVE))
             ->orderBy('nama_wilayah')
             ->get(['id', 'nama_wilayah', 'lat', 'lng']);
 

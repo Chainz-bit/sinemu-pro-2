@@ -228,7 +228,7 @@ class UploadSecurityTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'sinemu-upload-');
         $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=') ?: '';
         $targetBytes = max(1, $kilobytes) * 1024;
-        file_put_contents($path, $png . str_repeat('0', max(0, $targetBytes - strlen($png))));
+        file_put_contents($path, $png.str_repeat('0', max(0, $targetBytes - strlen($png))));
 
         return new UploadedFile($path, $name, 'image/png', null, true);
     }
@@ -260,10 +260,10 @@ class UploadSecurityTest extends TestCase
     private function createAdminForRegion(Wilayah $region, string $username): Admin
     {
         $superAdmin = SuperAdmin::query()->firstOrCreate(
-            ['email' => 'super-' . $username . '@example.com'],
+            ['email' => 'super-'.$username.'@example.com'],
             [
-                'nama' => 'Super ' . $username,
-                'username' => 'super-' . $username,
+                'nama' => 'Super '.$username,
+                'username' => 'super-'.$username,
                 'password' => Hash::make('password123'),
             ]
         );
@@ -271,8 +271,8 @@ class UploadSecurityTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',

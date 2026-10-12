@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\Cache;
 
 class LostReportController extends Controller
 {
-    public function __construct(private readonly LostReportCommandService $commandService)
-    {
-    }
+    public function __construct(private readonly LostReportCommandService $commandService) {}
 
     public function create(Request $request)
     {
@@ -45,14 +43,14 @@ class LostReportController extends Controller
     public function store(SubmitLostReportRequest $request): RedirectResponse
     {
         $userId = (int) Auth::id();
-        $lockKey = 'submit_laporan_hilang_' . $userId . '_' . md5(
-            trim((string) $request->input('nama_barang')) . '_' .
-            trim((string) $request->input('kategori_barang')) . '_' .
+        $lockKey = 'submit_laporan_hilang_'.$userId.'_'.md5(
+            trim((string) $request->input('nama_barang')).'_'.
+            trim((string) $request->input('kategori_barang')).'_'.
             trim((string) $request->input('tanggal_hilang'))
         );
         $lock = Cache::lock($lockKey, 10);
 
-        if (!$lock->get()) {
+        if (! $lock->get()) {
             return back()->with('warning', 'Laporan Anda sedang diproses, harap tunggu sebentar.');
         }
 
@@ -68,6 +66,8 @@ class LostReportController extends Controller
 
     public function destroy(LaporanBarangHilang $laporanBarangHilang): RedirectResponse
     {
+        $this->authorize('delete', $laporanBarangHilang);
+
         $result = $this->commandService->destroy($laporanBarangHilang, (int) Auth::id());
         $flashType = $result['ok'] ? 'status' : 'error';
 

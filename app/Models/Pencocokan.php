@@ -24,8 +24,8 @@ class Pencocokan extends Model
     protected function casts(): array
     {
         return [
-            'matched_at'          => 'datetime',
-            'ai_matched_at'       => 'datetime',
+            'matched_at' => 'datetime',
+            'ai_matched_at' => 'datetime',
             'ai_similarity_score' => 'integer',
         ];
     }
@@ -36,11 +36,11 @@ class Pencocokan extends Model
     public function aiRecommendationLabel(): string
     {
         return match ($this->ai_recommendation) {
-            'high'      => 'Sangat Cocok',
-            'medium'    => 'Kemungkinan Cocok',
-            'low'       => 'Perlu Verifikasi',
+            'high' => 'Sangat Cocok',
+            'medium' => 'Kemungkinan Cocok',
+            'low' => 'Perlu Verifikasi',
             'uncertain' => 'Kurang Cocok',
-            default     => 'Belum Dianalisis',
+            default => 'Belum Dianalisis',
         };
     }
 
@@ -50,11 +50,11 @@ class Pencocokan extends Model
     public function aiRecommendationClass(): string
     {
         return match ($this->ai_recommendation) {
-            'high'      => 'ai-badge--high',
-            'medium'    => 'ai-badge--medium',
-            'low'       => 'ai-badge--low',
+            'high' => 'ai-badge--high',
+            'medium' => 'ai-badge--medium',
+            'low' => 'ai-badge--low',
             'uncertain' => 'ai-badge--uncertain',
-            default     => 'ai-badge--none',
+            default => 'ai-badge--none',
         };
     }
 

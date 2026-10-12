@@ -108,7 +108,7 @@ class SuperTopbarNotificationTest extends TestCase
         $activityNotification = $notificationData['notifications']->firstWhere('is_dismissible', true);
 
         $this->assertNotNull($activityNotification);
-        $this->assertStringStartsWith('admin_status:' . $activeAdmin->id . ':active:', $activityNotification['item_key']);
+        $this->assertStringStartsWith('admin_status:'.$activeAdmin->id.':active:', $activityNotification['item_key']);
 
         $this->actingAs($superAdmin, 'super_admin')
             ->from(route('super.dashboard'))
@@ -440,10 +440,10 @@ class SuperTopbarNotificationTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'nama' => $name,
-            'email' => str($name)->slug('-') . '@example.com',
+            'email' => str($name)->slug('-').'@example.com',
             'username' => (string) str($name)->slug('-'),
             'password' => Hash::make('password123'),
-            'instansi' => 'Instansi ' . $name,
+            'instansi' => 'Instansi '.$name,
             'kecamatan' => 'Sindang',
             'alamat_lengkap' => 'Jl. Topbar No. 1',
             'status_verifikasi' => $status,

@@ -612,7 +612,7 @@ class AdminItemEditTest extends TestCase
         $user = $this->createUser();
 
         $this->createLostItem($user, [
-            'nama_barang' => 'Menu Aksi ' . $status,
+            'nama_barang' => 'Menu Aksi '.$status,
             'status_laporan' => $status,
             'tampil_di_home' => $tampilDiHome,
         ]);
@@ -825,7 +825,7 @@ class AdminItemEditTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createFoundItem(Admin $admin, User $user, Kategori $kategori, array $overrides = []): Barang
     {
@@ -872,7 +872,7 @@ class AdminItemEditTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createLostItem(User $user, array $overrides = []): LaporanBarangHilang
     {
@@ -945,22 +945,22 @@ class AdminItemEditTest extends TestCase
     private function createAdminForRegion(Wilayah $region, string $suffix): Admin
     {
         $superAdmin = SuperAdmin::query()->create([
-            'nama' => 'Super Admin Item ' . $suffix,
-            'email' => 'admin-item-super-' . $suffix . '@example.com',
-            'username' => 'super-item-admin-' . $suffix,
+            'nama' => 'Super Admin Item '.$suffix,
+            'email' => 'admin-item-super-'.$suffix.'@example.com',
+            'username' => 'super-item-admin-'.$suffix,
             'password' => Hash::make('password123'),
         ]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin Item ' . $suffix,
-            'email' => 'admin-item-' . $suffix . '@example.com',
-            'username' => 'admin-item-' . $suffix,
+            'nama' => 'Admin Item '.$suffix,
+            'email' => 'admin-item-'.$suffix.'@example.com',
+            'username' => 'admin-item-'.$suffix,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
-            'alamat_lengkap' => 'Jl. Admin Item No. ' . $suffix,
+            'alamat_lengkap' => 'Jl. Admin Item No. '.$suffix,
             'status_verifikasi' => 'active',
         ]);
     }

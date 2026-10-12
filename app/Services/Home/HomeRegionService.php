@@ -8,8 +8,8 @@ use Illuminate\Support\Str;
 class HomeRegionService
 {
     /**
-     * @param array<int,array<string,mixed>> $lostItems
-     * @param array<int,array<string,mixed>> $foundItems
+     * @param  array<int,array<string,mixed>>  $lostItems
+     * @param  array<int,array<string,mixed>>  $foundItems
      * @return array{0:array<int,string>,1:array<int,array<string,mixed>>}
      */
     public function build(array $lostItems, array $foundItems, bool $hasRegionTable, callable $safeDatabaseCall): array

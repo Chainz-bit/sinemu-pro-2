@@ -70,8 +70,8 @@ class UserDashboardClaimFeedService
                     'report_id' => null,
                     'item_name' => $itemName,
                     'item_detail' => $instruction
-                        ? 'Klaim Barang - ' . $location . ' • ' . $instruction
-                        : 'Klaim Barang - ' . $location,
+                        ? 'Klaim Barang - '.$location.' • '.$instruction
+                        : 'Klaim Barang - '.$location,
                     'incident_date' => (string) optional($claim->created_at)->toDateString(),
                     'created_at' => $claim->created_at,
                     'activity_at' => $activityAt,
@@ -113,11 +113,11 @@ class UserDashboardClaimFeedService
             return route('user.claims.show', $claim->id);
         }
 
-        if (!is_null($claim->barang_id)) {
+        if (! is_null($claim->barang_id)) {
             return route('home.found-detail', $claim->barang_id);
         }
 
-        if (!is_null($claim->laporan_hilang_id)) {
+        if (! is_null($claim->laporan_hilang_id)) {
             return route('home.lost-detail', $claim->laporan_hilang_id);
         }
 
@@ -143,16 +143,16 @@ class UserDashboardClaimFeedService
 
         [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
         if (in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
-            $relative = $folder . '/' . $subPath;
+            $relative = $folder.'/'.$subPath;
 
             return Storage::disk('public')->exists($relative)
-                ? asset('storage/' . $relative)
+                ? asset('storage/'.$relative)
                 : route('media.image', ['folder' => $folder, 'path' => $subPath]);
         }
 
-        $relative = $defaultFolder . '/' . ltrim($cleanPath, '/');
+        $relative = $defaultFolder.'/'.ltrim($cleanPath, '/');
         if (Storage::disk('public')->exists($relative)) {
-            return asset('storage/' . $relative);
+            return asset('storage/'.$relative);
         }
 
         return '';

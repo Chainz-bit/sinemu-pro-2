@@ -81,7 +81,7 @@ class ClaimNotificationDuplicateTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createClaim(Admin $admin, User $user, array $overrides = []): Klaim
     {

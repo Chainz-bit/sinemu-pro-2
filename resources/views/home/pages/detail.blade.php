@@ -15,10 +15,10 @@
 
                 <div class="report-detail-main">
                     <h1>{{ $detail->title }}</h1>
-                    <span class="report-detail-chip {{ $detail->status_class }}">
+                    <x-status-badge :status="$detail->status_class" :label="$detail->status_label" size="md" class="report-detail-chip">
                         <iconify-icon icon="mdi:shield-check-outline" aria-hidden="true"></iconify-icon>
-                        {{ $detail->status_label }}
-                    </span>
+                        <span>{{ $detail->status_label }}</span>
+                    </x-status-badge>
                     <p class="report-detail-subtitle">
                         {{ $detail->subtitle ?? ('Detail laporan barang ' . ($detail->type === 'hilang' ? 'hilang' : 'temuan') . ' untuk membantu pengguna memahami informasi sebelum tindak lanjut.') }}
                     </p>

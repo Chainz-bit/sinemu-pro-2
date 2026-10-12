@@ -12,20 +12,21 @@ class UserTopbarComposer
 
     public function __construct(
         private readonly DatabaseHealthService $databaseHealthService
-    ) {
-    }
+    ) {}
 
     public function compose(View $view): void
     {
         $viewData = $view->getData();
-        if (($viewData['hideTopActions'] ?? false) === true || !$this->databaseHealthService->isResponsive()) {
+        if (($viewData['hideTopActions'] ?? false) === true || ! $this->databaseHealthService->isResponsive()) {
             $this->bindEmptyState($view);
+
             return;
         }
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             $this->bindEmptyState($view);
+
             return;
         }
 

@@ -9,12 +9,19 @@ export function bindClaimVerificationForm() {
     const aiBanner = document.getElementById('checklist-ai-banner');
     const aiBannerText = document.getElementById('checklist-ai-banner-text');
     const rejectBtn = form.querySelector('button[formaction*="reject"], .claim-action-btn.danger');
+    const notesInput = form.querySelector('textarea[name="catatan_verifikasi_admin"]');
     const reasonInput = form.querySelector('textarea[name="alasan_penolakan"]');
 
     const checklistKeys = [
         'identitas_pelapor_valid',
         'detail_barang_valid',
         'kronologi_valid',
+        'bukti_visual_valid',
+        'kecocokan_data_laporan'
+    ];
+
+    const physicalAiKeys = [
+        'detail_barang_valid',
         'bukti_visual_valid',
         'kecocokan_data_laporan'
     ];
@@ -106,12 +113,14 @@ export function bindClaimVerificationForm() {
 
         let missingCount = 0;
         let allYes = true;
+        let hasAnyNo = false;
 
         checklistKeys.forEach(key => {
             const checkedRadio = form.querySelector(`input[name="${key}"]:checked`);
             if (checkedRadio) {
                 if (checkedRadio.value !== '1') {
                     allYes = false;
+                    hasAnyNo = true;
                 }
             } else {
                 // Fallback for select element if present
@@ -119,6 +128,7 @@ export function bindClaimVerificationForm() {
                 if (select && select.value !== '') {
                     if (select.value !== '1') {
                         allYes = false;
+                        hasAnyNo = true;
                     }
                 } else {
                     missingCount++;
@@ -129,23 +139,37 @@ export function bindClaimVerificationForm() {
 
         const isComplete = (missingCount === 0);
         const aiScore = getAiScore();
-        const isAiEligible = (aiScore !== null && !isNaN(aiScore) && aiScore >= 75);
-        const canApprove = isComplete && allYes && isAiEligible;
+        const isAiHigh = (aiScore === null || isNaN(aiScore) || aiScore >= 75);
+        const overrideNotes = (notesInput ? notesInput.value.trim() : '');
+        const hasValidOverride = (!isAiHigh && overrideNotes.length >= 15);
+
+        const canApprove = isComplete && allYes && (isAiHigh || hasValidOverride);
 
         if (approveButton) {
             approveButton.disabled = !canApprove;
             approveButton.setAttribute('aria-disabled', canApprove ? 'false' : 'true');
+
+            if (isComplete && allYes && !isAiHigh) {
+                approveButton.textContent = 'Setujui';
+            } else {
+                approveButton.textContent = 'Setujui Klaim';
+            }
         }
 
         if (approveHint) {
             if (!isComplete) {
                 approveHint.textContent = `Lengkapi ${missingCount} checklist wajib sebelum menyetujui klaim.`;
                 approveHint.className = 'claim-validation-hint';
-            } else if (!allYes || !isAiEligible) {
-                approveHint.textContent = 'Klaim tidak dapat disetujui otomatis karena skor AI di bawah 75 atau ada poin checklist bernilai \'Tidak\'.';
+            } else if (hasAnyNo) {
+                approveHint.textContent = 'Terdapat poin checklist bernilai "Tidak". Klaim memenuhi kriteria untuk DITOLAK (wajib isi alasan penolakan).';
+                approveHint.className = 'claim-validation-hint is-warning text-danger';
+            } else if (!isAiHigh && !hasValidOverride) {
+                approveHint.textContent = `Skor AI rendah (${aiScore ?? 0}%). Tulis catatan verifikasi fisik minimal 15 karakter di atas untuk menyetujui klaim.`;
                 approveHint.className = 'claim-validation-hint is-warning text-danger';
             } else {
-                approveHint.textContent = 'Checklist lengkap. Anda bisa menyetujui klaim.';
+                approveHint.textContent = isAiHigh
+                    ? 'Checklist lengkap. Anda bisa menyetujui klaim.'
+                    : 'Checklist lengkap dan justifikasi verifikasi fisik terpenuhi (Override Disetujui).';
                 approveHint.className = 'claim-validation-hint is-ready';
             }
         }
@@ -161,7 +185,11 @@ export function bindClaimVerificationForm() {
         }
     });
 
-    // Quick Action: Autofill checklist points dynamically based on AI Score
+    if (notesInput) {
+        notesInput.addEventListener('input', updateSubmitButtonState);
+    }
+
+    // Quick Action: Autofill 3 physical checklist points dynamically based on AI Score
     if (autofillBtn) {
         autofillBtn.addEventListener('click', function (e) {
             e.preventDefault();
@@ -169,21 +197,17 @@ export function bindClaimVerificationForm() {
             const aiScore = getAiScore();
 
             if (aiScore !== null && !isNaN(aiScore) && aiScore >= 75) {
-                // Tier 1: Skor >= 75 (Cocok / Sangat Cocok)
-                checklistKeys.forEach(key => setChecklistValue(key, '1'));
+                // Skor >= 75: Isi 3 atribut fisik bernilai '1'
+                physicalAiKeys.forEach(key => setChecklistValue(key, '1'));
             } else if (aiScore !== null && !isNaN(aiScore) && aiScore >= 50) {
-                // Tier 2: Skor 50 - 74 (Perlu Verifikasi)
-                setChecklistValue('identitas_pelapor_valid', '1');
+                // Skor 50-74: Detail dan bukti visual bernilai 1, kecocokan data laporan bernilai 0
                 setChecklistValue('detail_barang_valid', '1');
                 setChecklistValue('bukti_visual_valid', '1');
-                setChecklistValue('kronologi_valid', '0');
                 setChecklistValue('kecocokan_data_laporan', '0');
             } else {
-                // Tier 3: Skor < 50 (Kurang Cocok / Tidak Cocok, contoh kasus skor 35)
+                // Skor < 50: Bukti visual bergantung pada penalaran, detail dan kecocokan bernilai 0
                 const visualMatches = isVisualReasoningSimilar();
-                setChecklistValue('identitas_pelapor_valid', '1');
                 setChecklistValue('detail_barang_valid', '0');
-                setChecklistValue('kronologi_valid', '0');
                 setChecklistValue('bukti_visual_valid', visualMatches ? '1' : '0');
                 setChecklistValue('kecocokan_data_laporan', '0');
             }
@@ -191,8 +215,8 @@ export function bindClaimVerificationForm() {
             if (aiBanner) {
                 if (aiBannerText) {
                     aiBannerText.innerHTML = (aiScore !== null && !isNaN(aiScore))
-                        ? `Checklist terisi otomatis berdasarkan rekomendasi AI (<strong>${aiScore}%</strong>).`
-                        : `Checklist terisi otomatis berdasarkan rekomendasi AI.`;
+                        ? `Atribut fisik terisi via AI (<strong>${aiScore}%</strong>). <em>Mohon verifikasi identitas pelapor dan kronologi secara manual.</em>`
+                        : `Atribut fisik terisi via AI. <em>Mohon verifikasi identitas pelapor dan kronologi secara manual.</em>`;
                 }
                 aiBanner.style.display = 'flex';
                 aiBanner.classList.add('is-flash');

@@ -13,8 +13,7 @@ class AdminApprovalService
         private readonly AcceptAdminAction $acceptAdminAction,
         private readonly RejectAdminAction $rejectAdminAction,
         private readonly DeactivateAdminAction $deactivateAdminAction
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{key:string,message:string}

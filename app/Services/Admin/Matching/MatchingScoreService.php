@@ -61,8 +61,8 @@ class MatchingScoreService
             $reasons[] = 'Tanggal kejadian berdekatan';
         }
 
-        $descLeft = trim((string) ($laporan->keterangan ?? '') . ' ' . (string) ($laporan->ciri_khusus ?? ''));
-        $descRight = trim((string) ($barang->deskripsi ?? '') . ' ' . (string) ($barang->ciri_khusus ?? ''));
+        $descLeft = trim((string) ($laporan->keterangan ?? '').' '.(string) ($laporan->ciri_khusus ?? ''));
+        $descRight = trim((string) ($barang->deskripsi ?? '').' '.(string) ($barang->ciri_khusus ?? ''));
         $descriptionScore = (int) round($this->tokenSimilarity($descLeft, $descRight) * 10);
         $meta['deskripsi'] = $descriptionScore;
         if ($descriptionScore >= 5) {

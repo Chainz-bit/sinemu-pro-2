@@ -18,8 +18,7 @@ class ClaimVerificationWorkflowService
         private readonly RejectClaimAction $rejectClaimAction,
         private readonly CompleteClaimAction $completeClaimAction,
         private readonly ClaimStateResolver $claimStateResolver
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, array<int, string>|string>
@@ -40,12 +39,12 @@ class ClaimVerificationWorkflowService
     }
 
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      */
     public function approve(Klaim $klaim, array $validated, int $adminId): bool
     {
         $klaim = $this->freshClaim($klaim);
-        if (!$klaim || !$this->canApprove($klaim) || !$this->canApproveContext($klaim, $adminId)) {
+        if (! $klaim || ! $this->canApprove($klaim) || ! $this->canApproveContext($klaim, $adminId)) {
             return false;
         }
 
@@ -53,12 +52,12 @@ class ClaimVerificationWorkflowService
     }
 
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      */
     public function reject(Klaim $klaim, array $validated, int $adminId): bool
     {
         $klaim = $this->freshClaim($klaim);
-        if (!$klaim || !$this->canReject($klaim) || !$this->canRejectContext($klaim, $adminId)) {
+        if (! $klaim || ! $this->canReject($klaim) || ! $this->canRejectContext($klaim, $adminId)) {
             return false;
         }
 
@@ -70,12 +69,12 @@ class ClaimVerificationWorkflowService
     }
 
     /**
-     * @param array<string,mixed> $handoverData
+     * @param  array<string,mixed>  $handoverData
      */
     public function complete(Klaim $klaim, int $adminId, array $handoverData = []): bool
     {
         $klaim = $this->freshClaim($klaim);
-        if (!$klaim || !$this->canComplete($klaim) || !$this->canCompleteContext($klaim, $adminId)) {
+        if (! $klaim || ! $this->canComplete($klaim) || ! $this->canCompleteContext($klaim, $adminId)) {
             return false;
         }
 
@@ -87,7 +86,7 @@ class ClaimVerificationWorkflowService
     }
 
     /**
-     * @param array<string,mixed> $handoverData
+     * @param  array<string,mixed>  $handoverData
      */
     public function completeHandover(Klaim $klaim, int $adminId, array $handoverData = []): bool
     {
@@ -118,12 +117,12 @@ class ClaimVerificationWorkflowService
     {
         return $this->hasManageableContext($klaim, $adminId)
             && $this->hasPendingClaimContext($klaim)
-            && !$this->hasCompletedClaimForSameItem($klaim);
+            && ! $this->hasCompletedClaimForSameItem($klaim);
     }
 
     private function canRejectContext(Klaim $klaim, int $adminId): bool
     {
-        if (!$this->hasManageableContext($klaim, $adminId)) {
+        if (! $this->hasManageableContext($klaim, $adminId)) {
             return false;
         }
 
@@ -146,7 +145,7 @@ class ClaimVerificationWorkflowService
 
     private function canCompleteContext(Klaim $klaim, int $adminId): bool
     {
-        if (!$this->hasManageableContext($klaim, $adminId)) {
+        if (! $this->hasManageableContext($klaim, $adminId)) {
             return false;
         }
 
@@ -158,11 +157,11 @@ class ClaimVerificationWorkflowService
         if ($klaim->pencocokan !== null) {
             return in_array($klaim->barang?->status_barang, $validBarangStatuses, true)
                 && $klaim->pencocokan->status_pencocokan === WorkflowStatus::MATCH_CLAIM_APPROVED
-                && !$this->hasCompletedClaimForSameItem($klaim);
+                && ! $this->hasCompletedClaimForSameItem($klaim);
         }
 
         return in_array($klaim->barang?->status_barang, $validBarangStatuses, true)
-            && !$this->hasCompletedClaimForSameItem($klaim);
+            && ! $this->hasCompletedClaimForSameItem($klaim);
     }
 
     private function hasPendingClaimContext(Klaim $klaim): bool
@@ -185,11 +184,11 @@ class ClaimVerificationWorkflowService
     private function hasManageableContext(Klaim $klaim, int $adminId): bool
     {
         $admin = Admin::query()->find($adminId);
-        if (!$admin?->isActive() || is_null($admin->region_id)) {
+        if (! $admin?->isActive() || is_null($admin->region_id)) {
             return false;
         }
 
-        if (!is_null($klaim->admin_id) && (int) $klaim->admin_id !== (int) $admin->id) {
+        if (! is_null($klaim->admin_id) && (int) $klaim->admin_id !== (int) $admin->id) {
             return false;
         }
 

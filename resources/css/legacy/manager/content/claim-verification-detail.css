@@ -1106,7 +1106,7 @@
 .ai-card-top {
     display: flex;
     gap: 14px;
-    align-items: stretch;
+    align-items: flex-start;
     flex: 1;
     min-height: 0;
 }
@@ -1115,7 +1115,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: center;
     width: 140px;
     flex-shrink: 0;
@@ -1209,8 +1209,10 @@
     line-height: 1.3;
 }
 
-/* Callout Box: Penjelasan Analisis AI (Clean, No Thick Purple Border) */
-.claim-note-ai {
+/* Callout Box: Penjelasan Analisis AI (Clean, Dynamic Auto-Scroll) */
+.claim-note-ai,
+.ai-reasoning-box,
+#ai-reasoning-box {
     flex: 1;
     flex-grow: 1;
     display: flex;
@@ -1219,12 +1221,37 @@
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 12px 14px;
+    padding-right: 0.5rem;
     box-sizing: border-box;
+    max-height: 210px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.claim-note-ai::-webkit-scrollbar,
+.ai-reasoning-box::-webkit-scrollbar,
+#ai-reasoning-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.claim-note-ai::-webkit-scrollbar-track,
+.ai-reasoning-box::-webkit-scrollbar-track,
+#ai-reasoning-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.claim-note-ai::-webkit-scrollbar-thumb,
+.ai-reasoning-box::-webkit-scrollbar-thumb,
+#ai-reasoning-box::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 999px;
 }
 
 .claim-note-ai small.claim-note-title,
-.claim-note-ai small {
+.claim-note-ai small,
+#ai-reasoning-box small.claim-note-title,
+#ai-reasoning-box small {
     color: #475569;
     font-weight: 700;
     font-size: 11px;
@@ -1235,12 +1262,14 @@
     letter-spacing: 0.04em;
 }
 
-.claim-note-ai p {
+.claim-note-ai p,
+#ai-reasoning-box p {
     margin: 0;
     font-size: 13px;
     color: #334155;
-    line-height: 1.55;
+    line-height: 1.6;
     flex: 1;
+    white-space: pre-line;
 }
 
 /* Card Footer: Tombol Analisis Ulang Sejajar Bawah */
@@ -1920,6 +1949,15 @@
 @media (max-width: 640px) {
     .crosscheck-grid-details {
         grid-template-columns: 1fr;
+    }
+
+    .ai-card-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ai-score-column {
+        width: 100%;
     }
 }
 

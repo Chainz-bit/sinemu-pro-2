@@ -34,7 +34,7 @@
                                 <th>Nama Barang</th>
                                 <th>Kategori</th>
                                 <th>Lokasi</th>
-                                <th>Status</th>
+                                <th class="min-w-[140px]">Status</th>
                                 <th>Wilayah</th>
                                 <th class="text-end">Aksi</th>
                             </tr>
@@ -42,14 +42,14 @@
                         <tbody>
                             @forelse($barangs as $barang)
                                 <tr>
-                                    <td class="fw-semibold">{{ $barang->nama_barang }}</td>
-                                    <td>{{ $barang->kategori?->nama_kategori ?? '-' }}</td>
-                                    <td>{{ $barang->lokasi_ditemukan }}</td>
-                                    <td>
-                                        <span class="badge text-bg-info">{{ $barang->status_barang ?? 'Belum ada status' }}</span>
+                                    <td class="fw-semibold align-middle">{{ $barang->nama_barang }}</td>
+                                    <td class="align-middle">{{ $barang->kategori?->nama_kategori ?? '-' }}</td>
+                                    <td class="align-middle">{{ $barang->lokasi_ditemukan }}</td>
+                                    <td class="align-middle min-w-[140px]">
+                                        <x-status-badge :status="$barang->status_barang" type="found_item" />
                                     </td>
-                                    <td>{{ $barang->region?->nama_wilayah ?? '-' }}</td>
-                                    <td class="text-end">
+                                    <td class="align-middle">{{ $barang->region?->nama_wilayah ?? '-' }}</td>
+                                    <td class="text-end align-middle">
                                         <a href="{{ manager_route('barang-wilayah.edit', $barang) }}" class="btn btn-outline-primary btn-sm">Edit</a>
                                         <form method="POST" action="{{ manager_route('barang-wilayah.destroy', $barang) }}" class="d-inline" data-confirm-delete data-confirm-message="Hapus barang ini?">
                                             @csrf

@@ -423,25 +423,25 @@
                         </div>
                         <div class="claim-ticket-badge-wrap">
                             @if($isReadyForPickup)
-                                <span class="status-chip status-diproses claim-chip-lg claim-chip-ready">
+                                <x-status-badge status="disetujui" size="md" class="claim-chip-lg claim-chip-ready gap-1">
                                     <iconify-icon icon="mdi:check-circle" width="16"></iconify-icon>
                                     Siap Diambil
-                                </span>
+                                </x-status-badge>
                             @elseif($isCompleted)
-                                <span class="status-chip status-selesai claim-chip-lg claim-chip-completed">
+                                <x-status-badge status="selesai" size="md" class="claim-chip-lg claim-chip-completed gap-1">
                                     <iconify-icon icon="mdi:package-variant-closed-check" width="16"></iconify-icon>
                                     Sudah Diserahkan (Selesai)
-                                </span>
+                                </x-status-badge>
                             @elseif($statusKey === 'ditolak')
-                                <span class="status-chip status-ditolak claim-chip-lg claim-chip-rejected">
+                                <x-status-badge status="ditolak" size="md" class="claim-chip-lg claim-chip-rejected gap-1">
                                     <iconify-icon icon="mdi:close-circle" width="16"></iconify-icon>
                                     Tidak Disetujui
-                                </span>
+                                </x-status-badge>
                             @else
-                                <span class="status-chip status-dalam_peninjauan claim-chip-lg claim-chip-pending">
+                                <x-status-badge status="menunggu" size="md" class="claim-chip-lg claim-chip-pending gap-1">
                                     <iconify-icon icon="mdi:clock-outline" width="16"></iconify-icon>
                                     Menunggu Tinjauan
-                                </span>
+                                </x-status-badge>
                             @endif
                         </div>
                     </div>

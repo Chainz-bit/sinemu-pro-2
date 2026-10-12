@@ -8,32 +8,32 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('barangs')) {
+        if (! Schema::hasTable('barangs')) {
             return;
         }
 
         Schema::table('barangs', function (Blueprint $table) {
-            if (!Schema::hasColumn('barangs', 'lokasi_pengambilan')) {
+            if (! Schema::hasColumn('barangs', 'lokasi_pengambilan')) {
                 $table->string('lokasi_pengambilan')->nullable()->after('foto_barang');
             }
 
-            if (!Schema::hasColumn('barangs', 'alamat_pengambilan')) {
+            if (! Schema::hasColumn('barangs', 'alamat_pengambilan')) {
                 $table->string('alamat_pengambilan')->nullable()->after('lokasi_pengambilan');
             }
 
-            if (!Schema::hasColumn('barangs', 'penanggung_jawab_pengambilan')) {
+            if (! Schema::hasColumn('barangs', 'penanggung_jawab_pengambilan')) {
                 $table->string('penanggung_jawab_pengambilan')->nullable()->after('alamat_pengambilan');
             }
 
-            if (!Schema::hasColumn('barangs', 'kontak_pengambilan')) {
+            if (! Schema::hasColumn('barangs', 'kontak_pengambilan')) {
                 $table->string('kontak_pengambilan')->nullable()->after('penanggung_jawab_pengambilan');
             }
 
-            if (!Schema::hasColumn('barangs', 'jam_layanan_pengambilan')) {
+            if (! Schema::hasColumn('barangs', 'jam_layanan_pengambilan')) {
                 $table->string('jam_layanan_pengambilan')->nullable()->after('kontak_pengambilan');
             }
 
-            if (!Schema::hasColumn('barangs', 'catatan_pengambilan')) {
+            if (! Schema::hasColumn('barangs', 'catatan_pengambilan')) {
                 $table->text('catatan_pengambilan')->nullable()->after('jam_layanan_pengambilan');
             }
         });
@@ -41,7 +41,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('barangs')) {
+        if (! Schema::hasTable('barangs')) {
             return;
         }
 

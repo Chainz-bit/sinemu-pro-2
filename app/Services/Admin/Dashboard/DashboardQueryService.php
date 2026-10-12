@@ -3,10 +3,8 @@
 namespace App\Services\Admin\Dashboard;
 
 use App\Http\Requests\Admin\DashboardIndexRequest;
-use App\Models\Barang;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 class DashboardQueryService
 {
@@ -15,8 +13,7 @@ class DashboardQueryService
         private readonly DashboardClaimFeedService $claimFeedService,
         private readonly DashboardFoundFeedService $foundFeedService,
         private readonly DashboardLostFeedService $lostFeedService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{totalHilang:int,totalTemuan:int,menungguVerifikasi:int,latestReports:LengthAwarePaginator}
@@ -45,8 +42,8 @@ class DashboardQueryService
 
     private function buildLatestReports(): Collection
     {
-        $lostHasHomeFlag = Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home');
-        $foundHasHomeFlag = Schema::hasColumn('barangs', 'tampil_di_home');
+        $lostHasHomeFlag = true;
+        $foundHasHomeFlag = true;
 
         $lostReports = $this->buildLostReports($lostHasHomeFlag);
         $foundReports = $this->buildFoundReports($foundHasHomeFlag);

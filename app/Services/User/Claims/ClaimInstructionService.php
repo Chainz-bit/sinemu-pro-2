@@ -5,8 +5,6 @@ namespace App\Services\User\Claims;
 use App\Models\Klaim;
 use App\Support\ClaimStatusPresenter;
 use App\Support\WorkflowStatus;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ClaimInstructionService
@@ -76,7 +74,7 @@ class ClaimInstructionService
             $poskoAddress = trim((string) ($admin?->alamat_lengkap ?? $admin?->pickup_address ?? ''));
         }
         if ($poskoAddress === '') {
-            $poskoAddress = 'Posko layanan pengelola wilayah ' . ($admin?->kecamatan ?? 'kampus/instansi');
+            $poskoAddress = 'Posko layanan pengelola wilayah '.($admin?->kecamatan ?? 'kampus/instansi');
         }
 
         $poskoWilayah = trim((string) ($barang?->region?->nama_wilayah ?? $admin?->kecamatan ?? $admin?->region?->nama_wilayah ?? '-'));
@@ -98,19 +96,19 @@ class ClaimInstructionService
 
         $waUrl = null;
         $telHref = null;
-        $claimCode = '#KLM-' . str_pad((string) $klaim->id, 5, '0', STR_PAD_LEFT);
+        $claimCode = '#KLM-'.str_pad((string) $klaim->id, 5, '0', STR_PAD_LEFT);
         $cleanPhone = preg_replace('/[^0-9]/', '', $contactRaw) ?? '';
 
         if ($cleanPhone !== '') {
-            $telHref = 'tel:' . $contactRaw;
+            $telHref = 'tel:'.$contactRaw;
             if (str_starts_with($cleanPhone, '0')) {
-                $cleanPhone = '62' . substr($cleanPhone, 1);
-            } elseif (!str_starts_with($cleanPhone, '62')) {
-                $cleanPhone = '62' . $cleanPhone;
+                $cleanPhone = '62'.substr($cleanPhone, 1);
+            } elseif (! str_starts_with($cleanPhone, '62')) {
+                $cleanPhone = '62'.$cleanPhone;
             }
 
-            $waText = "Halo Petugas SiNemu, saya ingin konfirmasi pengambilan barang temuan terkait tiket klaim {$claimCode} (" . ($barang?->nama_barang ?? 'Barang Temuan') . ").";
-            $waUrl = 'https://wa.me/' . $cleanPhone . '?text=' . urlencode($waText);
+            $waText = "Halo Petugas SiNemu, saya ingin konfirmasi pengambilan barang temuan terkait tiket klaim {$claimCode} (".($barang?->nama_barang ?? 'Barang Temuan').').';
+            $waUrl = 'https://wa.me/'.$cleanPhone.'?text='.urlencode($waText);
         }
 
         $adminEmail = filter_var($admin?->email ?? '', FILTER_VALIDATE_EMAIL) ? $admin->email : null;
@@ -118,7 +116,7 @@ class ClaimInstructionService
         // Image resolution
         $itemImageUrl = $this->resolveItemImageUrl(
             (string) ($barang?->foto_barang ?? $klaim->laporanHilang?->foto_barang ?? ''),
-            !is_null($klaim->barang_id) ? 'barang-temuan' : 'barang-hilang'
+            ! is_null($klaim->barang_id) ? 'barang-temuan' : 'barang-hilang'
         );
 
         // Bukti foto URLs for user view
@@ -154,7 +152,7 @@ class ClaimInstructionService
             'adminEmail' => $adminEmail,
             'itemImageUrl' => $itemImageUrl,
             'buktiFotoList' => $buktiFotoList,
-            'pageTitle' => 'Tiket Pengambilan Barang ' . $claimCode . ' - SiNemu',
+            'pageTitle' => 'Tiket Pengambilan Barang '.$claimCode.' - SiNemu',
         ];
     }
 
@@ -184,6 +182,6 @@ class ClaimInstructionService
             return route('media.image', ['folder' => $defaultFolder, 'path' => $cleanPath]);
         }
 
-        return asset('storage/' . $cleanPath);
+        return asset('storage/'.$cleanPath);
     }
 }

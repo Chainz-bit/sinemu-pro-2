@@ -3,6 +3,7 @@
 namespace App\Services\Home;
 
 use App\Models\LaporanBarangHilang;
+use App\Support\RoleLabels;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Carbon;
 
@@ -10,8 +11,7 @@ class HomeLostDetailService
 {
     public function __construct(
         private readonly HomeMediaAssetService $mediaAssetService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{pageTitle:string,detail:object}
@@ -34,7 +34,7 @@ class HomeLostDetailService
             WorkflowStatus::REPORT_MATCHED => ['Sudah Dicocokkan', 'is-found'],
             WorkflowStatus::REPORT_CLAIMED => ['Sedang Diproses Klaim', 'is-in-progress'],
             WorkflowStatus::REPORT_COMPLETED => ['Selesai', 'is-returned'],
-            WorkflowStatus::REPORT_REJECTED => ['Ditolak ' . \App\Support\RoleLabels::manager(), 'is-returned'],
+            WorkflowStatus::REPORT_REJECTED => ['Ditolak '.RoleLabels::manager(), 'is-returned'],
             default => ['Menunggu Verifikasi', 'is-in-progress'],
         };
 

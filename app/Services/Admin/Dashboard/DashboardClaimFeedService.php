@@ -6,14 +6,13 @@ use App\Models\Klaim;
 use App\Support\ClaimStatusPresenter;
 use App\Support\ManagerPortal;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 class DashboardClaimFeedService
 {
     public function build(bool $foundHasHomeFlag, bool $lostHasHomeFlag): Collection
     {
         $admin = ManagerPortal::user();
-        if (!$admin || empty($admin->region_id)) {
+        if (! $admin || empty($admin->region_id)) {
             return collect();
         }
 
@@ -35,16 +34,16 @@ class DashboardClaimFeedService
                 },
                 'user:id,nama,name',
             ])
-            ->select(array_values(array_filter([
+            ->select([
                 'id',
                 'status_klaim',
-                Schema::hasColumn('klaims', 'status_verifikasi') ? 'status_verifikasi' : null,
+                'status_verifikasi',
                 'catatan',
                 'created_at',
                 'updated_at',
                 'barang_id',
                 'laporan_hilang_id',
-            ])))
+            ])
             ->where(function ($query) use ($admin): void {
                 $query
                     ->whereHas('barang', function ($barangQuery) use ($admin): void {
@@ -57,8 +56,7 @@ class DashboardClaimFeedService
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get()
-            ->toBase()
-            ->map(fn ($claim) => $this->presentClaim($claim));
+            ->map(fn (Klaim $claim): object => $this->presentClaim($claim));
     }
 
     private function presentClaim(Klaim $claim): object
@@ -82,7 +80,7 @@ class DashboardClaimFeedService
             'id' => (int) $claim->id,
             'type' => 'klaim',
             'item_name' => $namaBarang,
-            'item_detail' => 'Pelapor: ' . $pelapor . ' - Layanan: Verifikasi Klaim - ' . $lokasi,
+            'item_detail' => 'Pelapor: '.$pelapor.' - Layanan: Verifikasi Klaim - '.$lokasi,
             'incident_date' => $claim->created_at,
             'created_at' => $claim->created_at,
             'activity_at' => $activityAt,
@@ -94,15 +92,15 @@ class DashboardClaimFeedService
             'avatar_class' => 'avatar-claim',
             'foto_barang' => $claim->barang?->foto_barang ?? $claim->laporanHilang?->foto_barang,
             'detail_url' => $this->resolveDetailUrl($claim),
-            'edit_url' => route(\App\Support\ManagerPortal::routeName('claim-verifications.show'), $claim->id),
+            'edit_url' => route(ManagerPortal::routeName('claim-verifications.show'), $claim->id),
             'edit_status_klaim' => $claim->status_klaim,
             'edit_catatan' => $claim->catatan,
-            'update_url' => route(\App\Support\ManagerPortal::routeName('dashboard.reports.update'), ['type' => 'klaim', 'id' => $claim->id]),
+            'update_url' => route(ManagerPortal::routeName('dashboard.reports.update'), ['type' => 'klaim', 'id' => $claim->id]),
             'upload_home_url' => $this->resolveUploadHomeUrl($claim),
             'home_published' => $this->resolveHomePublished($claim),
             'target_url' => $this->resolveTargetUrl($namaBarang, $claimStatusKey),
             'target_label' => 'Buka Verifikasi Klaim',
-            'delete_url' => route(\App\Support\ManagerPortal::routeName('claim-verifications.destroy'), $claim->id),
+            'delete_url' => route(ManagerPortal::routeName('claim-verifications.destroy'), $claim->id),
         ];
     }
 
@@ -126,17 +124,17 @@ class DashboardClaimFeedService
     private function resolveDetailUrl(Klaim $claim): string
     {
         return match (true) {
-            !is_null($claim->barang_id) => route(\App\Support\ManagerPortal::routeName('found-items.show'), $claim->barang_id),
-            !is_null($claim->laporan_hilang_id) => route(\App\Support\ManagerPortal::routeName('lost-items.show'), $claim->laporan_hilang_id),
-            default => route(\App\Support\ManagerPortal::routeName('claim-verifications.show'), $claim->id),
+            ! is_null($claim->barang_id) => route(ManagerPortal::routeName('found-items.show'), $claim->barang_id),
+            ! is_null($claim->laporan_hilang_id) => route(ManagerPortal::routeName('lost-items.show'), $claim->laporan_hilang_id),
+            default => route(ManagerPortal::routeName('claim-verifications.show'), $claim->id),
         };
     }
 
     private function resolveUploadHomeUrl(Klaim $claim): ?string
     {
         return match (true) {
-            !is_null($claim->barang_id) => route(\App\Support\ManagerPortal::routeName('dashboard.reports.publish-home'), ['type' => 'temuan', 'id' => $claim->barang_id]),
-            !is_null($claim->laporan_hilang_id) => route(\App\Support\ManagerPortal::routeName('dashboard.reports.publish-home'), ['type' => 'hilang', 'id' => $claim->laporan_hilang_id]),
+            ! is_null($claim->barang_id) => route(ManagerPortal::routeName('dashboard.reports.publish-home'), ['type' => 'temuan', 'id' => $claim->barang_id]),
+            ! is_null($claim->laporan_hilang_id) => route(ManagerPortal::routeName('dashboard.reports.publish-home'), ['type' => 'hilang', 'id' => $claim->laporan_hilang_id]),
             default => null,
         };
     }
@@ -144,15 +142,15 @@ class DashboardClaimFeedService
     private function resolveHomePublished(Klaim $claim): bool
     {
         return match (true) {
-            !is_null($claim->barang?->tampil_di_home ?? null) => (bool) $claim->barang?->tampil_di_home,
-            !is_null($claim->laporanHilang?->tampil_di_home ?? null) => (bool) $claim->laporanHilang?->tampil_di_home,
+            ! is_null($claim->barang?->tampil_di_home ?? null) => (bool) $claim->barang?->tampil_di_home,
+            ! is_null($claim->laporanHilang?->tampil_di_home ?? null) => (bool) $claim->laporanHilang?->tampil_di_home,
             default => false,
         };
     }
 
     private function resolveTargetUrl(string $namaBarang, string $claimStatusKey): string
     {
-        return route(\App\Support\ManagerPortal::routeName('claim-verifications'), [
+        return route(ManagerPortal::routeName('claim-verifications'), [
             'search' => $namaBarang,
             'status' => match ($claimStatusKey) {
                 'menunggu' => 'menunggu',

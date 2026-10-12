@@ -12,7 +12,9 @@ use Throwable;
 class ClaimEvidenceMigrationService
 {
     private const LEGACY_PREFIX = 'verifikasi-klaim/';
+
     private const PRIVATE_PREFIX = 'private/verifikasi-klaim/';
+
     private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
 
     /**
@@ -37,8 +39,9 @@ class ClaimEvidenceMigrationService
             'error_samples' => [],
         ];
 
-        if (!Schema::hasTable('klaims') || !Schema::hasColumn('klaims', 'bukti_foto')) {
+        if (! Schema::hasTable('klaims') || ! Schema::hasColumn('klaims', 'bukti_foto')) {
             $summary['warnings'][] = 'Tabel klaims atau kolom bukti_foto tidak tersedia.';
+
             return $summary;
         }
 
@@ -69,6 +72,7 @@ class ClaimEvidenceMigrationService
                 $classification = $this->classifyPath($rawPath);
                 if ($classification['status'] === 'private') {
                     $summary['already_private']++;
+
                     continue;
                 }
 
@@ -80,11 +84,12 @@ class ClaimEvidenceMigrationService
                         'path' => $rawPath,
                         'reason' => $classification['reason'],
                     ], $sampleLimit);
+
                     continue;
                 }
 
                 $legacyPath = $classification['path'];
-                if (!Storage::disk('public')->exists($legacyPath)) {
+                if (! Storage::disk('public')->exists($legacyPath)) {
                     $summary['missing_files']++;
                     $summary['skipped']++;
                     $this->sample($summary['warnings'], [
@@ -93,6 +98,7 @@ class ClaimEvidenceMigrationService
                         'path' => $legacyPath,
                         'reason' => 'missing_public_file',
                     ], $sampleLimit);
+
                     continue;
                 }
 
@@ -102,10 +108,10 @@ class ClaimEvidenceMigrationService
                     'claim_id' => $claim->id,
                     'index' => $index,
                     'from' => $legacyPath,
-                    'to' => self::PRIVATE_PREFIX . now()->format('Y/m') . '/<random>.' . strtolower(pathinfo($legacyPath, PATHINFO_EXTENSION)),
+                    'to' => self::PRIVATE_PREFIX.now()->format('Y/m').'/<random>.'.strtolower(pathinfo($legacyPath, PATHINFO_EXTENSION)),
                 ], $sampleLimit);
 
-                if (!$execute) {
+                if (! $execute) {
                     continue;
                 }
 
@@ -127,13 +133,13 @@ class ClaimEvidenceMigrationService
                 }
             }
 
-            if (!$execute || !$claimChanged) {
+            if (! $execute || ! $claimChanged) {
                 return;
             }
 
             try {
                 DB::transaction(function () use ($claim, $updatedPaths): void {
-                    if (!$claim->forceFill(['bukti_foto' => array_values($updatedPaths)])->save()) {
+                    if (! $claim->forceFill(['bukti_foto' => array_values($updatedPaths)])->save()) {
                         throw new \RuntimeException('Database update returned false.');
                     }
                 });
@@ -145,7 +151,7 @@ class ClaimEvidenceMigrationService
                 $this->sample($summary['error_samples'], [
                     'claim_id' => $claim->id,
                     'path' => implode(', ', $copiedForClaim),
-                    'error' => 'database_update_failed: ' . $exception->getMessage(),
+                    'error' => 'database_update_failed: '.$exception->getMessage(),
                 ], $sampleLimit);
             }
         });
@@ -184,7 +190,7 @@ class ClaimEvidenceMigrationService
 
         $normalized = str_replace('\\', '/', $trimmed);
         $extension = strtolower(pathinfo($normalized, PATHINFO_EXTENSION));
-        if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+        if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
             return ['status' => 'invalid', 'path' => $normalized, 'reason' => 'unsupported_extension'];
         }
 
@@ -192,7 +198,7 @@ class ClaimEvidenceMigrationService
             return ['status' => 'private', 'path' => $normalized, 'reason' => null];
         }
 
-        if (!str_starts_with($normalized, self::LEGACY_PREFIX)) {
+        if (! str_starts_with($normalized, self::LEGACY_PREFIX)) {
             return ['status' => 'invalid', 'path' => $normalized, 'reason' => 'outside_legacy_folder'];
         }
 
@@ -202,20 +208,20 @@ class ClaimEvidenceMigrationService
     private function copyToPrivate(string $legacyPath): string
     {
         $extension = strtolower(pathinfo($legacyPath, PATHINFO_EXTENSION));
-        $directory = self::PRIVATE_PREFIX . now()->format('Y/m');
-        $newPath = $directory . '/' . Str::uuid()->toString() . '.' . $extension;
+        $directory = self::PRIVATE_PREFIX.now()->format('Y/m');
+        $newPath = $directory.'/'.Str::uuid()->toString().'.'.$extension;
 
         while (Storage::disk('local')->exists($newPath)) {
-            $newPath = $directory . '/' . Str::uuid()->toString() . '.' . $extension;
+            $newPath = $directory.'/'.Str::uuid()->toString().'.'.$extension;
         }
 
         $stream = Storage::disk('public')->readStream($legacyPath);
-        if (!is_resource($stream)) {
+        if (! is_resource($stream)) {
             throw new \RuntimeException('Tidak bisa membaca file public legacy.');
         }
 
         try {
-            if (!Storage::disk('local')->writeStream($newPath, $stream)) {
+            if (! Storage::disk('local')->writeStream($newPath, $stream)) {
                 throw new \RuntimeException('Tidak bisa menulis file private.');
             }
         } finally {
@@ -228,8 +234,7 @@ class ClaimEvidenceMigrationService
     }
 
     /**
-     * @param array<int,mixed> $items
-     * @param mixed $item
+     * @param  array<int,mixed>  $items
      */
     private function sample(array &$items, mixed $item, int $limit): void
     {

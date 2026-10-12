@@ -254,9 +254,9 @@ class AdminDirectoryTest extends TestCase
             $this->actingAs($superAdmin, 'super_admin')
                 ->from(route('super.admins.create'))
                 ->post(route('super.admins.store'), $this->validManagerPayload([
-                    'nama' => 'Admin Pickup Invalid ' . $index,
-                    'username' => 'admin-pickup-invalid-' . $index,
-                    'email' => 'admin-pickup-invalid-' . $index . '@example.com',
+                    'nama' => 'Admin Pickup Invalid '.$index,
+                    'username' => 'admin-pickup-invalid-'.$index,
+                    'email' => 'admin-pickup-invalid-'.$index.'@example.com',
                     'pickup_lat' => $case['pickup_lat'],
                     'pickup_lng' => $case['pickup_lng'],
                 ]))
@@ -489,10 +489,10 @@ class AdminDirectoryTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin?->id,
             'nama' => $name,
-            'email' => str($name)->slug('-') . '@example.com',
+            'email' => str($name)->slug('-').'@example.com',
             'username' => (string) str($name)->slug('-'),
             'password' => Hash::make('password123'),
-            'instansi' => 'Instansi ' . $name,
+            'instansi' => 'Instansi '.$name,
             'kecamatan' => str_contains($name, 'Sindang') ? 'Sindang' : 'Lohbener',
             'alamat_lengkap' => 'Jl. Direktori No. 1',
             'status_verifikasi' => $status,
@@ -501,7 +501,7 @@ class AdminDirectoryTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $overrides
+     * @param  array<string,mixed>  $overrides
      * @return array<string,mixed>
      */
     private function validManagerPayload(array $overrides = []): array

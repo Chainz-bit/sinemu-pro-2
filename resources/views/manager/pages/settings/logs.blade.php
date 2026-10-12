@@ -85,11 +85,7 @@
                             <p>{{ $log->message }}</p>
                             <small>
                                 {{ $log->created_at?->translatedFormat('d M Y, H:i') }} WIB
-                                @if($isUnread)
-                                    <span class="status-chip status-dalam_peninjauan">Belum Dibaca</span>
-                                @else
-                                    <span class="status-chip status-selesai">Sudah Dibaca</span>
-                                @endif
+                                <x-status-badge :status="$isUnread ? 'unread' : 'read'" type="log" size="sm" />
                             </small>
                         </div>
 

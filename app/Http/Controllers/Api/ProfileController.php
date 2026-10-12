@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\UpdateProfileRequest;
 use App\Http\Resources\Api\UserResource;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Schema;
 
 class ProfileController extends Controller
 {
@@ -37,7 +36,7 @@ class ProfileController extends Controller
             $payload['nomor_telepon'] = $validated['phone'];
         }
 
-        if (array_key_exists('alamat', $validated) && Schema::hasColumn('users', 'alamat')) {
+        if (array_key_exists('alamat', $validated)) {
             $payload['alamat'] = $validated['alamat'];
         }
 

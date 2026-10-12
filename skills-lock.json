@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "clean-code": {
+      "source": "wondelai/skills",
+      "sourceType": "github",
+      "skillPath": "clean-code/SKILL.md",
+      "computedHash": "af6b8adde1281493c8a55d5505efc739a2a5ed851ca467b7b6d35c2d2b2f9cea"
+    },
+    "laravel-best-practices": {
+      "source": "AsyrafHussin/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-best-practices/SKILL.md",
+      "computedHash": "3f2351dc1821d430b6b58ce24175e0af11f5c11b234198bfc76a6702c05fe3ef"
+    },
+    "laravel-owasp-security": {
+      "source": "AsyrafHussin/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-owasp-security/SKILL.md",
+      "computedHash": "c8e335415263f9f7bb224f15f82dda0a6cdfc136538e3fbf6b0eb1928fa110b5"
+    }
+  }
+}

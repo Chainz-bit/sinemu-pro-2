@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\Auth\LoginController;
-use App\Http\Controllers\Admin\BarangWilayahController;
 use App\Http\Controllers\Admin\Auth\RegisteredUserController as AdminRegisteredUserController;
+use App\Http\Controllers\Admin\BarangWilayahController;
 use App\Http\Controllers\Admin\ClaimVerificationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FoundItemController;
@@ -15,7 +15,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Support\ManagerPortal;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '.')->group(function () {
+Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix().'.')->group(function () {
     Route::get('logout', [LoginController::class, 'redirectAfterLogoutGet'])->name('logout.get');
 
     Route::middleware(ManagerPortal::guestMiddleware())->group(function () {
@@ -69,7 +69,6 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
         Route::post('verifikasi-klaim/{klaim}/run-ai-match', [ClaimVerificationController::class, 'runAiMatch'])->name('claim-verifications.run-ai-match');
         Route::post('verifikasi-klaim/{klaim}/run-ai-analysis', [ClaimVerificationController::class, 'runAiAnalysis'])->name('claim-verifications.run-ai-analysis');
 
-
         Route::get('input-barang', [InputItemController::class, 'index'])->name('input-items');
         Route::post('input-barang', [InputItemController::class, 'store'])->name('input-items.store');
 
@@ -103,6 +102,6 @@ Route::prefix(ManagerPortal::legacyUrlPrefix())->group(function () {
     Route::get('{path?}', function (?string $path = null) {
         $query = request()->getQueryString();
 
-        return redirect(ManagerPortal::legacyRedirectTarget($path) . ($query ? '?' . $query : ''));
+        return redirect(ManagerPortal::legacyRedirectTarget($path).($query ? '?'.$query : ''));
     })->where('path', '.*');
 });

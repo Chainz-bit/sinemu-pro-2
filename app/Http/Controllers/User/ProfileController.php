@@ -10,15 +10,13 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function __construct(private readonly UserProfilePageService $profileService)
-    {
-    }
+    public function __construct(private readonly UserProfilePageService $profileService) {}
 
     public function index(): View
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = Auth::user();
-        abort_if(!$user, 403);
+        abort_if(! $user, 403);
         $data = $this->profileService->buildProfileData($user);
 
         return view('user.pages.profile.show', [

@@ -126,7 +126,7 @@ class UserClaimInstructionTest extends TestCase
         // 1. Status: Siap Diambil
         $response->assertSee('Siap Diambil');
         // 2. Kode/ID Klaim
-        $claimCode = '#KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT);
+        $claimCode = '#KLM-'.str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT);
         $response->assertSee($claimCode);
         // 3. Lokasi Posko Layanan
         $response->assertSee('Posko Layanan Mahasiswa');

@@ -4,12 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Barang;
-use App\Models\Klaim;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
+use App\Models\Pencocokan;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Models\Wilayah;
+use App\Services\GeminiMatchingService;
+use App\Support\ClaimVerificationConfig;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -161,7 +164,7 @@ class ClaimVerificationDetailTest extends TestCase
 
         $response = $this->actingAs($admin, 'admin')
             ->post(route('admin.claim-verifications.complete', $claim), [
-                'kode_tiket' => '#KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
+                'kode_tiket' => '#KLM-'.str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
                 'nama_penerima' => 'Budi Pemilik',
                 'nomor_identitas_penerima' => '3212010101990001',
                 'catatan_serah_terima' => 'Diserahkan langsung dengan KTM dan KTP asli.',
@@ -284,7 +287,7 @@ class ClaimVerificationDetailTest extends TestCase
 
         $response = $this->actingAs($admin, 'admin')
             ->post(route('admin.claim-verifications.complete', $claim), [
-                'kode_tiket' => 'KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
+                'kode_tiket' => 'KLM-'.str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT),
                 'nama_penerima' => 'Budi Pemilik',
             ]);
 
@@ -329,7 +332,7 @@ class ClaimVerificationDetailTest extends TestCase
             ->get(route('admin.claim-verifications.show', $claim));
 
         $response->assertOk();
-        $expectedCode = '#KLM-' . str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT);
+        $expectedCode = '#KLM-'.str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT);
         $response->assertSee($expectedCode);
         $response->assertSee('KODE TIKET RESMI');
         $response->assertSee('IDENTITAS PENGAJU & PANDUAN KROSCEK FISIK');
@@ -466,16 +469,16 @@ class ClaimVerificationDetailTest extends TestCase
             'bukti_ciri_khusus' => 'Gantungan karet merah',
         ]);
 
-        $mockService = $this->createMock(\App\Services\GeminiMatchingService::class);
+        $mockService = $this->createMock(GeminiMatchingService::class);
         $mockService->method('match')->willReturn([
             'success' => true,
             'similarity_score' => 88,
             'recommendation' => 'high',
             'reasoning' => 'Kunci dan gantungan sangat identik dengan bukti kepemilikan.',
-            'model_used' => 'gemini-3.6-flash',
+            'model_used' => 'gemini-2.0-flash',
             'error' => null,
         ]);
-        $this->app->instance(\App\Services\GeminiMatchingService::class, $mockService);
+        $this->app->instance(GeminiMatchingService::class, $mockService);
 
         $response = $this->actingAs($admin, 'admin')
             ->post(route('admin.claim-verifications.run-ai-analysis', $claim), [], [
@@ -495,6 +498,7 @@ class ClaimVerificationDetailTest extends TestCase
             'ai_similarity_score' => 88,
             'ai_recommendation' => 'high',
             'ai_reasoning' => 'Kunci dan gantungan sangat identik dengan bukti kepemilikan.',
+            'ai_model_used' => 'gemini-2.0-flash',
         ]);
     }
 
@@ -517,7 +521,7 @@ class ClaimVerificationDetailTest extends TestCase
             'tampil_di_home' => false,
         ]);
 
-        $pencocokan = \App\Models\Pencocokan::query()->create([
+        $pencocokan = Pencocokan::query()->create([
             'barang_id' => $foundItem->id,
             'admin_id' => $admin->id,
             'status_pencocokan' => 'pending',
@@ -543,14 +547,70 @@ class ClaimVerificationDetailTest extends TestCase
                 'kronologi_valid' => '1',
                 'bukti_visual_valid' => '1',
                 'kecocokan_data_laporan' => '1',
-                'catatan_verifikasi_admin' => 'Mencoba approve skor rendah.',
+                'catatan_verifikasi_admin' => 'Skor rendah.',
             ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Klaim tidak dapat disetujui otomatis karena skor AI di bawah 75.');
+        $response->assertSessionHas('error', 'Klaim tidak dapat disetujui otomatis karena skor AI di bawah '.ClaimVerificationConfig::MINIMUM_AI_SCORE.'. Masukkan catatan verifikasi manual minimal '.ClaimVerificationConfig::MINIMUM_OVERRIDE_NOTE_LENGTH.' karakter.');
 
         $claim->refresh();
         $this->assertSame(WorkflowStatus::CLAIM_UNDER_REVIEW, $claim->status_verifikasi);
+    }
+
+    public function test_approve_claim_succeeds_when_ai_score_is_below_75_with_valid_manual_override_note(): void
+    {
+        $admin = $this->createAdmin('override-admin@example.com', 'override-admin');
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $foundItem = Barang::query()->create([
+            'admin_id' => $admin->id,
+            'region_id' => $admin->region_id,
+            'user_id' => $user->id,
+            'kategori_id' => $kategori->id,
+            'nama_barang' => 'Flashdisk 32GB',
+            'deskripsi' => 'Ditemukan di lab',
+            'lokasi_ditemukan' => 'Lab Komputer',
+            'tanggal_ditemukan' => now()->toDateString(),
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'tampil_di_home' => false,
+        ]);
+
+        $pencocokan = Pencocokan::query()->create([
+            'barang_id' => $foundItem->id,
+            'admin_id' => $admin->id,
+            'status_pencocokan' => 'pending',
+            'ai_similarity_score' => 35,
+            'ai_recommendation' => 'low',
+            'ai_reasoning' => 'Visual mirip namun data tidak cocok.',
+        ]);
+
+        $claim = Klaim::query()->create([
+            'barang_id' => $foundItem->id,
+            'pencocokan_id' => $pencocokan->id,
+            'user_id' => $user->id,
+            'admin_id' => $admin->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
+            'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
+            'catatan' => 'Klaim flashdisk',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.claim-verifications.approve', $claim), [
+                'identitas_pelapor_valid' => '1',
+                'detail_barang_valid' => '1',
+                'kronologi_valid' => '1',
+                'bukti_visual_valid' => '1',
+                'kecocokan_data_laporan' => '1',
+                'catatan_verifikasi_admin' => 'Verifikasi fisik langsung di posko: nomor seri dan stiker identik.',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status', 'Klaim berhasil disetujui.');
+
+        $claim->refresh();
+        $this->assertSame(WorkflowStatus::CLAIM_APPROVED, $claim->status_verifikasi);
     }
 
     public function test_approve_claim_fails_when_any_checklist_item_is_no(): void
@@ -572,7 +632,7 @@ class ClaimVerificationDetailTest extends TestCase
             'tampil_di_home' => false,
         ]);
 
-        $pencocokan = \App\Models\Pencocokan::query()->create([
+        $pencocokan = Pencocokan::query()->create([
             'barang_id' => $foundItem->id,
             'admin_id' => $admin->id,
             'status_pencocokan' => 'pending',
@@ -665,7 +725,7 @@ class ClaimVerificationDetailTest extends TestCase
             'tampil_di_home' => false,
         ]);
 
-        $pencocokan = \App\Models\Pencocokan::query()->create([
+        $pencocokan = Pencocokan::query()->create([
             'barang_id' => $foundItem->id,
             'admin_id' => $admin->id,
             'status_pencocokan' => 'pending',
@@ -721,18 +781,18 @@ class ClaimVerificationDetailTest extends TestCase
     private function createAdmin(string $email = 'claim-admin@example.com', string $username = 'claim-admin'): Admin
     {
         $superAdmin = SuperAdmin::query()->create([
-            'nama' => 'Super Admin ' . $username,
-            'email' => 'super-' . $email,
-            'username' => 'super-' . $username,
+            'nama' => 'Super Admin '.$username,
+            'email' => 'super-'.$email,
+            'username' => 'super-'.$username,
             'password' => Hash::make('password123'),
         ]);
 
-        $region = Wilayah::query()->create(['nama_wilayah' => 'Wilayah ' . $username]);
+        $region = Wilayah::query()->create(['nama_wilayah' => 'Wilayah '.$username]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin ' . $username,
+            'nama' => 'Admin '.$username,
             'email' => $email,
             'username' => $username,
             'password' => Hash::make('password123'),

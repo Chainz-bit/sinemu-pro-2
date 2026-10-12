@@ -3,7 +3,11 @@
 namespace App\Models;
 
 use App\Support\WorkflowStatus;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -35,15 +39,15 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $kontak_pengambilan
  * @property string|null $jam_layanan_pengambilan
  * @property string|null $catatan_pengambilan
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  * @property-read Admin|null $admin
  * @property-read Wilayah|null $region
  * @property-read User|null $user
  * @property-read Kategori|null $kategori
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Klaim> $klaims
- * @property-read \Illuminate\Database\Eloquent\Collection<int, BarangStatusHistory> $statusHistories
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Pencocokan> $pencocokans
+ * @property-read Collection<int, Klaim> $klaims
+ * @property-read Collection<int, BarangStatusHistory> $statusHistories
+ * @property-read Collection<int, Pencocokan> $pencocokans
  */
 class Barang extends Model
 {
@@ -212,26 +216,26 @@ class Barang extends Model
         ];
 
         return in_array(
-                strtolower(trim((string) ($this->status_laporan ?? ''))),
-                $allowedStatuses,
-                true
-            )
-            && !is_null($this->verified_by_admin_id);
+            strtolower(trim((string) ($this->status_laporan ?? ''))),
+            $allowedStatuses,
+            true
+        )
+            && ! is_null($this->verified_by_admin_id);
     }
 
     public function canBeDeletedByAdmin(): bool
     {
         return $this->hasAdminDeletableReportStatus()
-            && !$this->hasAdminDeletionWorkflowBlocker();
+            && ! $this->hasAdminDeletionWorkflowBlocker();
     }
 
     public function canBeEditedByAdmin(): bool
     {
-        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminEditableReportStatuses(), true)) {
+        if (! in_array($this->normalizedReportStatusForWorkflow(), self::adminEditableReportStatuses(), true)) {
             return false;
         }
 
-        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminEditableItemStatuses(), true)) {
+        if (! in_array($this->normalizedItemStatusForWorkflow(), self::adminEditableItemStatuses(), true)) {
             return false;
         }
 
@@ -239,31 +243,31 @@ class Barang extends Model
             return false;
         }
 
-        return !$this->relationHasRecords('klaims')
-            && !$this->relationHasRecords('pencocokans');
+        return ! $this->relationHasRecords('klaims')
+            && ! $this->relationHasRecords('pencocokans');
     }
 
     public function canBeVerifiedByAdmin(): bool
     {
-        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminVerifiableReportStatuses(), true)) {
+        if (! in_array($this->normalizedReportStatusForWorkflow(), self::adminVerifiableReportStatuses(), true)) {
             return false;
         }
 
-        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminVerifiableItemStatuses(), true)) {
+        if (! in_array($this->normalizedItemStatusForWorkflow(), self::adminVerifiableItemStatuses(), true)) {
             return false;
         }
 
-        return !$this->relationHasRecords('klaims')
-            && !$this->relationHasRecords('pencocokans');
+        return ! $this->relationHasRecords('klaims')
+            && ! $this->relationHasRecords('pencocokans');
     }
 
     public function canBePublishedToHomeByAdmin(): bool
     {
-        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminPublishableReportStatuses(), true)) {
+        if (! in_array($this->normalizedReportStatusForWorkflow(), self::adminPublishableReportStatuses(), true)) {
             return false;
         }
 
-        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminPublishableItemStatuses(), true)) {
+        if (! in_array($this->normalizedItemStatusForWorkflow(), self::adminPublishableItemStatuses(), true)) {
             return false;
         }
 
@@ -271,22 +275,22 @@ class Barang extends Model
             return false;
         }
 
-        return !$this->relationHasRecords('klaims')
-            && !$this->relationHasRecords('pencocokans');
+        return ! $this->relationHasRecords('klaims')
+            && ! $this->relationHasRecords('pencocokans');
     }
 
     public function canHaveStatusUpdatedByAdmin(): bool
     {
-        if (!in_array($this->normalizedReportStatusForWorkflow(), self::adminManualStatusReportStatuses(), true)) {
+        if (! in_array($this->normalizedReportStatusForWorkflow(), self::adminManualStatusReportStatuses(), true)) {
             return false;
         }
 
-        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminManualStatusCurrentStatuses(), true)) {
+        if (! in_array($this->normalizedItemStatusForWorkflow(), self::adminManualStatusCurrentStatuses(), true)) {
             return false;
         }
 
-        return !$this->relationHasRecords('klaims')
-            && !$this->relationHasRecords('pencocokans');
+        return ! $this->relationHasRecords('klaims')
+            && ! $this->relationHasRecords('pencocokans');
     }
 
     public function isAllowedManualStatusTarget(string $status): bool
@@ -313,7 +317,7 @@ class Barang extends Model
             return true;
         }
 
-        if (!in_array($this->normalizedItemStatusForWorkflow(), self::adminDeletableItemStatuses(), true)) {
+        if (! in_array($this->normalizedItemStatusForWorkflow(), self::adminDeletableItemStatuses(), true)) {
             return true;
         }
 
@@ -333,7 +337,7 @@ class Barang extends Model
 
     private function relationHasRecords(string $relation): bool
     {
-        $countKey = $relation . '_count';
+        $countKey = $relation.'_count';
         if (array_key_exists($countKey, $this->attributes)) {
             return (int) $this->attributes[$countKey] > 0;
         }
@@ -345,37 +349,37 @@ class Barang extends Model
         return $this->{$relation}()->exists();
     }
 
-    public function admin()
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class);
     }
 
-    public function region()
+    public function region(): BelongsTo
     {
         return $this->belongsTo(Wilayah::class, 'region_id');
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function kategori()
+    public function kategori(): BelongsTo
     {
         return $this->belongsTo(Kategori::class);
     }
 
-    public function klaims()
+    public function klaims(): HasMany
     {
         return $this->hasMany(Klaim::class);
     }
 
-    public function statusHistories()
+    public function statusHistories(): HasMany
     {
         return $this->hasMany(BarangStatusHistory::class)->latest();
     }
 
-    public function pencocokans()
+    public function pencocokans(): HasMany
     {
         return $this->hasMany(Pencocokan::class);
     }

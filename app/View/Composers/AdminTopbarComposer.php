@@ -3,7 +3,7 @@
 namespace App\View\Composers;
 
 use App\Services\Support\DatabaseHealthService;
-use Illuminate\Support\Facades\Auth;
+use App\Support\ManagerPortal;
 use Illuminate\View\View;
 
 class AdminTopbarComposer
@@ -12,20 +12,21 @@ class AdminTopbarComposer
 
     public function __construct(
         private readonly DatabaseHealthService $databaseHealthService
-    ) {
-    }
+    ) {}
 
     public function compose(View $view): void
     {
         $viewData = $view->getData();
-        if (($viewData['hideTopActions'] ?? false) === true || !$this->databaseHealthService->isResponsive()) {
+        if (($viewData['hideTopActions'] ?? false) === true || ! $this->databaseHealthService->isResponsive()) {
             $this->bindEmptyState($view);
+
             return;
         }
 
-        $admin = \App\Support\ManagerPortal::user();
-        if (!$admin) {
+        $admin = ManagerPortal::user();
+        if (! $admin) {
             $this->bindEmptyState($view);
+
             return;
         }
 

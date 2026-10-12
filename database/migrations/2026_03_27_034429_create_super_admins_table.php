@@ -9,17 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
- public function up(): void
-{
-    Schema::create('super_admins', function (Blueprint $table) {
-        $table->id();
-        $table->string('nama');
-        $table->string('username')->unique();
-        $table->string('password');
-        $table->text('profil')->nullable();
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('super_admins', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama');
+            $table->string('username')->unique();
+            $table->string('password');
+            $table->text('profil')->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

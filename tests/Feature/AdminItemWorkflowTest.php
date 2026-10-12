@@ -15,6 +15,7 @@ use App\Models\UserNotification;
 use App\Models\Wilayah;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -159,7 +160,7 @@ class AdminItemWorkflowTest extends TestCase
             ->assertRedirect(route('admin.found-items.show', $barang));
 
         $this->assertSame(1, UserNotification::query()->where('user_id', $user->id)->count());
-        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang->fresh()?->verified_at)->toDateTimeString());
+        $this->assertSame($verifiedAt->toDateTimeString(), Carbon::parse($barang->fresh()?->verified_at)->toDateTimeString());
     }
 
     #[DataProvider('processedFoundItemVerificationStates')]
@@ -198,7 +199,7 @@ class AdminItemWorkflowTest extends TestCase
         $this->assertSame($originalReportStatus, $barang?->status_laporan);
         $this->assertSame($originalItemStatus, $barang?->status_barang);
         $this->assertSame($admin->id, $barang?->verified_by_admin_id);
-        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang?->verified_at)->toDateTimeString());
+        $this->assertSame($verifiedAt->toDateTimeString(), Carbon::parse($barang?->verified_at)->toDateTimeString());
         $this->assertSame($originalHomeStatus, (bool) $barang?->tampil_di_home);
         $this->assertSame(1, UserNotification::query()->where('user_id', $user->id)->count());
     }
@@ -244,7 +245,7 @@ class AdminItemWorkflowTest extends TestCase
         $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $barang?->status_laporan);
         $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang?->status_barang);
         $this->assertSame($admin->id, $barang?->verified_by_admin_id);
-        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang?->verified_at)->toDateTimeString());
+        $this->assertSame($verifiedAt->toDateTimeString(), Carbon::parse($barang?->verified_at)->toDateTimeString());
         $this->assertFalse((bool) $barang?->tampil_di_home);
         $this->assertSame(0, UserNotification::query()->where('user_id', $user->id)->count());
     }
@@ -289,7 +290,7 @@ class AdminItemWorkflowTest extends TestCase
         $this->assertSame(WorkflowStatus::REPORT_SUBMITTED, $barang?->status_laporan);
         $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang?->status_barang);
         $this->assertSame($admin->id, $barang?->verified_by_admin_id);
-        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($barang?->verified_at)->toDateTimeString());
+        $this->assertSame($verifiedAt->toDateTimeString(), Carbon::parse($barang?->verified_at)->toDateTimeString());
         $this->assertFalse((bool) $barang?->tampil_di_home);
         $this->assertSame(0, UserNotification::query()->where('user_id', $user->id)->count());
     }
@@ -367,7 +368,7 @@ class AdminItemWorkflowTest extends TestCase
         $response->assertSessionHas('status', 'Perubahan status berhasil disimpan.');
 
         $this->assertSame(WorkflowStatus::FOUND_AVAILABLE, $barang->fresh()?->status_barang);
-        $this->assertDatabaseHas((new BarangStatusHistory())->getTable(), [
+        $this->assertDatabaseHas((new BarangStatusHistory)->getTable(), [
             'barang_id' => $barang->id,
             'admin_id' => $admin->id,
             'status_lama' => '',
@@ -740,7 +741,7 @@ class AdminItemWorkflowTest extends TestCase
         $this->assertSame($currentStatus, $laporanBarangHilang?->status_laporan);
         $this->assertSame($admin->id, $laporanBarangHilang?->verified_by_admin_id);
         $this->assertSame(1, UserNotification::query()->where('user_id', $user->id)->count());
-        $this->assertSame($verifiedAt->toDateTimeString(), \Illuminate\Support\Carbon::parse($laporanBarangHilang?->verified_at)->toDateTimeString());
+        $this->assertSame($verifiedAt->toDateTimeString(), Carbon::parse($laporanBarangHilang?->verified_at)->toDateTimeString());
     }
 
     public function test_lost_item_detail_hides_verification_buttons_after_report_processed(): void
@@ -930,7 +931,7 @@ class AdminItemWorkflowTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createFoundItem(Admin $admin, User $user, Kategori $kategori, array $overrides = []): Barang
     {
@@ -950,7 +951,7 @@ class AdminItemWorkflowTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createLostItem(User $user, array $overrides = []): LaporanBarangHilang
     {
@@ -1014,22 +1015,22 @@ class AdminItemWorkflowTest extends TestCase
     private function createAdminForRegion(Wilayah $region, string $suffix): Admin
     {
         $superAdmin = SuperAdmin::query()->create([
-            'nama' => 'Super Admin Workflow ' . $suffix,
-            'email' => 'admin-item-workflow-super-' . $suffix . '@example.com',
-            'username' => 'super-item-workflow-' . $suffix,
+            'nama' => 'Super Admin Workflow '.$suffix,
+            'email' => 'admin-item-workflow-super-'.$suffix.'@example.com',
+            'username' => 'super-item-workflow-'.$suffix,
             'password' => Hash::make('password123'),
         ]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin Workflow ' . $suffix,
-            'email' => 'admin-item-workflow-' . $suffix . '@example.com',
-            'username' => 'admin-item-workflow-' . $suffix,
+            'nama' => 'Admin Workflow '.$suffix,
+            'email' => 'admin-item-workflow-'.$suffix.'@example.com',
+            'username' => 'admin-item-workflow-'.$suffix,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
-            'alamat_lengkap' => 'Jl. Admin Workflow No. ' . $suffix,
+            'alamat_lengkap' => 'Jl. Admin Workflow No. '.$suffix,
             'status_verifikasi' => 'active',
         ]);
     }

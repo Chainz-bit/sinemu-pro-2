@@ -5,13 +5,13 @@ namespace App\Services\Admin\LostItems;
 use App\Models\LaporanBarangHilang;
 use App\Services\ReportImageCleaner;
 use App\Services\UserNotificationService;
-use App\Support\WorkflowStatus;
+use App\Support\ManagerPortal;
 use App\Support\Media\OptimizedImageUploader;
+use App\Support\RoleLabels;
+use App\Support\WorkflowStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -22,11 +22,11 @@ class LostItemCommandService
      */
     public function update(LaporanBarangHilang $item, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): array
     {
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $item->sumber_laporan !== 'lapor_hilang') {
+        if ($item->sumber_laporan !== 'lapor_hilang') {
             abort(404);
         }
 
-        if (!$item->canBeEditedByAdmin()) {
+        if (! $item->canBeEditedByAdmin()) {
             return ['ok' => false, 'message' => 'Laporan ini tidak dapat diedit karena sudah diproses.'];
         }
 
@@ -60,7 +60,7 @@ class LostItemCommandService
         $newPhotoPath = null;
         if ($photo) {
             $oldPhotoPath = $item->foto_barang;
-            $newPhotoPath = $uploader->upload($photo, 'barang-hilang/' . now()->format('Y/m'));
+            $newPhotoPath = $uploader->upload($photo, 'barang-hilang/'.now()->format('Y/m'));
             $payload['foto_barang'] = $newPhotoPath;
         }
 
@@ -74,7 +74,7 @@ class LostItemCommandService
             throw $exception;
         }
 
-        if (!empty($oldPhotoPath)) {
+        if (! empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
         }
 
@@ -86,11 +86,9 @@ class LostItemCommandService
      */
     public function destroy(LaporanBarangHilang $item): array
     {
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
-            abort_if($item->sumber_laporan !== 'lapor_hilang', 404);
-        }
+        abort_if($item->sumber_laporan !== 'lapor_hilang', 404);
 
-        if (!$item->canBeDeletedByAdmin()) {
+        if (! $item->canBeDeletedByAdmin()) {
             return ['ok' => false, 'message' => 'Laporan yang masih aktif tidak dapat dihapus.'];
         }
 
@@ -139,16 +137,12 @@ class LostItemCommandService
      */
     public function verify(LaporanBarangHilang $item, array $validated): array
     {
-        if (!Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-            return ['ok' => false, 'message' => 'Status verifikasi laporan belum tersedia di database.'];
-        }
-
         $newStatus = $validated['status_laporan'] === 'approved'
             ? WorkflowStatus::REPORT_APPROVED
             : WorkflowStatus::REPORT_REJECTED;
         $oldStatus = (string) ($item->status_laporan ?? '');
 
-        if (!$item->canBeVerifiedByAdmin()) {
+        if (! $item->canBeVerifiedByAdmin()) {
             return ['ok' => false, 'message' => 'Laporan ini tidak dapat diverifikasi ulang karena sudah diproses.'];
         }
 
@@ -158,18 +152,18 @@ class LostItemCommandService
 
         $item->update([
             'status_laporan' => $newStatus,
-            'verified_by_admin_id' => (int) \App\Support\ManagerPortal::id(),
+            'verified_by_admin_id' => (int) ManagerPortal::id(),
             'verified_at' => now(),
             'tampil_di_home' => $newStatus === WorkflowStatus::REPORT_APPROVED,
         ]);
 
-        if (!is_null($item->user_id)) {
+        if (! is_null($item->user_id)) {
             $label = $newStatus === WorkflowStatus::REPORT_APPROVED ? 'disetujui' : 'ditolak';
             UserNotificationService::notifyUser(
                 userId: (int) $item->user_id,
                 type: 'verifikasi_laporan_hilang',
                 title: 'Verifikasi Laporan Hilang',
-                message: 'Laporan barang hilang "' . $item->nama_barang . '" ' . $label . ' ' . \App\Support\RoleLabels::managerLower() . '.',
+                message: 'Laporan barang hilang "'.$item->nama_barang.'" '.$label.' '.RoleLabels::managerLower().'.',
                 actionUrl: route('user.dashboard'),
                 meta: ['laporan_hilang_id' => $item->id]
             );
@@ -186,18 +180,18 @@ class LostItemCommandService
      */
     public function togglePublikasi(LaporanBarangHilang $item): array
     {
-        if (!$item->canTogglePublikasiByAdmin()) {
+        if (! $item->canTogglePublikasiByAdmin()) {
             return [
-                'ok'      => false,
+                'ok' => false,
                 'message' => 'Publikasi tidak dapat diubah. Laporan harus berstatus Disetujui dan sudah diverifikasi.',
             ];
         }
 
         $sedangDipublikasikan = (bool) ($item->tampil_di_home ?? false);
-        $item->update(['tampil_di_home' => !$sedangDipublikasikan]);
+        $item->update(['tampil_di_home' => ! $sedangDipublikasikan]);
 
         $aksi = $sedangDipublikasikan ? 'ditarik dari publikasi' : 'dipublikasikan kembali';
 
-        return ['ok' => true, 'message' => 'Laporan barang hilang berhasil ' . $aksi . '.'];
+        return ['ok' => true, 'message' => 'Laporan barang hilang berhasil '.$aksi.'.'];
     }
 }

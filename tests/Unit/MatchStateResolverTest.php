@@ -18,7 +18,7 @@ class MatchStateResolverTest extends TestCase
 {
     public function test_resolves_unmatched_state_for_missing_pair(): void
     {
-        $state = (new MatchStateResolver())->resolve(null);
+        $state = (new MatchStateResolver)->resolve(null);
 
         $this->assertInstanceOf(UnmatchedPairState::class, $state);
         $this->assertTrue($state->canConfirm());
@@ -27,7 +27,7 @@ class MatchStateResolverTest extends TestCase
 
     public function test_resolves_confirmed_match_state(): void
     {
-        $state = (new MatchStateResolver())->resolve(new Pencocokan([
+        $state = (new MatchStateResolver)->resolve(new Pencocokan([
             'status_pencocokan' => WorkflowStatus::MATCH_CONFIRMED,
         ]));
 
@@ -38,7 +38,7 @@ class MatchStateResolverTest extends TestCase
 
     public function test_resolves_claim_in_progress_match_state(): void
     {
-        $state = (new MatchStateResolver())->resolve(new Pencocokan([
+        $state = (new MatchStateResolver)->resolve(new Pencocokan([
             'status_pencocokan' => WorkflowStatus::MATCH_CLAIM_IN_PROGRESS,
         ]));
 
@@ -49,7 +49,7 @@ class MatchStateResolverTest extends TestCase
 
     public function test_resolves_claim_approved_match_state(): void
     {
-        $state = (new MatchStateResolver())->resolve(new Pencocokan([
+        $state = (new MatchStateResolver)->resolve(new Pencocokan([
             'status_pencocokan' => WorkflowStatus::MATCH_CLAIM_APPROVED,
         ]));
 
@@ -60,7 +60,7 @@ class MatchStateResolverTest extends TestCase
 
     public function test_resolves_claim_rejected_match_state(): void
     {
-        $state = (new MatchStateResolver())->resolve(new Pencocokan([
+        $state = (new MatchStateResolver)->resolve(new Pencocokan([
             'status_pencocokan' => WorkflowStatus::MATCH_CLAIM_REJECTED,
         ]));
 
@@ -71,7 +71,7 @@ class MatchStateResolverTest extends TestCase
 
     public function test_resolves_completed_match_state(): void
     {
-        $state = (new MatchStateResolver())->resolve(new Pencocokan([
+        $state = (new MatchStateResolver)->resolve(new Pencocokan([
             'status_pencocokan' => WorkflowStatus::MATCH_COMPLETED,
         ]));
 
@@ -82,7 +82,7 @@ class MatchStateResolverTest extends TestCase
 
     public function test_resolves_cancelled_match_state(): void
     {
-        $state = (new MatchStateResolver())->resolve(new Pencocokan([
+        $state = (new MatchStateResolver)->resolve(new Pencocokan([
             'status_pencocokan' => WorkflowStatus::MATCH_CANCELLED,
         ]));
 

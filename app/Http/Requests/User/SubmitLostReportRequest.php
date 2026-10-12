@@ -20,7 +20,7 @@ class SubmitLostReportRequest extends FormRequest
         return [
             'report_id' => ['nullable', 'integer', 'exists:laporan_barang_hilangs,id'],
             'nama_barang' => ['required', 'string', 'max:255'],
-            'region_id' => ['required', 'integer', 'exists:wilayahs,id', new RegionHasActiveAdmin()],
+            'region_id' => ['required', 'integer', 'exists:wilayahs,id', new RegionHasActiveAdmin],
             'kategori_barang' => ['nullable', 'string', 'max:100'],
             'warna_barang' => ['nullable', 'string', 'max:100'],
             'merek_barang' => ['nullable', 'string', 'max:120'],

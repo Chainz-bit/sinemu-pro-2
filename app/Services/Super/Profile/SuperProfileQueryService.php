@@ -13,8 +13,7 @@ class SuperProfileQueryService
 {
     public function __construct(
         private readonly ProfileAvatarService $avatarService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string,mixed>
@@ -76,9 +75,9 @@ class SuperProfileQueryService
 
                 $statusLabel = AdminVerificationStatusPresenter::label($statusKey);
                 $title = match ($statusKey) {
-                    'active' => 'Admin ' . $admin->nama . ' disetujui',
-                    'rejected' => 'Admin ' . $admin->nama . ' ditolak',
-                    default => 'Admin ' . $admin->nama . ' menunggu verifikasi',
+                    'active' => 'Admin '.$admin->nama.' disetujui',
+                    'rejected' => 'Admin '.$admin->nama.' ditolak',
+                    default => 'Admin '.$admin->nama.' menunggu verifikasi',
                 };
 
                 return (object) [
