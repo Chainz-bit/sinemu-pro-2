@@ -222,6 +222,7 @@ class AdminAuthTest extends TestCase
 
     public function test_authenticated_user_cannot_access_manager_dashboard(): void
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email' => 'regular-dashboard-user@example.com',
             'username' => 'regular-dashboard-user',
