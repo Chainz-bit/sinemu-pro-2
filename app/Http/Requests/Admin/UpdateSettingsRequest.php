@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\ManagerPortal;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,7 @@ class UpdateSettingsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user(\App\Support\ManagerPortal::guard()) !== null;
+        return $this->user(ManagerPortal::guard()) !== null;
     }
 
     /**
@@ -17,7 +18,7 @@ class UpdateSettingsRequest extends FormRequest
      */
     public function rules(): array
     {
-        $adminId = $this->user(\App\Support\ManagerPortal::guard())?->id;
+        $adminId = $this->user(ManagerPortal::guard())?->id;
 
         return [
             'kecamatan' => ['required', 'string', 'max:100'],

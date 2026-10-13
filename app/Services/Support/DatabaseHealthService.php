@@ -13,11 +13,12 @@ class DatabaseHealthService
         }
 
         $defaultConnection = (string) config('database.default', 'mysql');
-        $connection = (array) config('database.connections.' . $defaultConnection, []);
+        $connection = (array) config('database.connections.'.$defaultConnection, []);
         $driver = (string) ($connection['driver'] ?? '');
 
-        if (!in_array($driver, ['mysql', 'mariadb'], true)) {
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
             $this->isResponsive = true;
+
             return true;
         }
 
@@ -26,17 +27,20 @@ class DatabaseHealthService
 
         if ($host === '' || $port <= 0) {
             $this->isResponsive = false;
+
             return false;
         }
 
-        if (!in_array($host, ['127.0.0.1', 'localhost'], true)) {
+        if (! in_array($host, ['127.0.0.1', 'localhost'], true)) {
             $this->isResponsive = true;
+
             return true;
         }
 
         $socket = @fsockopen($host, $port, $errno, $errstr, 0.25);
-        if (!is_resource($socket)) {
+        if (! is_resource($socket)) {
             $this->isResponsive = false;
+
             return false;
         }
 
@@ -45,7 +49,7 @@ class DatabaseHealthService
         $meta = stream_get_meta_data($socket);
         fclose($socket);
 
-        $this->isResponsive = !($probe === false || ($probe === '' && (($meta['timed_out'] ?? false) === true)));
+        $this->isResponsive = ! ($probe === false || ($probe === '' && (($meta['timed_out'] ?? false) === true)));
 
         return $this->isResponsive;
     }

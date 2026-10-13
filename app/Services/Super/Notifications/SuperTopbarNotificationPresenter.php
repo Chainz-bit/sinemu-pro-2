@@ -4,6 +4,7 @@ namespace App\Services\Super\Notifications;
 
 use App\Models\Admin;
 use App\Support\AdminVerificationStatusPresenter;
+use App\Support\RoleLabels;
 
 class SuperTopbarNotificationPresenter
 {
@@ -21,10 +22,10 @@ class SuperTopbarNotificationPresenter
      */
     public function pending(Admin $admin): array
     {
-        $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
+        $managerRoleLabelLower = RoleLabels::managerLower();
 
         return [
-            'title' => ucfirst($managerRoleLabelLower) . ' menunggu verifikasi',
+            'title' => ucfirst($managerRoleLabelLower).' menunggu verifikasi',
             'message' => sprintf(
                 '%s dari %s perlu ditinjau sekarang.',
                 (string) $admin->nama,
@@ -62,7 +63,7 @@ class SuperTopbarNotificationPresenter
         $activityTime = $admin->verified_at ?? $admin->updated_at ?? $admin->created_at;
 
         return [
-            'title' => sprintf('Status %s %s', \App\Support\RoleLabels::managerLower(), $statusLabel),
+            'title' => sprintf('Status %s %s', RoleLabels::managerLower(), $statusLabel),
             'message' => sprintf(
                 '%s dari %s masuk ke status %s.',
                 (string) $admin->nama,

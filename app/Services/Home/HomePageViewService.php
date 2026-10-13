@@ -3,23 +3,21 @@
 namespace App\Services\Home;
 
 use App\Models\Admin;
+use App\Models\Barang;
+use App\Models\LaporanBarangHilang;
 use App\Models\Wilayah;
 use App\Services\Support\DatabaseHealthService;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Throwable;
 
 class HomePageViewService
 {
     private const HOME_ITEMS_LIMIT = 24;
+
     private bool $skipDatabaseCalls = false;
+
     private bool $databaseFailureReported = false;
-    /** @var array<string,bool> */
-    private array $tableExistsCache = [];
-    /** @var array<string,bool> */
-    private array $columnExistsCache = [];
 
     public function __construct(
         private readonly HomeLostItemService $lostItemService,
@@ -29,11 +27,8 @@ class HomePageViewService
         private readonly HomePickupLocationService $pickupLocationService,
         private readonly HomeClaimableLostReportService $claimableLostReportService,
         private readonly DatabaseHealthService $databaseHealthService,
-        private readonly HomeMediaAssetService $mediaAssetService,
-        private readonly HomeLostDetailService $lostDetailService,
-        private readonly HomeFoundDetailService $foundDetailService
-    ) {
-    }
+        private readonly HomeMediaAssetService $mediaAssetService
+    ) {}
 
     public function isDatabaseResponsive(): bool
     {
@@ -79,17 +74,17 @@ class HomePageViewService
     /**
      * @return array{pageTitle:string,detail:object}
      */
-    public function buildLostDetailViewData(\App\Models\LaporanBarangHilang $laporanBarangHilang): array
+    public function buildLostDetailViewData(LaporanBarangHilang $laporanBarangHilang): array
     {
-        return $this->lostDetailService->build($laporanBarangHilang);
+        return app(HomeLostDetailService::class)->build($laporanBarangHilang);
     }
 
     /**
      * @return array{pageTitle:string,detail:object}
      */
-    public function buildFoundDetailViewData(\App\Models\Barang $barang): array
+    public function buildFoundDetailViewData(Barang $barang): array
     {
-        return $this->foundDetailService->build($barang);
+        return app(HomeFoundDetailService::class)->build($barang);
     }
 
     /**
@@ -129,7 +124,7 @@ class HomePageViewService
     }
 
     /**
-     * @param array<int,array<string,mixed>> $foundItems
+     * @param  array<int,array<string,mixed>>  $foundItems
      * @return array{0:array<int,string>,1:Collection<int,mixed>}
      */
     private function getCategories(array $foundItems): array
@@ -142,8 +137,8 @@ class HomePageViewService
     }
 
     /**
-     * @param array<int,array<string,mixed>> $lostItems
-     * @param array<int,array<string,mixed>> $foundItems
+     * @param  array<int,array<string,mixed>>  $lostItems
+     * @param  array<int,array<string,mixed>>  $foundItems
      * @return array{0:array<int,string>,1:array<int,array<string,mixed>>}
      */
     private function getRegions(array $lostItems, array $foundItems): array
@@ -170,7 +165,7 @@ class HomePageViewService
 
     private function getWilayahOptions(): Collection
     {
-        if (!$this->hasDatabaseTable('wilayahs') || !$this->hasDatabaseTable('admins')) {
+        if (! $this->hasDatabaseTable('wilayahs') || ! $this->hasDatabaseTable('admins')) {
             return collect();
         }
 
@@ -186,7 +181,7 @@ class HomePageViewService
 
     private function getClaimableLostReports(int $userId): Collection
     {
-        if ($userId <= 0 || !$this->hasDatabaseTable('laporan_barang_hilangs')) {
+        if ($userId <= 0 || ! $this->hasDatabaseTable('laporan_barang_hilangs')) {
             return collect();
         }
 
@@ -199,7 +194,7 @@ class HomePageViewService
 
     private function resolveUserDisplayName(mixed $user): string
     {
-        if (!$user) {
+        if (! $user) {
             return 'Pengguna';
         }
 
@@ -227,22 +222,26 @@ class HomePageViewService
 
         if (Str::startsWith($lower, 'kec ')) {
             $district = trim(substr($location, 4));
-            return 'Kecamatan ' . ucwords(Str::lower($district));
+
+            return 'Kecamatan '.ucwords(Str::lower($district));
         }
 
         if (Str::startsWith($lower, 'kecamatan ')) {
             $district = trim(substr($location, 10));
-            return 'Kecamatan ' . ucwords(Str::lower($district));
+
+            return 'Kecamatan '.ucwords(Str::lower($district));
         }
 
         if (Str::startsWith($lower, 'kel ')) {
             $ward = trim(substr($location, 4));
-            return 'Kelurahan ' . ucwords(Str::lower($ward));
+
+            return 'Kelurahan '.ucwords(Str::lower($ward));
         }
 
         if (Str::startsWith($lower, 'kelurahan ')) {
             $ward = trim(substr($location, 10));
-            return 'Kelurahan ' . ucwords(Str::lower($ward));
+
+            return 'Kelurahan '.ucwords(Str::lower($ward));
         }
 
         return ucwords(Str::lower($location));
@@ -301,27 +300,12 @@ class HomePageViewService
 
     private function hasDatabaseTable(string $table): bool
     {
-        if (array_key_exists($table, $this->tableExistsCache)) {
-            return $this->tableExistsCache[$table];
-        }
-
-        $exists = $this->safeDatabaseCall(fn () => Schema::hasTable($table), false);
-        $this->tableExistsCache[$table] = (bool) $exists;
-
-        return $this->tableExistsCache[$table];
+        return true;
     }
 
     private function hasDatabaseColumn(string $table, string $column): bool
     {
-        $key = $table . '.' . $column;
-        if (array_key_exists($key, $this->columnExistsCache)) {
-            return $this->columnExistsCache[$key];
-        }
-
-        $exists = $this->safeDatabaseCall(fn () => Schema::hasColumn($table, $column), false);
-        $this->columnExistsCache[$key] = (bool) $exists;
-
-        return $this->columnExistsCache[$key];
+        return true;
     }
 
     private function safeDatabaseCall(callable $callback, mixed $fallback): mixed
@@ -330,22 +314,12 @@ class HomePageViewService
             return $fallback;
         }
 
-        if (!$this->databaseHealthService->isResponsive()) {
+        if (! $this->databaseHealthService->isResponsive()) {
             $this->skipDatabaseCalls = true;
+
             return $fallback;
         }
 
-        try {
-            return $callback();
-        } catch (Throwable $exception) {
-            $this->skipDatabaseCalls = true;
-
-            if (!$this->databaseFailureReported) {
-                report($exception);
-                $this->databaseFailureReported = true;
-            }
-
-            return $fallback;
-        }
+        return $callback();
     }
 }

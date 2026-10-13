@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/pengaturan', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('/pengaturan/riwayat', [SettingsController::class, 'history'])->name('settings.history');
         Route::get('/klaim', [ClaimController::class, 'create'])->name('claims.create');
+        Route::get('/klaim/{klaim}', [ClaimController::class, 'show'])->name('claims.show');
         Route::get('/riwayat-klaim', [RiwayatKlaimController::class, 'index'])->name('claim-history');
         Route::delete('/riwayat-klaim/{klaim}', [RiwayatKlaimController::class, 'destroy'])->name('claim-history.destroy');
         Route::get('/lapor-barang-hilang', [LostReportController::class, 'create'])->name('lost-reports.create');

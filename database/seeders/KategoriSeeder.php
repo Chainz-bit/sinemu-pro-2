@@ -2,29 +2,22 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Kategori;
+use Illuminate\Database\Seeder;
 
 class KategoriSeeder extends Seeder
 {
     public function run(): void
     {
         $categories = [
-            'Elektronik',
-            'Dokumen',
             'Dompet',
+            'Elektronik',
             'Kunci',
-            'Tas',
-            'Aksesoris',
-            'Kendaraan',
-            'Pakaian',
-            'Perhiasan',
-            'Uang',
-            'Kartu Identitas',
-            'Buku atau Alat Tulis',
-            'Mainan',
-            'Perlengkapan Pribadi',
-            'Lainnya',
+            'Dokumen & Kartu',
+            'Tas & Ransel',
+            'Aksesoris & Perhiasan',
+            'Pakaian & Sepatu',
+            'Lain-lain',
         ];
 
         foreach ($categories as $name) {

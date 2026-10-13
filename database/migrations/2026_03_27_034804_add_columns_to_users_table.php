@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -12,20 +12,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('users')) {
+        if (! Schema::hasTable('users')) {
             return;
         }
 
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'username')) {
+            if (! Schema::hasColumn('users', 'username')) {
                 $table->string('username')->unique()->nullable()->after('id');
             }
 
-            if (!Schema::hasColumn('users', 'profil')) {
+            if (! Schema::hasColumn('users', 'profil')) {
                 $table->text('profil')->nullable()->after('email');
             }
 
-            if (!Schema::hasColumn('users', 'nama')) {
+            if (! Schema::hasColumn('users', 'nama')) {
                 $table->string('nama')->nullable()->after('name');
             }
         });
@@ -42,7 +42,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (!Schema::hasTable('users')) {
+        if (! Schema::hasTable('users')) {
             return;
         }
 

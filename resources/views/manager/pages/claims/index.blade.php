@@ -57,7 +57,7 @@
                         <th>Pelapor</th>
                         <th>Tanggal Klaim</th>
                         <th>Lokasi Penyimpanan</th>
-                        <th>Status</th>
+                        <th class="min-w-[160px]">Status</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -91,7 +91,7 @@
 
                                             if (!empty($localFotoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($localFotoPath)) {
                                                 $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($localFotoPath);
-                                                $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($localFotoPath) ?: 'image/jpeg';
+                                                $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
                                                 $binary = @file_get_contents($absolutePath);
                                                 if ($binary !== false) {
                                                     $fotoSrc = 'data:' . $mimeType . ';base64,' . base64_encode($binary);
@@ -113,7 +113,10 @@
                                         >
                                     </div>
                                     <div>
-                                        <strong>{{ $claim->barang_temuan }}</strong>
+                                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                            <strong>{{ $claim->barang_temuan }}</strong>
+                                            <span style="display: inline-block; font-size: 0.72rem; font-family: monospace; font-weight: 700; color: #1e40af; background: #dbeafe; border: 1px solid #bfdbfe; border-radius: 4px; padding: 1px 5px; letter-spacing: 0.02em;">#KLM-{{ str_pad((string) $claim->id, 5, '0', STR_PAD_LEFT) }}</span>
+                                        </div>
                                         <small>Klaim untuk: {{ $claim->barang_hilang }}</small>
                                     </div>
                                 </div>
@@ -121,17 +124,15 @@
                             <td>{{ $claim->pelapor_nama }}</td>
                             <td>{{ \Illuminate\Support\Carbon::parse($claim->created_at)->format('d M Y') }}</td>
                             <td>{{ $claim->lokasi }}</td>
-                            <td>
+                            <td class="align-middle">
                                 @php
                                     $statusKey = \App\Support\ClaimStatusPresenter::key(
                                         (string) $claim->status_klaim,
                                         (string) ($claim->status_verifikasi ?? ''),
                                         (string) ($claim->status_barang_temuan ?? '')
                                     );
-                                    $statusLabel = \App\Support\ClaimStatusPresenter::label($statusKey);
-                                    $statusClass = \App\Support\ClaimStatusPresenter::cssClass($statusKey);
                                 @endphp
-                                <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
+                                <x-status-badge :status="$statusKey" type="claim" />
                             </td>
                             <td class="menu-cell">
                                 <button type="button" class="row-menu-trigger" data-menu-target="menu-claim-{{ $index }}" aria-label="Aksi">

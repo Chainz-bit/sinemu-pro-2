@@ -1,5 +1,9 @@
 @extends('layouts.auth')
 
+@php
+    /** @var \Illuminate\Support\ViewErrorBag $errors */
+@endphp
+
 @push('styles')
     @vite('resources/js/entries/auth-register.js')
 @endpush

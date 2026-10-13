@@ -81,7 +81,7 @@ final class IndramayuDistricts
 
         return str_starts_with(strtolower($district), 'kecamatan ')
             ? $district
-            : 'Kecamatan ' . $district;
+            : 'Kecamatan '.$district;
     }
 
     public static function normalizeName(string $district): string

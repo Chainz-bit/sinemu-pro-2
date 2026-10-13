@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Super\AdminVerificationController;
 use App\Http\Controllers\Super\AdminDirectoryController;
+use App\Http\Controllers\Super\AdminVerificationController;
 use App\Http\Controllers\Super\Auth\LoginController;
 use App\Http\Controllers\Super\DashboardController;
 use App\Http\Controllers\Super\ProfileController;

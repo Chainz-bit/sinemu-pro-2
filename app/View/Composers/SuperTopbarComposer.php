@@ -2,8 +2,8 @@
 
 namespace App\View\Composers;
 
-use App\Services\Support\DatabaseHealthService;
 use App\Services\Super\Notifications\SuperTopbarNotificationService;
+use App\Services\Support\DatabaseHealthService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -12,19 +12,20 @@ class SuperTopbarComposer
     public function __construct(
         private readonly DatabaseHealthService $databaseHealthService,
         private readonly SuperTopbarNotificationService $superTopbarNotificationService
-    ) {
-    }
+    ) {}
 
     public function compose(View $view): void
     {
         $viewData = $view->getData();
-        if (($viewData['hideTopActions'] ?? false) === true || !$this->databaseHealthService->isResponsive()) {
+        if (($viewData['hideTopActions'] ?? false) === true || ! $this->databaseHealthService->isResponsive()) {
             $this->bindEmptyState($view);
+
             return;
         }
 
-        if (!Auth::guard('super_admin')->check()) {
+        if (! Auth::guard('super_admin')->check()) {
             $this->bindEmptyState($view);
+
             return;
         }
 
@@ -32,6 +33,7 @@ class SuperTopbarComposer
 
         if ($superAdminId === null) {
             $this->bindEmptyState($view);
+
             return;
         }
 

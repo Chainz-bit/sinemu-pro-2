@@ -8,6 +8,7 @@ use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Models\User;
+use App\Support\RoleLabels;
 use App\Support\WorkflowStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -18,16 +19,16 @@ use Throwable;
 class SubmitClaimAction
 {
     /**
-     * @param array<string,mixed> $validated
-     * @param array<int,UploadedFile> $photos
+     * @param  array<string,mixed>  $validated
+     * @param  array<int,UploadedFile>  $photos
      * @return array{ok:bool,message:string,status?:int,claim?:Klaim}
      */
     public function execute(array $validated, array $photos = [], ?User $user = null): array
     {
-        $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
+        $managerRoleLabelLower = RoleLabels::managerLower();
 
         $user ??= Auth::user();
-        if (!$user) {
+        if (! $user) {
             return ['ok' => false, 'message' => 'Anda harus login sebelum mengajukan klaim.', 'status' => 401];
         }
 
@@ -45,7 +46,7 @@ class SubmitClaimAction
                         ->lockForUpdate()
                         ->first();
 
-                    if (!$laporan) {
+                    if (! $laporan) {
                         return ['ok' => false, 'message' => 'Pilih laporan barang hilang milik Anda yang valid sebelum mengajukan klaim.', 'status' => 422];
                     }
                 }
@@ -56,11 +57,11 @@ class SubmitClaimAction
                     ->lockForUpdate()
                     ->first();
 
-                if (!$barang) {
+                if (! $barang) {
                     return ['ok' => false, 'message' => 'Barang temuan tidak ditemukan.', 'status' => 404];
                 }
 
-                if (!is_null($barang->user_id) && (int) $barang->user_id === (int) $user->id) {
+                if (! is_null($barang->user_id) && (int) $barang->user_id === (int) $user->id) {
                     return ['ok' => false, 'message' => 'Tidak bisa mengklaim barang temuan milik sendiri.', 'status' => 403];
                 }
 
@@ -75,11 +76,11 @@ class SubmitClaimAction
                     return ['ok' => false, 'message' => 'Barang ini sedang tidak tersedia untuk diklaim.', 'status' => 409];
                 }
 
-                if (!in_array((string) ($barang->status_laporan ?? ''), [WorkflowStatus::REPORT_APPROVED, WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_CLAIMED], true)) {
-                    return ['ok' => false, 'message' => 'Barang temuan harus disetujui ' . $managerRoleLabelLower . ' terlebih dahulu sebelum klaim.', 'status' => 422];
+                if (! in_array((string) ($barang->status_laporan ?? ''), [WorkflowStatus::REPORT_APPROVED, WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_CLAIMED], true)) {
+                    return ['ok' => false, 'message' => 'Barang temuan harus disetujui '.$managerRoleLabelLower.' terlebih dahulu sebelum klaim.', 'status' => 422];
                 }
 
-                if (!$barang->admin_id) {
+                if (! $barang->admin_id) {
                     return ['ok' => false, 'message' => 'Barang belum memiliki pengelola untuk memproses klaim.', 'status' => 409];
                 }
 
@@ -87,21 +88,26 @@ class SubmitClaimAction
                     ->whereKey((int) $barang->admin_id)
                     ->where('status_verifikasi', Admin::STATUS_ACTIVE)
                     ->first();
-                if (!$assignedAdmin || (!is_null($barang->region_id) && (int) $assignedAdmin->region_id !== (int) $barang->region_id)) {
+                if (! $assignedAdmin || (! is_null($barang->region_id) && (int) $assignedAdmin->region_id !== (int) $barang->region_id)) {
                     return ['ok' => false, 'message' => 'Barang belum memiliki pengelola aktif untuk memproses klaim.', 'status' => 409];
                 }
 
+                $pencocokan = null;
                 if ($laporan) {
-                    if (!in_array((string) $laporan->status_laporan, [WorkflowStatus::REPORT_APPROVED, WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_CLAIMED], true)) {
-                        return ['ok' => false, 'message' => 'Laporan barang hilang harus disetujui ' . $managerRoleLabelLower . ' terlebih dahulu sebelum klaim.', 'status' => 422];
+                    if (! in_array((string) $laporan->status_laporan, [WorkflowStatus::REPORT_APPROVED, WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_CLAIMED], true)) {
+                        return ['ok' => false, 'message' => 'Laporan barang hilang harus disetujui '.$managerRoleLabelLower.' terlebih dahulu sebelum klaim.', 'status' => 422];
                     }
 
-                    $pencocokan = Pencocokan::query()
-                        ->where('laporan_hilang_id', (int) $laporan->id)
-                        ->where('barang_id', (int) $barang->id)
-                        ->latest('updated_at')
-                        ->lockForUpdate()
-                        ->first();
+                    $pencocokan = Pencocokan::firstOrCreate(
+                        [
+                            'laporan_hilang_id' => (int) $laporan->id,
+                            'barang_id' => (int) $barang->id,
+                        ],
+                        [
+                            'status_pencocokan' => 'pending',
+                            'admin_id' => null,
+                        ]
+                    );
                 }
 
                 $hasDuplicateClaim = Klaim::query()
@@ -131,16 +137,12 @@ class SubmitClaimAction
                     }
                 }
 
-                if ($laporan && (!$pencocokan || !in_array((string) $pencocokan->status_pencocokan, [WorkflowStatus::MATCH_CONFIRMED, WorkflowStatus::MATCH_CLAIM_IN_PROGRESS, WorkflowStatus::MATCH_CLAIM_REJECTED], true))) {
-                    return ['ok' => false, 'message' => 'Barang ini belum ditandai cocok oleh ' . $managerRoleLabelLower . ' dengan laporan Anda.', 'status' => 422];
-                }
-
                 if ($laporan) {
                     $laporanUpdatePayload = [];
-                    if (empty($laporan->kontak_pelapor) && !empty($validated['kontak_pelapor'])) {
+                    if (empty($laporan->kontak_pelapor) && ! empty($validated['kontak_pelapor'])) {
                         $laporanUpdatePayload['kontak_pelapor'] = $validated['kontak_pelapor'];
                     }
-                    if (empty($laporan->bukti_kepemilikan) && !empty($validated['bukti_kepemilikan'])) {
+                    if (empty($laporan->bukti_kepemilikan) && ! empty($validated['bukti_kepemilikan'])) {
                         $laporanUpdatePayload['bukti_kepemilikan'] = $validated['bukti_kepemilikan'];
                     }
                     if ($laporanUpdatePayload !== []) {
@@ -149,7 +151,7 @@ class SubmitClaimAction
                 }
 
                 foreach ($photos as $photo) {
-                    $buktiFotoPaths[] = $photo->store('private/verifikasi-klaim/' . now()->format('Y/m'), 'local');
+                    $buktiFotoPaths[] = $photo->store('private/verifikasi-klaim/'.now()->format('Y/m'), 'local');
                 }
 
                 $klaim = Klaim::create([

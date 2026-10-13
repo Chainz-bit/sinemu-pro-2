@@ -16,7 +16,7 @@ class FoundItemCommandService
      */
     public function update(Barang $barang, array $validated, ?UploadedFile $photo, OptimizedImageUploader $uploader): array
     {
-        if (!$barang->canBeEditedByAdmin()) {
+        if (! $barang->canBeEditedByAdmin()) {
             return ['ok' => false, 'message' => 'Barang temuan ini tidak dapat diedit karena sudah diproses.'];
         }
 
@@ -68,7 +68,7 @@ class FoundItemCommandService
         $newPhotoPath = null;
         if ($photo) {
             $oldPhotoPath = $barang->foto_barang;
-            $newPhotoPath = $uploader->upload($photo, 'barang-temuan/' . now()->format('Y/m'));
+            $newPhotoPath = $uploader->upload($photo, 'barang-temuan/'.now()->format('Y/m'));
             $payload['foto_barang'] = $newPhotoPath;
         }
 
@@ -82,7 +82,7 @@ class FoundItemCommandService
             throw $exception;
         }
 
-        if (!empty($oldPhotoPath)) {
+        if (! empty($oldPhotoPath)) {
             ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
         }
 
@@ -97,18 +97,18 @@ class FoundItemCommandService
      */
     public function togglePublikasi(Barang $barang): array
     {
-        if (!$barang->canTogglePublikasiByAdmin()) {
+        if (! $barang->canTogglePublikasiByAdmin()) {
             return [
-                'ok'      => false,
+                'ok' => false,
                 'message' => 'Publikasi tidak dapat diubah. Laporan harus berstatus Disetujui dan sudah diverifikasi.',
             ];
         }
 
         $sedangDipublikasikan = (bool) ($barang->tampil_di_home ?? false);
-        $barang->update(['tampil_di_home' => !$sedangDipublikasikan]);
+        $barang->update(['tampil_di_home' => ! $sedangDipublikasikan]);
 
         $aksi = $sedangDipublikasikan ? 'ditarik dari publikasi' : 'dipublikasikan kembali';
 
-        return ['ok' => true, 'message' => 'Laporan barang temuan berhasil ' . $aksi . '.'];
+        return ['ok' => true, 'message' => 'Laporan barang temuan berhasil '.$aksi.'.'];
     }
 }

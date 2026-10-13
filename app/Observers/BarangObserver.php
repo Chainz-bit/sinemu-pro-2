@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Barang;
 use App\Services\AdminNotificationService;
+use App\Support\ManagerPortal;
 use App\Support\WorkflowStatus;
 
 class BarangObserver
@@ -11,7 +12,7 @@ class BarangObserver
     public function created(Barang $barang): void
     {
         if ($this->isUserSubmittedFoundReport($barang)) {
-            if (!$barang->region_id) {
+            if (! $barang->region_id) {
                 return;
             }
 
@@ -20,14 +21,14 @@ class BarangObserver
                 type: 'barang_temuan_baru',
                 title: 'Barang temuan baru',
                 message: 'Data barang temuan ditambahkan: '.$barang->nama_barang,
-                actionUrl: route(\App\Support\ManagerPortal::routeName('found-items')),
+                actionUrl: route(ManagerPortal::routeName('found-items')),
                 meta: ['barang_id' => $barang->id]
             );
 
             return;
         }
 
-        if (!$barang->admin_id) {
+        if (! $barang->admin_id) {
             return;
         }
 
@@ -36,7 +37,7 @@ class BarangObserver
             type: 'barang_temuan_baru',
             title: 'Barang temuan baru',
             message: 'Data barang temuan ditambahkan: '.$barang->nama_barang,
-            actionUrl: route(\App\Support\ManagerPortal::routeName('found-items')),
+            actionUrl: route(ManagerPortal::routeName('found-items')),
             meta: ['barang_id' => $barang->id]
         );
     }

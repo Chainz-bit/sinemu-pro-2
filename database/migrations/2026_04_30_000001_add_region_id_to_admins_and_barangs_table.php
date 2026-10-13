@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('admins') && !Schema::hasColumn('admins', 'region_id')) {
+        if (Schema::hasTable('admins') && ! Schema::hasColumn('admins', 'region_id')) {
             Schema::table('admins', function (Blueprint $table) {
                 $table->foreignId('region_id')
                     ->nullable()
@@ -18,7 +18,7 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('barangs') && !Schema::hasColumn('barangs', 'region_id')) {
+        if (Schema::hasTable('barangs') && ! Schema::hasColumn('barangs', 'region_id')) {
             Schema::table('barangs', function (Blueprint $table) {
                 $table->foreignId('region_id')
                     ->nullable()

@@ -8,9 +8,13 @@ use Illuminate\Validation\Rule;
 class DashboardIndexRequest extends FormRequest
 {
     public const STATUS_ALL = 'semua';
+
     public const STATUS_IN_PROGRESS = 'diproses';
+
     public const STATUS_UNDER_REVIEW = 'dalam_peninjauan';
+
     public const STATUS_DONE = 'selesai';
+
     public const STATUS_REJECTED = 'ditolak';
 
     /**

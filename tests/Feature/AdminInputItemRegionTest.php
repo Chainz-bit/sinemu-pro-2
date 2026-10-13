@@ -143,18 +143,18 @@ class AdminInputItemRegionTest extends TestCase
     {
         $suffix = str()->random(8);
         $superAdmin = SuperAdmin::query()->create([
-            'nama' => 'Super Input ' . $suffix,
-            'email' => 'super-input-' . $suffix . '@example.com',
-            'username' => 'super-input-' . $suffix,
+            'nama' => 'Super Input '.$suffix,
+            'email' => 'super-input-'.$suffix.'@example.com',
+            'username' => 'super-input-'.$suffix,
             'password' => Hash::make('password123'),
         ]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region?->id,
-            'nama' => 'Admin Input ' . $suffix,
-            'email' => 'admin-input-' . $suffix . '@example.com',
-            'username' => 'admin-input-' . $suffix,
+            'nama' => 'Admin Input '.$suffix,
+            'email' => 'admin-input-'.$suffix.'@example.com',
+            'username' => 'admin-input-'.$suffix,
             'password' => Hash::make('password123'),
             'instansi' => 'Kantor Input',
             'kecamatan' => 'Sindang',

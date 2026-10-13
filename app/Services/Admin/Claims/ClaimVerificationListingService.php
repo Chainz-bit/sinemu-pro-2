@@ -3,13 +3,13 @@
 namespace App\Services\Admin\Claims;
 
 use App\Http\Requests\Admin\ClaimVerificationIndexRequest;
+use App\Models\Admin;
 use App\Models\Klaim;
 use App\Support\ClaimStatusPresenter;
 use App\Support\ManagerPortal;
 use App\Support\WorkflowStatus;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClaimVerificationListingService
@@ -19,20 +19,7 @@ class ClaimVerificationListingService
      */
     public function prepareIndexQuery(ClaimVerificationIndexRequest $request): array
     {
-        $hasNamaColumn = Schema::hasColumn('users', 'nama');
-        $hasNameColumn = Schema::hasColumn('users', 'name');
-        $hasLostHomeFlag = Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home');
-        $hasFoundHomeFlag = Schema::hasColumn('barangs', 'tampil_di_home');
-        $hasClaimVerificationStatus = Schema::hasColumn('klaims', 'status_verifikasi');
-
-        $pelaporSelect = '"Pengguna"';
-        if ($hasNamaColumn && $hasNameColumn) {
-            $pelaporSelect = 'COALESCE(users.nama, users.name, "Pengguna")';
-        } elseif ($hasNamaColumn) {
-            $pelaporSelect = 'COALESCE(users.nama, "Pengguna")';
-        } elseif ($hasNameColumn) {
-            $pelaporSelect = 'COALESCE(users.name, "Pengguna")';
-        }
+        $pelaporSelect = 'COALESCE(users.nama, users.name, "Pengguna")';
 
         $query = Klaim::query()
             ->leftJoin('laporan_barang_hilangs', 'laporan_barang_hilangs.id', '=', 'klaims.laporan_hilang_id')
@@ -45,11 +32,11 @@ class ClaimVerificationListingService
                 'klaims.barang_id',
                 'klaims.laporan_hilang_id',
                 'klaims.status_klaim',
-                DB::raw(($hasClaimVerificationStatus ? 'COALESCE(klaims.status_verifikasi, "")' : '""') . ' as status_verifikasi'),
+                DB::raw('COALESCE(klaims.status_verifikasi, "") as status_verifikasi'),
                 'klaims.catatan',
                 'klaims.created_at',
                 'klaims.updated_at',
-                DB::raw($pelaporSelect . ' as pelapor_nama'),
+                DB::raw($pelaporSelect.' as pelapor_nama'),
                 DB::raw('COALESCE(laporan_barang_hilangs.nama_barang, "-") as barang_hilang'),
                 DB::raw('COALESCE(barangs.nama_barang, "-") as barang_temuan'),
                 DB::raw('COALESCE(barangs.foto_barang, laporan_barang_hilangs.foto_barang, "") as foto_barang'),
@@ -58,15 +45,15 @@ class ClaimVerificationListingService
                 'barangs.region_id as barang_region_id',
                 'laporan_barang_hilangs.region_id as laporan_region_id',
                 DB::raw('COALESCE(admins.nama, "-") as admin_nama'),
-                DB::raw(($hasLostHomeFlag ? 'COALESCE(laporan_barang_hilangs.tampil_di_home, 0)' : '0') . ' as laporan_hilang_tampil_di_home'),
-                DB::raw(($hasFoundHomeFlag ? 'COALESCE(barangs.tampil_di_home, 0)' : '0') . ' as barang_tampil_di_home'),
+                DB::raw('COALESCE(laporan_barang_hilangs.tampil_di_home, 0) as laporan_hilang_tampil_di_home'),
+                DB::raw('COALESCE(barangs.tampil_di_home, 0) as barang_tampil_di_home'),
             ]);
 
         $sort = $request->sort();
 
         $this->applyManagerScope($query);
-        $this->applySearch($query, $request->search(), $hasNamaColumn, $hasNameColumn);
-        $this->applyStatus($query, $request->status(), $hasClaimVerificationStatus);
+        $this->applySearch($query, $request->search());
+        $this->applyStatus($query, $request->status());
         $this->applyDate($query, $request->filterDate());
         $this->applySort($query, $sort);
 
@@ -78,10 +65,11 @@ class ClaimVerificationListingService
 
     private function applyManagerScope(EloquentBuilder $query): void
     {
-        /** @var \App\Models\Admin|null $admin */
+        /** @var Admin|null $admin */
         $admin = ManagerPortal::user();
-        if (!$admin) {
+        if (! $admin) {
             $query->whereRaw('1 = 0');
+
             return;
         }
 
@@ -101,52 +89,47 @@ class ClaimVerificationListingService
         });
     }
 
-    private function applySearch(EloquentBuilder $query, ?string $search, bool $hasNamaColumn, bool $hasNameColumn): void
+    private function applySearch(EloquentBuilder $query, ?string $search): void
     {
         if ($search === null) {
             return;
         }
 
-        $query->where(function ($builder) use ($search, $hasNamaColumn, $hasNameColumn): void {
-            $builder->where('laporan_barang_hilangs.nama_barang', 'like', '%' . $search . '%')
-                ->orWhere('barangs.nama_barang', 'like', '%' . $search . '%');
+        $trimmed = trim($search);
+        $claimId = null;
+        if (preg_match('/^#?KLM-?0*([1-9]\d*)$/i', $trimmed, $matches)) {
+            $claimId = (int) $matches[1];
+        } elseif (preg_match('/^0*([1-9]\d*)$/', $trimmed, $matches)) {
+            $claimId = (int) $matches[1];
+        }
 
-            if ($hasNamaColumn) {
-                $builder->orWhere('users.nama', 'like', '%' . $search . '%');
+        $query->where(function ($builder) use ($search, $claimId): void {
+            $builder->where('laporan_barang_hilangs.nama_barang', 'like', '%'.$search.'%')
+                ->orWhere('barangs.nama_barang', 'like', '%'.$search.'%');
+
+            if ($claimId !== null) {
+                $builder->orWhere('klaims.id', $claimId);
             }
 
-            if ($hasNameColumn) {
-                $builder->orWhere('users.name', 'like', '%' . $search . '%');
-            }
+            $builder->orWhere('users.nama', 'like', '%'.$search.'%')
+                ->orWhere('users.name', 'like', '%'.$search.'%');
         });
     }
 
-    private function applyStatus(EloquentBuilder $query, ?string $status, bool $hasClaimVerificationStatus): void
+    private function applyStatus(EloquentBuilder $query, ?string $status): void
     {
         if ($status === null) {
             return;
         }
 
-        if ($hasClaimVerificationStatus) {
-            match ($status) {
-                ClaimVerificationIndexRequest::STATUS_WAITING, WorkflowStatus::CLAIM_LEGACY_PENDING => $query->whereIn(
-                    'klaims.status_verifikasi',
-                    [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]
-                ),
-                WorkflowStatus::CLAIM_LEGACY_APPROVED => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_APPROVED),
-                WorkflowStatus::CLAIM_LEGACY_REJECTED => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_REJECTED),
-                ClaimVerificationIndexRequest::STATUS_DONE => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_COMPLETED),
-                default => null,
-            };
-
-            return;
-        }
-
         match ($status) {
-            ClaimVerificationIndexRequest::STATUS_WAITING, WorkflowStatus::CLAIM_LEGACY_PENDING => $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING),
-            ClaimVerificationIndexRequest::STATUS_DONE => $query->where('klaims.status_klaim', WorkflowStatus::CLAIM_LEGACY_APPROVED)
-                ->where('barangs.status_barang', WorkflowStatus::FOUND_RETURNED),
-            WorkflowStatus::CLAIM_LEGACY_APPROVED, WorkflowStatus::CLAIM_LEGACY_REJECTED => $query->where('klaims.status_klaim', $status),
+            ClaimVerificationIndexRequest::STATUS_WAITING, WorkflowStatus::CLAIM_LEGACY_PENDING => $query->whereIn(
+                'klaims.status_verifikasi',
+                [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]
+            ),
+            WorkflowStatus::CLAIM_LEGACY_APPROVED => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_APPROVED),
+            WorkflowStatus::CLAIM_LEGACY_REJECTED => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_REJECTED),
+            ClaimVerificationIndexRequest::STATUS_DONE => $query->where('klaims.status_verifikasi', WorkflowStatus::CLAIM_COMPLETED),
             default => null,
         };
     }

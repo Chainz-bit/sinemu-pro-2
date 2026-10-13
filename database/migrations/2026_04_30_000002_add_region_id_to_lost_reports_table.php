@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('laporan_barang_hilangs') && !Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+        if (Schema::hasTable('laporan_barang_hilangs') && ! Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
             Schema::table('laporan_barang_hilangs', function (Blueprint $table) {
                 $table->foreignId('region_id')
                     ->nullable()
@@ -35,7 +35,7 @@ return new class extends Migration
 
                     $regionId = DB::table('wilayahs')
                         ->whereRaw("LOWER(REPLACE(nama_wilayah, 'Kecamatan ', '')) = ?", [Str::lower($district)])
-                        ->orWhereRaw('LOWER(nama_wilayah) = ?', [Str::lower('Kecamatan ' . $district)])
+                        ->orWhereRaw('LOWER(nama_wilayah) = ?', [Str::lower('Kecamatan '.$district)])
                         ->value('id');
 
                     if ($regionId) {

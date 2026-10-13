@@ -18,7 +18,7 @@ class ClaimEvidenceAuditService
         $private = array_values(array_filter($references, fn (array $item): bool => $item['disk'] === 'local'));
         $unknown = array_values(array_filter($references, fn (array $item): bool => $item['disk'] === null));
         $missing = array_values(array_filter($references, function (array $item): bool {
-            return is_string($item['disk']) && !Storage::disk($item['disk'])->exists($item['path']);
+            return is_string($item['disk']) && ! Storage::disk($item['disk'])->exists($item['path']);
         }));
 
         return [
@@ -47,7 +47,7 @@ class ClaimEvidenceAuditService
      */
     private function collectReferences(): array
     {
-        if (!Schema::hasTable('klaims') || !Schema::hasColumn('klaims', 'bukti_foto')) {
+        if (! Schema::hasTable('klaims') || ! Schema::hasColumn('klaims', 'bukti_foto')) {
             return [];
         }
 
@@ -60,7 +60,7 @@ class ClaimEvidenceAuditService
             ->each(function (object $row) use (&$references): void {
                 $paths = json_decode((string) $row->bukti_foto, true);
                 foreach (is_array($paths) ? $paths : [(string) $row->bukti_foto] as $index => $rawPath) {
-                    if (!is_string($rawPath)) {
+                    if (! is_string($rawPath)) {
                         continue;
                     }
 
@@ -83,7 +83,7 @@ class ClaimEvidenceAuditService
 
     private function claimsWithEvidenceCount(): int
     {
-        if (!Schema::hasTable('klaims') || !Schema::hasColumn('klaims', 'bukti_foto')) {
+        if (! Schema::hasTable('klaims') || ! Schema::hasColumn('klaims', 'bukti_foto')) {
             return 0;
         }
 

@@ -8,18 +8,16 @@ use App\Models\Klaim;
 use App\Services\Common\ProfileAvatarService;
 use App\Support\ClaimStatusPresenter;
 use App\Support\IndramayuDistricts;
+use App\Support\ManagerPortal;
 use App\Support\WorkflowStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class AdminProfilePageService
 {
-    public function __construct(private readonly ProfileAvatarService $avatarService)
-    {
-    }
+    public function __construct(private readonly ProfileAvatarService $avatarService) {}
 
     /**
      * @return array<string,mixed>
@@ -30,30 +28,19 @@ class AdminProfilePageService
             ->where('admin_id', $admin->id)
             ->count();
 
-        $hasClaimVerification = Schema::hasColumn('klaims', 'status_verifikasi');
+        $klaimMenunggu = Klaim::query()
+            ->where('admin_id', $admin->id)
+            ->whereIn('status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW])
+            ->count();
 
-        $klaimMenungguQuery = Klaim::query()->where('admin_id', $admin->id);
-        if ($hasClaimVerification) {
-            $klaimMenungguQuery->whereIn('status_verifikasi', [WorkflowStatus::CLAIM_SUBMITTED, WorkflowStatus::CLAIM_UNDER_REVIEW]);
-        } else {
-            $klaimMenungguQuery->where('status_klaim', WorkflowStatus::CLAIM_LEGACY_PENDING);
-        }
-        $klaimMenunggu = $klaimMenungguQuery->count();
-
-        $selesaiDitanganiQuery = Klaim::query()->where('admin_id', $admin->id);
-        if ($hasClaimVerification) {
-            $selesaiDitanganiQuery->whereIn('status_verifikasi', [
+        $selesaiDitangani = Klaim::query()
+            ->where('admin_id', $admin->id)
+            ->whereIn('status_verifikasi', [
                 WorkflowStatus::CLAIM_APPROVED,
                 WorkflowStatus::CLAIM_REJECTED,
                 WorkflowStatus::CLAIM_COMPLETED,
-            ]);
-        } else {
-            $selesaiDitanganiQuery->whereIn('status_klaim', [
-                WorkflowStatus::CLAIM_LEGACY_APPROVED,
-                WorkflowStatus::CLAIM_LEGACY_REJECTED,
-            ]);
-        }
-        $selesaiDitangani = $selesaiDitanganiQuery->count();
+            ])
+            ->count();
 
         [$verificationLabel, $verificationClass] = $this->resolveVerificationStatus($admin);
 
@@ -89,7 +76,7 @@ class AdminProfilePageService
         $newProfilePath = null;
         if ($photo) {
             $oldProfilePath = $this->deletablePublicPath((string) ($admin->profil ?? ''));
-            $newProfilePath = $photo->store('profil-admin/' . now()->format('Y/m'), 'public');
+            $newProfilePath = $photo->store('profil-admin/'.now()->format('Y/m'), 'public');
             $validated['profil'] = $newProfilePath;
         }
 
@@ -113,17 +100,15 @@ class AdminProfilePageService
         $path = trim($path);
 
         return $path !== ''
-            && !str_starts_with($path, 'http://')
-            && !str_starts_with($path, 'https://')
-            && !str_starts_with($path, '/')
+            && ! str_starts_with($path, 'http://')
+            && ! str_starts_with($path, 'https://')
+            && ! str_starts_with($path, '/')
             ? $path
             : null;
     }
 
     private function buildRecentActivities(int $adminId): Collection
     {
-        $hasStatusVerifikasi = Schema::hasColumn('klaims', 'status_verifikasi');
-
         $inputActivities = Barang::query()
             ->where('admin_id', $adminId)
             ->latest('updated_at')
@@ -150,11 +135,11 @@ class AdminProfilePageService
 
                 return (object) [
                     'activity_at' => strtotime((string) ($barang->updated_at ?? $barang->created_at)),
-                    'title' => 'Anda memasukkan data barang temuan ' . $barang->nama_barang,
+                    'title' => 'Anda memasukkan data barang temuan '.$barang->nama_barang,
                     'timestamp' => $barang->updated_at ?? $barang->created_at,
                     'status_class' => $statusClass,
                     'status_label' => $statusLabel,
-                    'detail_url' => route(\App\Support\ManagerPortal::routeName('found-items.show'), $barang->id),
+                    'detail_url' => route(ManagerPortal::routeName('found-items.show'), $barang->id),
                 ];
             });
 
@@ -166,15 +151,15 @@ class AdminProfilePageService
             ])
             ->latest('updated_at')
             ->limit(8)
-            ->get(array_values(array_filter([
+            ->get([
                 'id',
                 'barang_id',
                 'laporan_hilang_id',
                 'status_klaim',
-                $hasStatusVerifikasi ? 'status_verifikasi' : null,
+                'status_verifikasi',
                 'created_at',
                 'updated_at',
-            ])))
+            ])
             ->map(function (Klaim $klaim) {
                 $namaBarang = $klaim->barang?->nama_barang
                     ?? $klaim->laporanHilang?->nama_barang
@@ -201,11 +186,11 @@ class AdminProfilePageService
 
                 return (object) [
                     'activity_at' => strtotime((string) ($klaim->updated_at ?? $klaim->created_at)),
-                    'title' => 'Klaim barang ' . $namaBarang . ' ' . $kataKerja,
+                    'title' => 'Klaim barang '.$namaBarang.' '.$kataKerja,
                     'timestamp' => $klaim->updated_at ?? $klaim->created_at,
                     'status_class' => $statusClass,
                     'status_label' => $statusLabel,
-                    'detail_url' => route(\App\Support\ManagerPortal::routeName('claim-verifications.show'), $klaim->id),
+                    'detail_url' => route(ManagerPortal::routeName('claim-verifications.show'), $klaim->id),
                 ];
             });
 

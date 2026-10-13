@@ -1,5 +1,8 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
+/* Anti-FOUC: hide Alpine.js elements until Alpine initialises */
+[x-cloak] { display: none !important; }
+
 /* Hide default password reveal icon from Microsoft Edge / Internet Explorer. */
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {

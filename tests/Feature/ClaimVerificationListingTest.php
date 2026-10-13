@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Barang;
-use App\Models\Klaim;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Models\SuperAdmin;
 use App\Models\User;
@@ -179,6 +179,46 @@ class ClaimVerificationListingTest extends TestCase
         $response->assertViewHas('sort', 'terbaru');
     }
 
+    public function test_claim_verification_index_can_search_by_ticket_code_formats(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createUser();
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
+
+        $claim1 = $this->createClaimForAdmin($admin, $user, $kategori, 'HP Samsung Galaxy');
+        $claim2 = $this->createClaimForAdmin($admin, $user, $kategori, 'Laptop Lenovo ThinkPad');
+
+        // Search with #KLM-0000X
+        $ticketCodeFull = '#KLM-'.str_pad((string) $claim1->id, 5, '0', STR_PAD_LEFT);
+        $resFull = $this->actingAs($admin, 'admin')->get(route('admin.claim-verifications', [
+            'search' => $ticketCodeFull,
+        ]));
+        $resFull->assertOk();
+        $tableFull = $this->extractTableBody($resFull->getContent());
+        $this->assertStringContainsString('HP Samsung Galaxy', $tableFull);
+        $this->assertStringNotContainsString('Laptop Lenovo ThinkPad', $tableFull);
+
+        // Search with KLM-0000X
+        $ticketCodeNoHash = 'KLM-'.str_pad((string) $claim1->id, 5, '0', STR_PAD_LEFT);
+        $resNoHash = $this->actingAs($admin, 'admin')->get(route('admin.claim-verifications', [
+            'search' => $ticketCodeNoHash,
+        ]));
+        $resNoHash->assertOk();
+        $tableNoHash = $this->extractTableBody($resNoHash->getContent());
+        $this->assertStringContainsString('HP Samsung Galaxy', $tableNoHash);
+        $this->assertStringNotContainsString('Laptop Lenovo ThinkPad', $tableNoHash);
+
+        // Search with 0000X
+        $ticketNumberOnly = str_pad((string) $claim1->id, 5, '0', STR_PAD_LEFT);
+        $resNum = $this->actingAs($admin, 'admin')->get(route('admin.claim-verifications', [
+            'search' => $ticketNumberOnly,
+        ]));
+        $resNum->assertOk();
+        $tableNum = $this->extractTableBody($resNum->getContent());
+        $this->assertStringContainsString('HP Samsung Galaxy', $tableNum);
+        $this->assertStringNotContainsString('Laptop Lenovo ThinkPad', $tableNum);
+    }
+
     public function test_claim_verification_index_and_delete_are_scoped_to_current_admin(): void
     {
         $admin = $this->createAdmin();
@@ -199,7 +239,8 @@ class ClaimVerificationListingTest extends TestCase
         $this->assertStringContainsString('Laptop Milik Admin Ini', $tableBody);
         $this->assertStringNotContainsString('Laptop Admin Lain', $tableBody);
 
-        $this->actingAs($admin, 'admin')
+        $this
+            ->actingAs($admin, 'admin')
             ->delete(route('admin.claim-verifications.destroy', $otherClaim))
             ->assertForbidden();
 
@@ -276,8 +317,8 @@ class ClaimVerificationListingTest extends TestCase
     {
         $superAdmin = SuperAdmin::query()->create([
             'nama' => 'Super Admin Claim',
-            'email' => 'super-' . $email,
-            'username' => 'super-' . $username,
+            'email' => 'super-'.$email,
+            'username' => 'super-'.$username,
             'password' => Hash::make('password123'),
         ]);
 

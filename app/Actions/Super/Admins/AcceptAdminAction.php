@@ -3,6 +3,7 @@
 namespace App\Actions\Super\Admins;
 
 use App\Models\Admin;
+use App\Support\RoleLabels;
 
 class AcceptAdminAction
 {
@@ -11,26 +12,26 @@ class AcceptAdminAction
      */
     public function execute(Admin $admin, ?int $superAdminId = null): array
     {
-        $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
+        $managerRoleLabelLower = RoleLabels::managerLower();
 
-        if ($superAdminId !== null && !$this->isOwnedBySuperAdmin($admin, $superAdminId)) {
+        if ($superAdminId !== null && ! $this->isOwnedBySuperAdmin($admin, $superAdminId)) {
             return [
                 'key' => 'error',
-                'message' => ucfirst($managerRoleLabelLower) . ' ini tidak berada dalam cakupan akun super admin Anda.',
+                'message' => ucfirst($managerRoleLabelLower).' ini tidak berada dalam cakupan akun super admin Anda.',
             ];
         }
 
         if ($admin->status_verifikasi === 'active') {
             return [
                 'key' => 'error',
-                'message' => 'Akun ' . $managerRoleLabelLower . ' sudah aktif.',
+                'message' => 'Akun '.$managerRoleLabelLower.' sudah aktif.',
             ];
         }
 
         if (empty($admin->region_id)) {
             return [
                 'key' => 'error',
-                'message' => ucfirst($managerRoleLabelLower) . ' harus memiliki wilayah sebelum diverifikasi.',
+                'message' => ucfirst($managerRoleLabelLower).' harus memiliki wilayah sebelum diverifikasi.',
             ];
         }
 
@@ -43,7 +44,7 @@ class AcceptAdminAction
 
         return [
             'key' => 'status',
-            'message' => ucfirst($managerRoleLabelLower) . ' berhasil diverifikasi dan diaktifkan.',
+            'message' => ucfirst($managerRoleLabelLower).' berhasil diverifikasi dan diaktifkan.',
         ];
     }
 

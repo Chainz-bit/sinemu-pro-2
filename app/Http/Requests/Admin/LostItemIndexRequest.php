@@ -9,8 +9,11 @@ use Illuminate\Validation\Rule;
 class LostItemIndexRequest extends FormRequest
 {
     public const SORT_NEWEST = 'terbaru';
+
     public const SORT_OLDEST = 'terlama';
+
     public const SORT_NAME_ASC = 'nama_asc';
+
     public const SORT_NAME_DESC = 'nama_desc';
 
     public const ALLOWED_SORTS = [

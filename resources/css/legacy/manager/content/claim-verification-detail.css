@@ -1,32 +1,47 @@
 .claim-detail-page {
     display: grid;
-    gap: 20px;
+    gap: 16px;
     padding-bottom: 18px;
 }
 
 .claim-detail-header h1 {
-    margin: 0;
-    font-size: 36px;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    font-size: 1.5rem; /* 24px - standard admin dashboard */
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: #0f172a;
 }
 
 .claim-detail-breadcrumb {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     font-size: 12px;
-    color: #7b8797;
+    color: #64748b;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    letter-spacing: 0.02em;
 }
 
 .claim-detail-breadcrumb a {
-    color: #637894;
+    color: #475569;
     text-decoration: none;
+    font-weight: 500;
+}
+
+.claim-detail-breadcrumb a:hover {
+    color: #1e293b;
+    text-decoration: underline;
+}
+
+.claim-detail-breadcrumb strong {
+    color: #0f172a;
+    font-weight: 600;
 }
 
 .claim-detail-header-meta {
-    margin-top: 10px;
+    margin-top: 0;
+    margin-bottom: 2px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -35,14 +50,105 @@
 .claim-detail-header-meta span {
     display: inline-flex;
     align-items: center;
-    min-height: 26px;
-    padding: 0 10px;
+    padding: 3px 10px; /* py-1 px-2.5 */
+    min-height: 24px;
     border-radius: 999px;
     border: 1px solid #dce6f3;
-    background: #f7faff;
-    color: #5d728f;
-    font-size: 11px;
+    background: #f8faff;
+    color: #475569;
+    font-size: 12px; /* text-xs */
     font-weight: 600;
+    line-height: 1.3;
+}
+
+/* ── Header Actions & Handover Primary Button ── */
+.claim-header-action-wrap {
+    display: flex;
+    align-items: center;
+}
+
+.btn-handover-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #1e3a8a !important; /* SiNemu Deep Blue / Navy */
+    color: #ffffff !important;
+    border: 1px solid #1e3a8a !important;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(30, 58, 138, 0.18);
+    transition: all 0.15s ease-in-out;
+    text-decoration: none;
+}
+
+.btn-handover-primary:hover {
+    background: #1e40af !important;
+    border-color: #1e40af !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+}
+
+.btn-handover-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(30, 58, 138, 0.18);
+}
+
+.btn-handover-primary iconify-icon,
+.btn-handover-primary svg {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* ── Clean Neutral Status Handover Banner ── */
+.claim-handover-status-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: #f8fafc; /* bg-slate-50 */
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #2563eb; /* border-l-4 border-l-blue-600 */
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.claim-handover-banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb; /* blue-600 */
+    font-size: 22px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.claim-handover-banner-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.claim-handover-banner-title {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b; /* text-slate-800 */
+    line-height: 1.4;
+}
+
+.claim-handover-banner-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #475569; /* text-slate-600 */
+    line-height: 1.5;
 }
 
 .claim-detail-layout {
@@ -54,35 +160,38 @@
 .claim-main-card {
     overflow: hidden;
     border-radius: 14px;
-    border: 1px solid #e5ecf5;
-    box-shadow: 0 10px 24px rgba(17, 24, 39, 0.04);
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
 }
 
 .claim-main-head {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
-    padding: 13px 14px;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-    border-bottom: 1px solid #e7eef7;
+    padding: 14px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .claim-chip-label {
     display: inline-block;
-    margin-bottom: 7px;
-    color: #6f8098;
+    margin-bottom: 3px;
+    color: #64748b;
     font-size: 11px;
-    letter-spacing: 0.04em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
 .claim-main-head h2 {
     margin: 0;
-    font-size: clamp(1.85rem, 2.5vw, 2.45rem);
-    line-height: 1.18;
-    letter-spacing: -0.02em;
-    color: #162b49;
+    font-size: 1.25rem; /* 20px / text-xl */
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+    color: #0f172a;
 }
 
 .claim-main-grid {
@@ -94,15 +203,15 @@
 
 .claim-item-visual {
     position: relative;
-    border: 1px solid #e4ebf5;
-    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     overflow: hidden;
-    background: linear-gradient(180deg, #f5f8fc 0%, #eef3f9 100%);
+    background: #ffffff;
     min-height: 300px;
     width: 100%;
     max-width: 520px;
     margin: 0 auto;
-    padding: 12px;
+    padding: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -117,9 +226,9 @@
     min-height: 24px;
     padding: 0 9px;
     border-radius: 999px;
-    border: 1px solid #d5e2f2;
-    background: rgba(255, 255, 255, 0.9);
-    color: #4f6481;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.03em;
@@ -149,10 +258,10 @@
 }
 
 .claim-info-card {
-    border: 1px solid #e5edf7;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #fbfdff 0%, #f7faff 100%);
-    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 11px 13px;
     min-height: 72px;
 }
 
@@ -172,49 +281,52 @@
 }
 
 .claim-description-box {
-    border: 1px solid #e4ebf5;
-    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
     background: #ffffff;
-    padding: 11px 12px;
+    padding: 14px 16px;
 }
 
 .claim-description-box h3 {
     margin: 0 0 8px;
-    font-size: 18px;
+    font-size: 16px;
+    color: #0f172a;
+    font-weight: 600;
 }
 
 .claim-description-box p {
     margin: 0;
-    color: #3f4f66;
+    color: #334155;
     line-height: 1.58;
     font-size: 14px;
 }
 
 .claim-verification-summary {
-    border: 1px solid #dbe8fa;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #f7fbff 0%, #f1f7ff 100%);
-    padding: 11px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 14px 16px;
 }
 
 .claim-verification-summary h3 {
     margin: 0 0 8px;
     font-size: 15px;
-    color: #1f3f66;
+    color: #1e3a8a;
+    font-weight: 600;
 }
 
 .claim-verification-summary p {
     margin: 0;
-    color: #4a607e;
+    color: #475569;
     line-height: 1.55;
     font-size: 13px;
 }
 
 .claim-decision-guide {
-    border: 1px solid #dfe8f6;
-    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
     background: #ffffff;
-    padding: 11px 12px;
+    padding: 14px 16px;
 }
 
 .claim-decision-guide h3 {
@@ -267,14 +379,13 @@
 }
 
 .claim-side-column {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: start;
-    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .claim-panel-status {
-    grid-column: 1 / -1;
+    width: 100%;
 }
 
 .claim-side-card {
@@ -380,31 +491,59 @@
     border: 1px solid #dfe7f3;
     border-radius: 10px;
     background: #ffffff;
-    padding: 9px 10px;
-    display: grid;
-    gap: 7px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.claim-proof-gallery small {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .claim-proof-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .claim-proof-item {
-    border: 1px solid #e6edf7;
-    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
     overflow: hidden;
-    min-height: 84px;
-    display: block;
-    background: #f7faff;
+    background: #f8fafc;
+    text-decoration: none;
+    max-width: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.claim-proof-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5e1;
 }
 
 .claim-proof-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    max-width: 100%;
+    max-height: 380px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     display: block;
+    border-radius: 8px;
 }
 
 .claim-contact-actions {
@@ -437,13 +576,33 @@
     line-height: 1;
 }
 
+/* Harmonization of TERVERIFIKASI badge with SiNemu blue token */
+.claim-detail-page .status-chip.status-diproses {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+.claim-detail-page .report-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+}
+
+.claim-detail-page .report-card > header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
 .claim-status-current .status-chip {
     justify-self: start;
     align-self: start;
 }
 
 .claim-status-current .status-diproses {
-    border-color: #f2db9f;
+    border-color: #bfdbfe !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
 }
 
 .claim-status-current .status-dalam_peninjauan {
@@ -661,9 +820,15 @@
     color: #22744a;
 }
 
+.claim-validation-hint.is-warning,
+.claim-validation-hint.text-danger {
+    color: #dc2626 !important;
+    font-weight: 600;
+}
+
 @media (max-width: 1024px) {
     .claim-detail-header h1 {
-        font-size: 28px;
+        font-size: 1.35rem;
     }
 
     .claim-verification-grid {
@@ -679,11 +844,7 @@
 
 @media (max-width: 900px) {
     .claim-side-column {
-        grid-template-columns: 1fr;
-    }
-
-    .claim-panel-status {
-        grid-column: auto;
+        gap: 1rem;
     }
 }
 
@@ -694,7 +855,7 @@
     }
 
     .claim-main-head h2 {
-        font-size: 24px;
+        font-size: 1.15rem;
     }
 
     .claim-main-grid {
@@ -714,7 +875,8 @@
     }
 
     .claim-proof-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: center;
+        gap: 0.75rem;
     }
 
     .claim-decision-guide-grid {
@@ -740,3 +902,1089 @@
         width: 100%;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BALANCED 50:50 WORKSPACE LAYOUT & CLEAN CHECKLIST (EQUAL HEIGHT)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.claim-balanced-workspace {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+    width: 100%;
+}
+
+.claim-side-col-left,
+.claim-side-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+    height: 100%;
+}
+
+/* ── Kolom Kiri: Informasi Pengaju ── */
+.panel-header-svg {
+    width: 16px;
+    height: 16px;
+    color: var(--brand, #2b6cb0);
+    flex-shrink: 0;
+}
+
+.btn-svg-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+.claim-panel-requester {
+    flex-shrink: 0;
+}
+
+.requester-card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.requester-profile-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.requester-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--brand-soft, #e8f1ff);
+    color: var(--brand, #2b6cb0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    border: 1px solid #c8dcf5;
+    flex-shrink: 0;
+}
+
+.requester-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.requester-name-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.requester-name-badge strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+}
+
+.requester-role-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 1px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.requester-meta-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.requester-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.requester-meta-item .meta-icon {
+    width: 14px;
+    height: 14px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.claim-contact-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.claim-contact-actions .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 7px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    transition: all 0.15s ease;
+}
+
+.claim-contact-actions .filter-btn:hover:not(.is-disabled) {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.claim-contact-actions .filter-btn .btn-icon {
+    width: 13px;
+    height: 13px;
+    color: #64748b;
+}
+
+/* ── Kolom Kiri: AI Matching Panel (Equal Height & Flex-Grow Distribution) ── */
+.claim-panel-ai {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.claim-panel-ai > header {
+    flex-shrink: 0;
+}
+
+.claim-panel-ai header h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #173865;
+}
+
+.ai-panel-empty {
+    font-size: 12.5px;
+    color: #7b8797;
+    margin: 0;
+}
+
+.ai-card-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+}
+
+.ai-card-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    height: 100%;
+    gap: 12px;
+}
+
+.ai-card-top {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    flex: 1;
+    min-height: 0;
+}
+
+.ai-score-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    width: 140px;
+    flex-shrink: 0;
+    gap: 6px;
+}
+
+.ai-score-gauge {
+    position: relative;
+    width: 110px;
+    margin: 0 auto;
+}
+
+.ai-gauge-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.ai-gauge-value {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    line-height: 1.1;
+    padding-bottom: 2px;
+}
+
+.ai-gauge-value strong {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.ai-gauge-value small {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ai-score-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.ai-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.ai-badge--high {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.ai-badge--medium {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.ai-badge--low {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.ai-badge--uncertain,
+.ai-badge--none {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.ai-matched-at,
+.ai-model-label {
+    font-size: 10px;
+    color: #64748b;
+    line-height: 1.3;
+}
+
+/* Callout Box: Penjelasan Analisis AI (Clean, Dynamic Auto-Scroll) */
+.claim-note-ai,
+.ai-reasoning-box,
+#ai-reasoning-box {
+    flex: 1;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    padding-right: 0.5rem;
+    box-sizing: border-box;
+    max-height: 210px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.claim-note-ai::-webkit-scrollbar,
+.ai-reasoning-box::-webkit-scrollbar,
+#ai-reasoning-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.claim-note-ai::-webkit-scrollbar-track,
+.ai-reasoning-box::-webkit-scrollbar-track,
+#ai-reasoning-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.claim-note-ai::-webkit-scrollbar-thumb,
+.ai-reasoning-box::-webkit-scrollbar-thumb,
+#ai-reasoning-box::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 999px;
+}
+
+.claim-note-ai small.claim-note-title,
+.claim-note-ai small,
+#ai-reasoning-box small.claim-note-title,
+#ai-reasoning-box small {
+    color: #475569;
+    font-weight: 700;
+    font-size: 11px;
+    display: block;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.claim-note-ai p,
+#ai-reasoning-box p {
+    margin: 0;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.6;
+    flex: 1;
+    white-space: pre-line;
+}
+
+/* Card Footer: Tombol Analisis Ulang Sejajar Bawah */
+.ai-card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-top: auto;
+    padding-top: 2px;
+}
+
+.ai-match-form-footer {
+    width: 100%;
+    margin: 0;
+}
+
+.ai-match-trigger-btn {
+    width: 100%;
+    min-height: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: var(--brand, #2b6cb0);
+    color: #fff;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(43, 108, 176, 0.2);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ai-match-trigger-btn:hover {
+    background: #235891;
+    box-shadow: 0 2px 6px rgba(43, 108, 176, 0.3);
+}
+
+.ai-panel-hint {
+    font-size: 11px;
+    color: #64748b;
+    margin: 2px 0 0;
+    text-align: center;
+    line-height: 1.35;
+}
+
+/* ── Kolom Kanan: Card Form Verifikasi Klaim (Equal Height) ── */
+.claim-panel-verification {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.claim-panel-verification header h2 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #173865;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.claim-panel-verification .claim-side-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.claim-verification-form-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+}
+
+.claim-verification-rule-compact {
+    border: 1px solid #dbe7f6;
+    border-left: 3px solid var(--brand, #2b6cb0);
+    border-radius: 8px;
+    background: #f8fbff;
+    padding: 7px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.claim-verification-rule-compact strong {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--brand, #2b6cb0);
+}
+
+.claim-verification-rule-compact span {
+    font-size: 11.5px;
+    color: #475569;
+    line-height: 1.35;
+}
+
+.claim-checklist-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.checklist-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.checklist-header-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checklist-header-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+}
+
+.checklist-header-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+}
+
+.checklist-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checklist-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    transition: all 0.15s ease;
+    line-height: 1.2;
+    user-select: none;
+}
+
+.checklist-quick-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.checklist-quick-btn--autofill {
+    color: var(--brand, #2b6cb0);
+}
+
+.checklist-quick-btn--autofill:hover {
+    color: #1e4b7a;
+    border-color: var(--brand, #2b6cb0);
+}
+
+/* ── AI Auto-fill Banner (Clean Green Subtle) ── */
+.checklist-ai-autofill-banner {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 3px solid #16a34a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11.5px;
+    color: #166534;
+    margin-bottom: 2px;
+    box-sizing: border-box;
+    transition: all 0.25s ease;
+}
+
+.checklist-ai-autofill-banner strong {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.banner-svg-icon {
+    width: 14px;
+    height: 14px;
+    color: #16a34a;
+    flex-shrink: 0;
+}
+
+.checklist-ai-autofill-banner.is-flash {
+    animation: bannerPulse 0.5s ease;
+}
+
+@keyframes bannerPulse {
+    0% { transform: scale(0.98); opacity: 0.7; }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.claim-verification-list-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 0;
+}
+
+.claim-checklist-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 5px 12px;
+    margin: 0;
+    cursor: default;
+    box-sizing: border-box;
+    min-height: 36px;
+    transition: all 0.15s ease;
+}
+
+.claim-checklist-row:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.checklist-field-label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #1e293b;
+    line-height: 1.35;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Segmented Radio Pill Group ── */
+.checklist-pill-group {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.checklist-pill-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 10px;
+    min-width: 40px;
+    height: 24px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #64748b;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid transparent;
+    background: transparent;
+    margin: 0;
+    transition: all 0.15s ease;
+}
+
+.checklist-pill-btn:hover:not(.is-active) {
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.checklist-radio-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    margin: 0;
+}
+
+.checklist-pill-btn.is-active.is-yes,
+.checklist-pill-btn:has(input[value="1"]:checked) {
+    background: #ffffff;
+    color: #15803d;
+    border-color: #86efac;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.checklist-pill-btn.is-active.is-no,
+.checklist-pill-btn:has(input[value="0"]:checked) {
+    background: #ffffff;
+    color: #b91c1c;
+    border-color: #fca5a5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.claim-field-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.claim-field-compact small {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 1px;
+}
+
+.claim-field-compact textarea.form-control {
+    min-height: 48px;
+    height: 50px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    line-height: 1.4;
+    padding: 8px 12px;
+    font-size: 13px;
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.claim-field-compact textarea.form-control:focus {
+    border-color: #8bb5e5;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.12);
+}
+
+.claim-verification-actions-compact {
+    display: flex;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.claim-verification-actions-compact .claim-action-btn {
+    flex: 1;
+    min-height: 38px;
+    height: 38px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 8px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.claim-action-btn.danger {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #be123c;
+}
+
+.claim-action-btn.danger:hover {
+    background: #ffe4e6;
+}
+
+.claim-action-btn.success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
+.claim-action-btn.success:hover:not(:disabled) {
+    background: #dcfce7;
+}
+
+.claim-action-btn.success:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(0.2);
+}
+
+.claim-validation-hint {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.35;
+}
+
+.claim-validation-hint.is-ready {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.claim-validation-hint.is-warning,
+.claim-validation-hint.text-danger {
+    color: #dc2626 !important;
+    font-weight: 600;
+}
+
+/* ── Responsive Breakdown ── */
+@media (max-width: 1024px) {
+    .claim-balanced-workspace {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .ai-horizontal-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-score-legend {
+        grid-template-columns: 1fr;
+    }
+
+    .claim-verification-actions-compact {
+        flex-direction: column;
+    }
+
+    .claim-verification-actions-compact .claim-action-btn {
+        width: 100%;
+    }
+}
+
+/* ── Official Ticket Code Hero Card ── */
+.claim-ticket-card-wrapper {
+    width: 100%;
+}
+
+.claim-ticket-hero-card {
+    background: #f0f7ff;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid #2563eb;
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+}
+
+.claim-ticket-hero-main {
+    flex: 1;
+    min-width: 280px;
+}
+
+.claim-ticket-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.claim-ticket-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.claim-ticket-ready-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.claim-ticket-code-display-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.claim-ticket-code-text {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+}
+
+.btn-copy-ticket-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-copy-ticket-inline:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.claim-ticket-instruction-text {
+    margin: 0;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.45;
+}
+
+.btn-handover-prominent {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+    border: 1px solid #1e3a8a !important;
+    padding: 11px 22px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(30, 58, 138, 0.25) !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-handover-prominent:hover {
+    background: #1e40af !important;
+    border-color: #1e40af !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.35) !important;
+}
+
+.btn-handover-prominent:active {
+    transform: translateY(0);
+}
+
+/* ── Requester Spotlight & Crosscheck Card ── */
+.claim-requester-crosscheck-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.crosscheck-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 12px;
+}
+
+.crosscheck-header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.crosscheck-label-badge {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.crosscheck-user-name {
+    margin: 2px 0 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.crosscheck-contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.crosscheck-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #334155;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.crosscheck-pill:hover:not(.is-disabled) {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.crosscheck-pill.is-disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.crosscheck-pill-wa {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #15803d;
+}
+
+.crosscheck-pill-wa:hover {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.crosscheck-grid-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+@media (max-width: 640px) {
+    .crosscheck-grid-details {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-card-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ai-score-column {
+        width: 100%;
+    }
+}
+
+.crosscheck-point-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.crosscheck-point-title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+}
+
+.crosscheck-point-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #0f172a;
+    line-height: 1.45;
+    word-break: break-word;
+}
+

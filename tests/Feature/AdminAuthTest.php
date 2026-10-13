@@ -222,6 +222,7 @@ class AdminAuthTest extends TestCase
 
     public function test_authenticated_user_cannot_access_manager_dashboard(): void
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email' => 'regular-dashboard-user@example.com',
             'username' => 'regular-dashboard-user',
@@ -375,8 +376,8 @@ class AdminAuthTest extends TestCase
         foreach ($cases as $index => $case) {
             $this->from(route('admin.register'))
                 ->post(route('admin.register'), array_merge($this->validAdminRegistrationPayload(), [
-                    'username' => 'admin-invalid-pickup-' . $index,
-                    'email' => 'admin-invalid-pickup-' . $index . '@example.com',
+                    'username' => 'admin-invalid-pickup-'.$index,
+                    'email' => 'admin-invalid-pickup-'.$index.'@example.com',
                     'pickup_lat' => $case['pickup_lat'],
                     'pickup_lng' => $case['pickup_lng'],
                 ]))
@@ -384,7 +385,7 @@ class AdminAuthTest extends TestCase
                 ->assertSessionHasErrors($case['error']);
 
             $this->assertDatabaseMissing('admins', [
-                'username' => 'admin-invalid-pickup-' . $index,
+                'username' => 'admin-invalid-pickup-'.$index,
             ]);
         }
     }
@@ -522,7 +523,7 @@ class AdminAuthTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createAdmin(array $overrides = []): Admin
     {

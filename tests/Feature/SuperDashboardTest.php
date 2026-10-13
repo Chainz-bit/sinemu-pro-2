@@ -153,17 +153,17 @@ class SuperDashboardTest extends TestCase
         mixed $createdAt
     ): Admin {
         $region = Wilayah::query()->firstOrCreate([
-            'nama_wilayah' => 'Wilayah ' . (string) str($name)->slug('-'),
+            'nama_wilayah' => 'Wilayah '.(string) str($name)->slug('-'),
         ]);
 
         $admin = Admin::query()->create([
             'super_admin_id' => $superAdmin?->id,
             'region_id' => $region->id,
             'nama' => $name,
-            'email' => str($name)->slug('-') . '@example.com',
+            'email' => str($name)->slug('-').'@example.com',
             'username' => (string) str($name)->slug('-'),
             'password' => Hash::make('password123'),
-            'instansi' => 'Kampus ' . $name,
+            'instansi' => 'Kampus '.$name,
             'kecamatan' => 'Sindang',
             'alamat_lengkap' => 'Jl. Super Dashboard No. 1',
             'status_verifikasi' => $status,

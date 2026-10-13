@@ -18,7 +18,7 @@
         <section class="profile-account-card">
             <div class="profile-account-top">
                 <div class="profile-account-main">
-                    <img src="{{ $profileAvatar }}" alt="Foto profil {{ $superAdmin?->nama ?? 'Super Admin' }}" class="profile-account-avatar" onerror="this.onerror=null;this.src='{{ asset('img/profil.jpg') }}';">
+                    <img src="{{ $profileAvatar }}" alt="Foto profil {{ $superAdmin?->nama ?? 'Super Admin' }}" class="profile-account-avatar" data-fallback="{{ asset('img/profil.jpg') }}" onerror="this.onerror=null;this.src=this.dataset.fallback;">
                     <div class="profile-account-meta">
                         <div class="profile-account-name-wrap">
                             <h2>{{ $superAdmin?->nama ?? 'Super Admin' }}</h2>
@@ -91,7 +91,7 @@
                             </p>
                         </div>
                         <div class="profile-activity-right">
-                            <span class="status-chip status-{{ $activity->status_class }}">{{ $activity->status_label }}</span>
+                            <x-status-badge :status="$activity->status_class" :label="$activity->status_label" />
                             <a href="{{ $activity->detail_url }}">Lihat Detail</a>
                         </div>
                     </article>

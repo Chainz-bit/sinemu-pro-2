@@ -11,19 +11,16 @@ use App\Support\RoleLabels;
 use App\Support\WorkflowStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
 class InputItemService
 {
-    public function __construct(private readonly OptimizedImageUploader $imageUploader)
-    {
-    }
+    public function __construct(private readonly OptimizedImageUploader $imageUploader) {}
 
     /**
-     * @param array<string, mixed> $validated
+     * @param  array<string, mixed>  $validated
      */
     public function storeLostItem(int $adminId, int $regionId, array $validated, ?UploadedFile $photo): bool
     {
@@ -32,7 +29,7 @@ class InputItemService
 
         $user = $this->resolveReporter($reporterName);
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -46,26 +43,13 @@ class InputItemService
             'tanggal_hilang' => $reportDate,
             'keterangan' => $keterangan !== '' ? $keterangan : null,
             'foto_barang' => $fotoPath,
+            'region_id' => $regionId,
+            'sumber_laporan' => 'lapor_hilang',
+            'tampil_di_home' => true,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'verified_by_admin_id' => $adminId,
+            'verified_at' => now(),
         ];
-
-        if (Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
-            $payload['region_id'] = $regionId;
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
-            $payload['sumber_laporan'] = 'lapor_hilang';
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home')) {
-            $payload['tampil_di_home'] = true;
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-            $payload['status_laporan'] = WorkflowStatus::REPORT_APPROVED;
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'verified_by_admin_id')) {
-            $payload['verified_by_admin_id'] = $adminId;
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'verified_at')) {
-            $payload['verified_at'] = now();
-        }
 
         try {
             LaporanBarangHilang::create($payload);
@@ -81,15 +65,15 @@ class InputItemService
     }
 
     /**
-     * @param array<string, mixed> $validated
+     * @param  array<string, mixed>  $validated
      */
     public function storeFoundItem(int $adminId, int $regionId, array $validated, ?UploadedFile $photo): void
     {
         $kategoriId = $validated['kategori_id'] ?? null;
 
-        if (!$kategoriId) {
+        if (! $kategoriId) {
             $defaultKategori = Kategori::query()->first();
-            if (!$defaultKategori) {
+            if (! $defaultKategori) {
                 $defaultKategori = Kategori::query()->create(['nama_kategori' => 'Umum']);
             }
 
@@ -118,19 +102,12 @@ class InputItemService
             'kontak_pengambilan' => trim((string) ($validated['kontak_pengambilan'] ?? '')) ?: null,
             'jam_layanan_pengambilan' => trim((string) ($validated['jam_layanan_pengambilan'] ?? '')) ?: null,
             'catatan_pengambilan' => trim((string) ($validated['catatan_pengambilan'] ?? '')) ?: null,
+            'tampil_di_home' => true,
+            'region_id' => $regionId,
+            'status_laporan' => WorkflowStatus::REPORT_APPROVED,
+            'verified_by_admin_id' => $adminId,
+            'verified_at' => now(),
         ];
-
-        if (Schema::hasColumn('barangs', 'tampil_di_home')) {
-            $payload['tampil_di_home'] = true;
-        }
-        if (Schema::hasColumn('barangs', 'region_id')) {
-            $payload['region_id'] = $regionId;
-        }
-        if (Schema::hasColumn('barangs', 'status_laporan')) {
-            $payload['status_laporan'] = WorkflowStatus::REPORT_APPROVED;
-            $payload['verified_by_admin_id'] = $adminId;
-            $payload['verified_at'] = now();
-        }
 
         try {
             Barang::create($payload);
@@ -147,27 +124,14 @@ class InputItemService
     {
         $normalizedReporter = trim($reporterName);
         if ($normalizedReporter === '') {
-            $normalizedReporter = 'Pelapor ' . RoleLabels::manager();
+            $normalizedReporter = 'Pelapor '.RoleLabels::manager();
         }
 
-        $hasNamaColumn = Schema::hasColumn('users', 'nama');
-        $hasNameColumn = Schema::hasColumn('users', 'name');
-
         $existingUser = User::query()
-            ->where(function ($query) use ($normalizedReporter, $hasNamaColumn, $hasNameColumn): void {
-                if ($hasNamaColumn) {
-                    $query->where('nama', $normalizedReporter);
-                }
-
-                if ($hasNameColumn) {
-                    if ($hasNamaColumn) {
-                        $query->orWhere('name', $normalizedReporter);
-                    } else {
-                        $query->where('name', $normalizedReporter);
-                    }
-                }
-
-                $query->orWhere('email', $normalizedReporter);
+            ->where(function ($query) use ($normalizedReporter): void {
+                $query->where('nama', $normalizedReporter)
+                    ->orWhere('name', $normalizedReporter)
+                    ->orWhere('email', $normalizedReporter);
             })
             ->first();
 
@@ -177,7 +141,7 @@ class InputItemService
 
         $baseSlug = Str::slug($normalizedReporter);
         if ($baseSlug === '') {
-            $baseSlug = 'pelapor-' . Str::slug(RoleLabels::manager());
+            $baseSlug = 'pelapor-'.Str::slug(RoleLabels::manager());
         }
 
         $username = $baseSlug;

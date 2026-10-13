@@ -12,3 +12,20 @@ body {
     height: auto;
     overflow-x: hidden;
 }
+
+.user-main-content {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.user-main-content .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    flex-shrink: 0;
+}

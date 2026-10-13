@@ -21,13 +21,13 @@ class SuperProfileCommandService
         $newProfilePath = null;
         if ($photo) {
             $oldProfilePath = $this->deletablePublicPath((string) ($superAdmin->profil ?? ''));
-            $newProfilePath = $photo->store('profil-super/' . now()->format('Y/m'), 'public');
+            $newProfilePath = $photo->store('profil-super/'.now()->format('Y/m'), 'public');
             $validated['profil'] = $newProfilePath;
         } else {
             unset($validated['profil']);
         }
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make((string) $validated['password']);
         } else {
             unset($validated['password']);
@@ -53,9 +53,9 @@ class SuperProfileCommandService
         $path = trim($path);
 
         return $path !== ''
-            && !str_starts_with($path, 'http://')
-            && !str_starts_with($path, 'https://')
-            && !str_starts_with($path, '/')
+            && ! str_starts_with($path, 'http://')
+            && ! str_starts_with($path, 'https://')
+            && ! str_starts_with($path, '/')
             ? $path
             : null;
     }

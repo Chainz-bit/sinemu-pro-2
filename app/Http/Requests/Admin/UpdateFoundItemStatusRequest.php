@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\ManagerPortal;
 use App\Support\WorkflowStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,7 +11,7 @@ class UpdateFoundItemStatusRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user(\App\Support\ManagerPortal::guard()) !== null;
+        return $this->user(ManagerPortal::guard()) !== null;
     }
 
     /**

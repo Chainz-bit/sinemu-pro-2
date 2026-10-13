@@ -153,7 +153,7 @@
 
                     <div class="form-col-12 form-actions claim-create-actions">
                         <a href="{{ route('home') }}#hilang-temuan" class="btn-secondary">Batal</a>
-                        <button id="claimSubmitButton" type="submit" class="btn-primary" @disabled(!old('persetujuan_klaim'))>
+                        <button id="claimSubmitButton" type="submit" class="btn-primary" data-loading-text="Memproses Klaim..." @disabled(!old('persetujuan_klaim'))>
                             Ajukan Klaim
                         </button>
                     </div>
@@ -166,6 +166,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             document.body.classList.add('input-page-mode');
 
+            const claimForm = document.querySelector('form.input-form');
             const barangSelect = document.getElementById('barang_id');
             const itemSummary = document.getElementById('claimItemSummary');
             const itemName = document.getElementById('claimItemSummaryName');
@@ -189,6 +190,7 @@
 
             const updateSubmitState = function () {
                 if (!submitButton) return;
+                if (claimForm && claimForm.dataset.submitting === 'true') return;
                 submitButton.disabled = !(consent && consent.checked);
             };
 

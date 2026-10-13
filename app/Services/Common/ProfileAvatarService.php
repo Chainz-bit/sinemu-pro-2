@@ -32,7 +32,7 @@ class ProfileAvatarService
                 $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
                 $binary = @file_get_contents($absolutePath);
                 if ($binary !== false) {
-                    return 'data:' . $mimeType . ';base64,' . base64_encode($binary);
+                    return 'data:'.$mimeType.';base64,'.base64_encode($binary);
                 }
 
                 return route('media.image', ['folder' => $folder, 'path' => $subPath]);
@@ -46,10 +46,10 @@ class ProfileAvatarService
             $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
             $binary = @file_get_contents($absolutePath);
             if ($binary !== false) {
-                return 'data:' . $mimeType . ';base64,' . base64_encode($binary);
+                return 'data:'.$mimeType.';base64,'.base64_encode($binary);
             }
 
-            return asset('storage/' . $normalized);
+            return asset('storage/'.$normalized);
         }
 
         return $defaultAvatarUrl;

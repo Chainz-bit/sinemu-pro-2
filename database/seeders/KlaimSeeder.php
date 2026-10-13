@@ -19,7 +19,7 @@ class KlaimSeeder extends Seeder
         $admin = Admin::where('username', 'admin')->first();
         $user = User::where('email', 'user@example.com')->first();
 
-        if (!$admin || !$user) {
+        if (! $admin || ! $user) {
             return;
         }
 
@@ -48,7 +48,7 @@ class KlaimSeeder extends Seeder
             $laporan = LaporanBarangHilang::where('nama_barang', $item['laporan_nama'])->first();
             $barang = Barang::where('nama_barang', $item['barang_nama'])->first();
 
-            if (!$laporan || !$barang) {
+            if (! $laporan || ! $barang) {
                 continue;
             }
 

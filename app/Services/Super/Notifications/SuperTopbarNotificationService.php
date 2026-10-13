@@ -14,8 +14,7 @@ class SuperTopbarNotificationService
     public function __construct(
         private readonly AdminVerificationQueryService $adminVerificationQueryService,
         private readonly SuperTopbarNotificationPresenter $notificationPresenter
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -24,13 +27,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property float|null $pickup_lng
  * @property string|null $status_verifikasi
  * @property string|null $alasan_penolakan
- * @property \Illuminate\Support\Carbon|null $verified_at
+ * @property Carbon|null $verified_at
  * @property float|null $lat
  * @property float|null $lng
  * @property string|null $profil
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  * @property-read SuperAdmin|null $superAdmin
  * @property-read Wilayah|null $region
  * @property-read Collection<int, Barang> $barangs
@@ -43,8 +46,11 @@ class Admin extends Authenticatable
     use SoftDeletes;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_REJECTED = 'rejected';
+
     public const STATUS_INACTIVE = 'inactive';
 
     public const VERIFICATION_STATUSES = [
@@ -88,35 +94,35 @@ class Admin extends Authenticatable
 
     public function isActive(): bool
     {
-        return $this->status_verifikasi === self::STATUS_ACTIVE && !$this->trashed();
+        return $this->status_verifikasi === self::STATUS_ACTIVE && ! $this->trashed();
     }
 
-    public function superAdmin()
+    public function superAdmin(): BelongsTo
     {
         return $this->belongsTo(SuperAdmin::class);
     }
 
-    public function region()
+    public function region(): BelongsTo
     {
         return $this->belongsTo(Wilayah::class, 'region_id');
     }
 
-    public function barangs()
+    public function barangs(): HasMany
     {
         return $this->hasMany(Barang::class);
     }
 
-    public function klaims()
+    public function klaims(): HasMany
     {
         return $this->hasMany(Klaim::class);
     }
 
-    public function pencocokans()
+    public function pencocokans(): HasMany
     {
         return $this->hasMany(Pencocokan::class);
     }
 
-    public function notifications()
+    public function notifications(): HasMany
     {
         return $this->hasMany(AdminNotification::class);
     }

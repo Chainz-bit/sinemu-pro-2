@@ -15,6 +15,7 @@ import * as L from 'leaflet';
 import '../shared/page-transition.js';
 import '../shared/flash-popup.js';
 import '../shared/custom-select.js';
+import '../shared/form-submit-protection.js';
 import '../apps/home/app.js';
 
 flatpickr.localize(Indonesian);

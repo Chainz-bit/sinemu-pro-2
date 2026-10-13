@@ -11,8 +11,7 @@ class DashboardController extends Controller
 {
     public function __construct(
         private readonly SuperDashboardQueryService $dashboardQueryService
-    ) {
-    }
+    ) {}
 
     public function index(): View
     {

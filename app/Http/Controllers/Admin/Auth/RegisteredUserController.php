@@ -12,7 +12,6 @@ use App\Support\RoleLabels;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -54,15 +53,11 @@ class RegisteredUserController extends Controller
 
         return redirect()
             ->route(ManagerPortal::loginRoute())
-            ->with('status', 'Pendaftaran ' . RoleLabels::managerLower() . ' berhasil. Akun Anda akan aktif setelah diverifikasi super admin.');
+            ->with('status', 'Pendaftaran '.RoleLabels::managerLower().' berhasil. Akun Anda akan aktif setelah diverifikasi super admin.');
     }
 
     private function resolveRegionId(string $kecamatan): ?int
     {
-        if (!Schema::hasTable('wilayahs') || !Schema::hasColumn('admins', 'region_id')) {
-            return null;
-        }
-
         $wilayah = IndramayuDistricts::wilayahItem($kecamatan);
 
         return (int) Wilayah::query()->firstOrCreate(

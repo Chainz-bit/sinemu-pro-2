@@ -5,10 +5,9 @@ namespace App\Services\Admin\LostItems;
 use App\Http\Requests\Admin\LostItemIndexRequest;
 use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
+use App\Support\ManagerPortal;
 use App\Support\WorkflowStatus;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 
 class LostItemQueryService
 {
@@ -24,13 +23,9 @@ class LostItemQueryService
             'laporan_barang_hilangs.foto_barang',
             'laporan_barang_hilangs.created_at',
             'laporan_barang_hilangs.updated_at',
+            'laporan_barang_hilangs.tampil_di_home',
+            'laporan_barang_hilangs.status_laporan',
         ];
-        if (Schema::hasColumn('laporan_barang_hilangs', 'tampil_di_home')) {
-            $selectColumns[] = 'laporan_barang_hilangs.tampil_di_home';
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-            $selectColumns[] = 'laporan_barang_hilangs.status_laporan';
-        }
 
         $query = LaporanBarangHilang::query()
             ->with('user')
@@ -45,13 +40,11 @@ class LostItemQueryService
             )
             ->withCount(['klaims', 'pencocokans']);
 
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
-            $query->where('laporan_barang_hilangs.sumber_laporan', 'lapor_hilang');
-        }
-        $admin = \App\Support\ManagerPortal::user();
-        if ($admin && $admin->region_id && Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+        $query->where('laporan_barang_hilangs.sumber_laporan', 'lapor_hilang');
+        $admin = ManagerPortal::user();
+        if ($admin && $admin->region_id) {
             $query->where('laporan_barang_hilangs.region_id', $admin->region_id);
-        } elseif (Schema::hasColumn('laporan_barang_hilangs', 'region_id')) {
+        } else {
             $query->whereRaw('1 = 0');
         }
 
@@ -69,30 +62,13 @@ class LostItemQueryService
             return;
         }
 
-        $hasNamaColumn = Schema::hasColumn('users', 'nama');
-        $hasNameColumn = Schema::hasColumn('users', 'name');
-
-        $query->where(function ($builder) use ($search, $hasNamaColumn, $hasNameColumn): void {
+        $query->where(function ($builder) use ($search): void {
             $builder->where('nama_barang', 'like', '%'.$search.'%')
-                ->orWhere('lokasi_hilang', 'like', '%'.$search.'%');
-
-            if (!$hasNamaColumn && !$hasNameColumn) {
-                return;
-            }
-
-            $builder->orWhereHas('user', function ($userQuery) use ($search, $hasNamaColumn, $hasNameColumn): void {
-                if ($hasNamaColumn) {
-                    $userQuery->where('users.nama', 'like', '%'.$search.'%');
-                }
-
-                if ($hasNameColumn) {
-                    if ($hasNamaColumn) {
-                        $userQuery->orWhere('users.name', 'like', '%'.$search.'%');
-                    } else {
-                        $userQuery->where('users.name', 'like', '%'.$search.'%');
-                    }
-                }
-            });
+                ->orWhere('lokasi_hilang', 'like', '%'.$search.'%')
+                ->orWhereHas('user', function ($userQuery) use ($search): void {
+                    $userQuery->where('users.nama', 'like', '%'.$search.'%')
+                        ->orWhere('users.name', 'like', '%'.$search.'%');
+                });
         });
     }
 
@@ -102,39 +78,18 @@ class LostItemQueryService
             return;
         }
 
-        if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-            $allowedStatuses = [
-                WorkflowStatus::REPORT_SUBMITTED,
-                WorkflowStatus::REPORT_APPROVED,
-                WorkflowStatus::REPORT_REJECTED,
-                WorkflowStatus::REPORT_MATCHED,
-                WorkflowStatus::REPORT_CLAIMED,
-                WorkflowStatus::REPORT_COMPLETED,
-            ];
-
-            if (in_array($status, $allowedStatuses, true)) {
-                $query->where('laporan_barang_hilangs.status_laporan', $status);
-            }
-
-            return;
-        }
-
-        $legacyStatusMap = [
-            WorkflowStatus::REPORT_SUBMITTED => WorkflowStatus::CLAIM_LEGACY_PENDING,
-            WorkflowStatus::REPORT_REJECTED => WorkflowStatus::CLAIM_LEGACY_REJECTED,
-            WorkflowStatus::REPORT_COMPLETED => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+        $allowedStatuses = [
+            WorkflowStatus::REPORT_SUBMITTED,
+            WorkflowStatus::REPORT_APPROVED,
+            WorkflowStatus::REPORT_REJECTED,
+            WorkflowStatus::REPORT_MATCHED,
+            WorkflowStatus::REPORT_CLAIMED,
+            WorkflowStatus::REPORT_COMPLETED,
         ];
-        $claimStatus = $legacyStatusMap[$status] ?? null;
-        if ($claimStatus === null) {
-            return;
-        }
 
-        $query->whereExists(function ($claimQuery) use ($claimStatus): void {
-            $claimQuery->selectRaw('1')
-                ->from('klaims')
-                ->whereColumn('klaims.laporan_hilang_id', 'laporan_barang_hilangs.id')
-                ->where('klaims.status_klaim', $claimStatus);
-        });
+        if (in_array($status, $allowedStatuses, true)) {
+            $query->where('laporan_barang_hilangs.status_laporan', $status);
+        }
     }
 
     private function applyDate(Builder $query, ?string $date): void

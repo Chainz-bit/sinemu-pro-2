@@ -31,14 +31,17 @@
 }
 
 .lost-detail-header h1 {
-    margin: 0;
-    font-size: 36px;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    font-size: 1.5rem; /* 24px - standard admin dashboard */
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: #0f172a;
 }
 
 .lost-detail-header-meta {
-    margin-top: 10px;
+    margin-top: 0;
+    margin-bottom: 2px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -47,14 +50,15 @@
 .lost-detail-header-meta span {
     display: inline-flex;
     align-items: center;
-    min-height: 26px;
-    padding: 0 10px;
+    padding: 3px 10px; /* py-1 px-2.5 */
+    min-height: 24px;
     border-radius: 999px;
     border: 1px solid #dce6f3;
-    background: #f7faff;
-    color: #5d728f;
-    font-size: 11px;
+    background: #f8faff;
+    color: #475569;
+    font-size: 12px; /* text-xs */
     font-weight: 600;
+    line-height: 1.3;
 }
 
 .lost-detail-actions {
@@ -102,9 +106,34 @@
 }
 
 .lost-action-btn-primary {
-    border-color: #2f8fe9;
-    background: #2f8fe9;
+    border-color: var(--brand, #2b6cb0);
+    background: var(--brand, #2b6cb0);
     color: #fff;
+}
+
+.lost-action-btn-primary:hover {
+    background: #235892;
+    border-color: #235892;
+}
+
+.lost-action-btn-outline {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lost-action-btn-outline:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
 }
 
 .lost-action-btn-primary:disabled {
@@ -197,11 +226,12 @@
 
 .lost-detail-body h2 {
     margin: 0;
-    font-size: clamp(1.85rem, 2.5vw, 2.45rem);
-    line-height: 1.18;
-    letter-spacing: -0.02em;
+    font-size: 1.25rem; /* 20px / text-xl */
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    font-weight: 700;
     text-transform: none;
-    color: #162b49;
+    color: #0f172a;
 }
 
 .lost-detail-body p {
@@ -340,6 +370,81 @@
     padding: 10px;
     display: grid;
     gap: 8px;
+}
+
+.lost-verify-box form {
+    margin: 0;
+    width: fit-content;
+}
+
+.lost-claim-action-card,
+.claim-action-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-top: 2px;
+}
+
+.lost-claim-action-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lost-claim-action-text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #475569;
+}
+
+.lost-claim-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--brand, #2b6cb0);
+    border: 1px solid var(--brand, #2b6cb0);
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.lost-claim-btn:hover {
+    background: #235892;
+    border-color: #235892;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(43, 108, 176, 0.2);
+}
+
+.lost-claim-btn-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+}
+
+.lost-claim-btn:hover .lost-claim-btn-icon {
+    transform: translateX(2px);
+}
+
+.lost-claim-empty-note {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
 }
 
 .lost-verify-box > small {
@@ -657,7 +762,7 @@
     }
 
     .lost-detail-header h1 {
-        font-size: 28px;
+        font-size: 1.35rem;
     }
 }
 
@@ -679,7 +784,19 @@
     }
 
     .lost-detail-header h1 {
-        font-size: 26px;
+        font-size: 1.25rem;
+    }
+
+    .lost-claim-action-card,
+    .claim-action-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .lost-claim-btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .lost-detail-header-meta {

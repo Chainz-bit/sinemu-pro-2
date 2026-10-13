@@ -11,17 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('admins')) {
+        if (! Schema::hasTable('admins')) {
             return;
         }
 
-        if (!Schema::hasColumn('admins', 'deleted_at')) {
+        if (! Schema::hasColumn('admins', 'deleted_at')) {
             Schema::table('admins', function ($table): void {
                 $table->softDeletes();
             });
         }
 
-        if (!Schema::hasColumn('admins', 'status_verifikasi')) {
+        if (! Schema::hasColumn('admins', 'status_verifikasi')) {
             return;
         }
 
@@ -48,7 +48,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (!Schema::hasTable('admins') || !Schema::hasColumn('admins', 'status_verifikasi')) {
+        if (! Schema::hasTable('admins') || ! Schema::hasColumn('admins', 'status_verifikasi')) {
             return;
         }
 

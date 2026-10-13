@@ -64,7 +64,7 @@
                         <tr>
                             <th>Detail {{ $managerRoleLabel }}</th>
                             <th>Tanggal Daftar</th>
-                            <th>Status</th>
+                            <th class="min-w-[140px]">Status</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -74,9 +74,9 @@
                                 $statusKey = \App\Support\AdminVerificationStatusPresenter::key($admin->status_verifikasi);
                             @endphp
                             <tr>
-                                <td class="card-primary-cell" data-label="Detail Aktivitas">
+                                <td class="card-primary-cell align-middle" data-label="Detail Aktivitas">
                                     <div class="item-cell">
-                                        <div class="item-avatar avatar-claim">
+                                        <div class="item-avatar avatar-claim w-10 h-10 rounded-lg shrink-0">
                                             <span class="item-avatar-fallback">{{ strtoupper(substr((string) $admin->nama, 0, 1)) }}</span>
                                         </div>
                                         <div>
@@ -86,18 +86,16 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="card-date-cell" data-label="Tanggal">
+                                <td class="card-date-cell align-middle" data-label="Tanggal">
                                     <div class="date-cell">
                                         <strong>{{ optional($admin->created_at)->format('d M Y') ?? '-' }}</strong>
                                         <small>{{ optional($admin->created_at)->format('H:i') ?? '-' }} WIB</small>
                                     </div>
                                 </td>
-                                <td class="card-status-cell" data-label="Status">
-                                    <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass($statusKey) }}">
-                                        {{ \App\Support\AdminVerificationStatusPresenter::label($statusKey) }}
-                                    </span>
+                                <td class="card-status-cell align-middle min-w-[140px]" data-label="Status">
+                                    <x-status-badge :status="$statusKey" type="admin" />
                                 </td>
-                                <td class="menu-cell card-action-cell" data-label="Aksi">
+                                <td class="menu-cell card-action-cell align-middle" data-label="Aksi">
                                     <x-dashboard.action-menu id="super-manager-menu-{{ $index }}" label="Buka menu aksi pengelola">
                                         <a href="{{ route('super.admins.show', $admin) }}">Lihat Detail</a>
                                         <a href="{{ route('super.admins.edit', $admin) }}">Edit Akun</a>

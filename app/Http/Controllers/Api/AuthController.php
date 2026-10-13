@@ -13,7 +13,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -26,26 +25,14 @@ class AuthController extends Controller
 
         $payload = [
             'name' => $validated['name'],
+            'nama' => $validated['name'],
             'email' => strtolower((string) $validated['email']),
             'nomor_telepon' => $validated['phone'],
             'password' => Hash::make((string) $validated['password']),
+            'username' => $validated['username'],
+            'alamat' => $validated['alamat'] ?? null,
+            'email_verified_at' => now(),
         ];
-
-        if ($this->userHasColumn('nama')) {
-            $payload['nama'] = $validated['name'];
-        }
-
-        if ($this->userHasColumn('username')) {
-            $payload['username'] = $validated['username'];
-        }
-
-        if ($this->userHasColumn('alamat')) {
-            $payload['alamat'] = $validated['alamat'] ?? null;
-        }
-
-        if ($this->userHasColumn('email_verified_at')) {
-            $payload['email_verified_at'] = now();
-        }
 
         $user = User::query()->create($payload);
         $token = $user->createToken('mobile')->plainTextToken;
@@ -132,14 +119,12 @@ class AuthController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if ($this->userHasColumn('google_id')) {
-                $linkedUser = User::query()
-                    ->where('google_id', $googleId)
-                    ->when($user, fn ($query) => $query->whereKeyNot($user->getKey()))
-                    ->first();
+            $linkedUser = User::query()
+                ->where('google_id', $googleId)
+                ->when($user, fn ($query) => $query->whereKeyNot($user->getKey()))
+                ->first();
 
-                abort_if($linkedUser !== null, 409, 'Akun Google sudah terhubung dengan user lain.');
-            }
+            abort_if($linkedUser !== null, 409, 'Akun Google sudah terhubung dengan user lain.');
 
             if ($user) {
                 $this->syncGoogleUser($user, $googleId, $avatar);
@@ -172,21 +157,19 @@ class AuthController extends Controller
     {
         $updates = [];
 
-        if ($this->userHasColumn('google_id')) {
-            $currentGoogleId = trim((string) ($user->google_id ?? ''));
+        $currentGoogleId = trim((string) ($user->google_id ?? ''));
 
-            abort_if(
-                $currentGoogleId !== '' && $currentGoogleId !== $googleId,
-                403,
-                'Akun Google tidak sesuai dengan akun ini.'
-            );
+        abort_if(
+            $currentGoogleId !== '' && $currentGoogleId !== $googleId,
+            403,
+            'Akun Google tidak sesuai dengan akun ini.'
+        );
 
-            if ($currentGoogleId === '') {
-                $updates['google_id'] = $googleId;
-            }
+        if ($currentGoogleId === '') {
+            $updates['google_id'] = $googleId;
         }
 
-        if ($avatar !== '' && $this->userHasColumn('avatar') && (string) ($user->avatar ?? '') !== $avatar) {
+        if ($avatar !== '' && (string) ($user->avatar ?? '') !== $avatar) {
             $updates['avatar'] = $avatar;
         }
 
@@ -202,27 +185,15 @@ class AuthController extends Controller
     {
         $payload = [
             'name' => $name,
+            'nama' => $name,
             'email' => $email,
             'password' => Hash::make(Str::random(32)),
+            'username' => $this->makeUniqueUsername($email, $name),
+            'email_verified_at' => now(),
+            'google_id' => $googleId,
         ];
 
-        if ($this->userHasColumn('nama')) {
-            $payload['nama'] = $name;
-        }
-
-        if ($this->userHasColumn('username')) {
-            $payload['username'] = $this->makeUniqueUsername($email, $name);
-        }
-
-        if ($this->userHasColumn('email_verified_at')) {
-            $payload['email_verified_at'] = now();
-        }
-
-        if ($this->userHasColumn('google_id')) {
-            $payload['google_id'] = $googleId;
-        }
-
-        if ($avatar !== '' && $this->userHasColumn('avatar')) {
+        if ($avatar !== '') {
             $payload['avatar'] = $avatar;
         }
 
@@ -283,10 +254,5 @@ class AuthController extends Controller
                 'alamat' => $user->alamat,
             ],
         ], 201);
-    }
-
-    private function userHasColumn(string $column): bool
-    {
-        return Schema::hasColumn('users', $column);
     }
 }

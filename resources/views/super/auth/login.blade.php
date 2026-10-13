@@ -6,6 +6,7 @@
 
 @section('content')
 @php
+    /** @var \Illuminate\Support\ViewErrorBag $errors */
     $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
 @endphp
 <main class="super-login-shell">

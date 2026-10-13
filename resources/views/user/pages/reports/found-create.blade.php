@@ -125,7 +125,7 @@
                 </div>
 
                 <div class="form-col-12 form-actions">
-                    <button type="submit" class="btn-primary">Kirim Laporan</button>
+                    <button type="submit" class="btn-primary" data-loading-text="Menyimpan Laporan...">Kirim Laporan</button>
                 </div>
             </form>
         </section>

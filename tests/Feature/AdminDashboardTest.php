@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Barang;
-use App\Models\Klaim;
 use App\Models\Kategori;
+use App\Models\Klaim;
 use App\Models\LaporanBarangHilang;
 use App\Models\Pencocokan;
 use App\Models\SuperAdmin;
@@ -208,7 +208,7 @@ class AdminDashboardTest extends TestCase
         $this->assertStringContainsString('Tablet Xiaomi', $tableBody);
         $this->assertStringNotContainsString('Dokumen Penting', $tableBody);
         $this->assertStringNotContainsString('Payung Hitam', $tableBody);
-        $this->assertStringContainsString('DISETUJUI', $tableBody);
+        $this->assertStringContainsString('TERVERIFIKASI', $tableBody);
     }
 
     public function test_dashboard_report_update_validates_payload_by_type(): void
@@ -400,12 +400,12 @@ class AdminDashboardTest extends TestCase
     {
         $admin = $this->createAdmin();
         $user = $this->createUser();
-        $adminRegion = \App\Models\Wilayah::query()->create([
+        $adminRegion = Wilayah::query()->create([
             'nama_wilayah' => 'Wilayah Dashboard Admin',
             'lat' => -6.32,
             'lng' => 108.32,
         ]);
-        $otherRegion = \App\Models\Wilayah::query()->create([
+        $otherRegion = Wilayah::query()->create([
             'nama_wilayah' => 'Wilayah Dashboard Lain',
             'lat' => -6.42,
             'lng' => 108.42,
@@ -639,7 +639,7 @@ class AdminDashboardTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createFoundItemForPublish(Admin $admin, User $user, Kategori $kategori, array $overrides = []): Barang
     {
@@ -659,7 +659,7 @@ class AdminDashboardTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createLostReportForPublish(Admin $admin, User $user, array $overrides = []): LaporanBarangHilang
     {
@@ -735,8 +735,8 @@ class AdminDashboardTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',

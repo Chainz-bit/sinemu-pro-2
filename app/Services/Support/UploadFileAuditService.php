@@ -27,7 +27,7 @@ class UploadFileAuditService
         $existingFiles = $this->collectExistingFiles();
         $missingReferences = array_values(array_filter(
             $references,
-            fn (array $reference): bool => !Storage::disk('public')->exists($reference['path'])
+            fn (array $reference): bool => ! Storage::disk('public')->exists($reference['path'])
         ));
         $orphanFiles = array_values(array_diff($existingFiles, $referencedPaths));
 
@@ -62,7 +62,7 @@ class UploadFileAuditService
             ['admins', 'profil'],
             ['super_admins', 'profil'],
         ] as [$table, $column]) {
-            if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+            if (! Schema::hasTable($table) || ! Schema::hasColumn($table, $column)) {
                 continue;
             }
 
@@ -134,7 +134,7 @@ class UploadFileAuditService
             $path = substr($path, strlen('storage/'));
         }
 
-        if (str_contains($path, '..') || !preg_match('#^(' . implode('|', self::FOLDERS) . ')/#', $path)) {
+        if (str_contains($path, '..') || ! preg_match('#^('.implode('|', self::FOLDERS).')/#', $path)) {
             return null;
         }
 

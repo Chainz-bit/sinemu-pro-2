@@ -43,7 +43,7 @@ class UserDashboardLostFeedService
                     'type' => 'lost_report',
                     'report_id' => (int) $report->id,
                     'item_name' => (string) $report->nama_barang,
-                    'item_detail' => 'Laporan Hilang - ' . (string) $report->lokasi_hilang,
+                    'item_detail' => 'Laporan Hilang - '.(string) $report->lokasi_hilang,
                     'incident_date' => (string) $report->tanggal_hilang,
                     'created_at' => $report->created_at,
                     'activity_at' => $activityAt,
@@ -105,16 +105,16 @@ class UserDashboardLostFeedService
 
         [$folder, $subPath] = array_pad(explode('/', $cleanPath, 2), 2, '');
         if (in_array($folder, ['barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
-            $relative = $folder . '/' . $subPath;
+            $relative = $folder.'/'.$subPath;
 
             return Storage::disk('public')->exists($relative)
-                ? asset('storage/' . $relative)
+                ? asset('storage/'.$relative)
                 : route('media.image', ['folder' => $folder, 'path' => $subPath]);
         }
 
-        $relative = $defaultFolder . '/' . ltrim($cleanPath, '/');
+        $relative = $defaultFolder.'/'.ltrim($cleanPath, '/');
         if (Storage::disk('public')->exists($relative)) {
-            return asset('storage/' . $relative);
+            return asset('storage/'.$relative);
         }
 
         return '';

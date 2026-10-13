@@ -11,8 +11,7 @@ class SuperDashboardQueryService
     public function __construct(
         private readonly AdminVerificationQueryService $adminVerificationQueryService,
         private readonly SuperDashboardNewestAdminService $newestAdminService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

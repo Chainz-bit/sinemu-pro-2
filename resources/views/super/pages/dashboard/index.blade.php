@@ -46,7 +46,7 @@
                                 <small>{{ $admin->email }} | {{ $admin->instansi ?: 'Instansi belum diisi' }}</small>
                                 <small>Didaftarkan {{ optional($admin->created_at)->format('d M Y H:i') ?? '-' }} WIB</small>
                             </div>
-                            <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass('pending') }}">Menunggu</span>
+                            <x-status-badge status="pending" type="admin" label="Menunggu" />
                             <div class="super-priority-actions">
                                 <form method="POST"
                                     action="{{ route('super.admins.verify', $admin->id) }}"
@@ -103,9 +103,7 @@
                                 </small>
                             </div>
                             <div class="super-activity-side">
-                                <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass($statusKey) }}">
-                                    {{ \App\Support\AdminVerificationStatusPresenter::label($statusKey) }}
-                                </span>
+                                <x-status-badge :status="$statusKey" type="admin" />
                                 <a class="super-activity-link" href="{{ route('super.admin-verifications.index', ['search' => $admin->nama]) }}">Buka</a>
                             </div>
                         </article>
@@ -147,9 +145,7 @@
                                 <small>{{ $admin->instansi ?: 'Instansi belum diisi' }} | {{ $admin->kecamatan ?: 'Kecamatan belum diisi' }}</small>
                                 <small>{{ optional($admin->created_at)->format('d M Y, H:i') ?? '-' }} WIB</small>
                             </div>
-                            <span class="status-chip {{ \App\Support\AdminVerificationStatusPresenter::badgeClass($statusKey) }}">
-                                {{ \App\Support\AdminVerificationStatusPresenter::label($statusKey) }}
-                            </span>
+                            <x-status-badge :status="$statusKey" type="admin" />
                             <div class="menu-cell card-action-cell" data-label="Aksi">
                                 <x-dashboard.action-menu id="super-dashboard-menu-{{ $index }}">
                                     <a href="{{ route('super.admins.show', $admin) }}">Lihat Detail</a>

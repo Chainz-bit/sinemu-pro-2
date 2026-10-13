@@ -14,8 +14,7 @@ class SuperNotificationController extends Controller
 {
     public function __construct(
         private readonly SuperTopbarNotificationService $superTopbarNotificationService
-    ) {
-    }
+    ) {}
 
     public function dismiss(Request $request): RedirectResponse
     {

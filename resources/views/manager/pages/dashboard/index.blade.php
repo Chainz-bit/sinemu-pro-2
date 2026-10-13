@@ -98,16 +98,16 @@
                         <tr>
                             <th>Detail Barang</th>
                             <th>Tanggal Laporan</th>
-                            <th>Status</th>
+                            <th class="min-w-[150px]">Status</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($latestReports as $index => $report)
                             <tr>
-                                <td class="card-primary-cell" data-label="Detail Aktivitas">
+                                <td class="card-primary-cell align-middle" data-label="Detail Aktivitas">
                                     <div class="item-cell">
-                                        <div class="item-avatar {{ $report->avatar_class ?? '' }}">
+                                        <div class="item-avatar {{ $report->avatar_class ?? '' }} w-10 h-10 rounded-lg shrink-0">
                                             <span class="item-avatar-fallback">{{ $report->avatar ?? '?' }}</span>
                                             @php
                                                 $fotoUrlDefault = asset('img/login-image.png');
@@ -131,7 +131,7 @@
 
                                                 if (!empty($localFotoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($localFotoPath)) {
                                                     $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($localFotoPath);
-                                                    $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($localFotoPath) ?: 'image/jpeg';
+                                                    $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
                                                     $binary = @file_get_contents($absolutePath);
                                                     if ($binary !== false) {
                                                         $fotoSrc = 'data:' . $mimeType . ';base64,' . base64_encode($binary);
@@ -187,7 +187,7 @@
                                     </div>
                                 </td>
 
-                                <td class="card-date-cell" data-label="Tanggal">
+                                <td class="card-date-cell align-middle" data-label="Tanggal">
                                     <div class="date-cell">
                                         <strong>
                                             {{ !empty($report->incident_date) ? \Carbon\Carbon::parse($report->incident_date)->format('d M Y') : '-' }}
@@ -198,13 +198,11 @@
                                     </div>
                                 </td>
 
-                                <td class="card-status-cell" data-label="Status">
-                                    <span class="status-chip {{ $report->status_class ?? ('status-' . ($report->status ?? 'default')) }}">
-                                        {{ $report->status_text ?? strtoupper(str_replace('_', ' ', $report->status ?? 'TIDAK DIKETAHUI')) }}
-                                    </span>
+                                <td class="card-status-cell align-middle min-w-[150px]" data-label="Status">
+                                    <x-status-badge :status="$report->status ?? $report->status_class" :label="$report->status_text" />
                                 </td>
 
-                                <td class="menu-cell card-action-cell" data-label="Aksi">
+                                <td class="menu-cell card-action-cell align-middle" data-label="Aksi">
                                     <button
                                         type="button"
                                         class="row-menu-trigger"

@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 class GeminiService
 {
     private string $apiKey;
+
     private string $model;
+
     private string $baseUrl;
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
@@ -140,6 +142,7 @@ PROMPT;
                 if ($response->status() === 503) {
                     if ($attempt < $maxRetries) {
                         sleep(1 + $attempt); // 1s, 2s backoff
+
                         continue;
                     }
                     Log::warning("Gemini model {$model} overloaded after retries");

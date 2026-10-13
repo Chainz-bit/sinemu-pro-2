@@ -94,7 +94,7 @@ class AdminNotificationSecurityTest extends TestCase
     public function test_non_active_admins_cannot_access_admin_notification_routes(): void
     {
         foreach ([Admin::STATUS_PENDING, Admin::STATUS_REJECTED, Admin::STATUS_INACTIVE] as $status) {
-            $admin = $this->createAdmin('blocked-admin-' . $status, $status);
+            $admin = $this->createAdmin('blocked-admin-'.$status, $status);
             $notification = $this->createNotification($admin);
 
             $this->actingAs($admin, 'admin')
@@ -133,8 +133,8 @@ class AdminNotificationSecurityTest extends TestCase
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
-            'nama' => 'Admin ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Instansi Notifikasi',

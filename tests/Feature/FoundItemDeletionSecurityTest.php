@@ -246,23 +246,23 @@ class FoundItemDeletionSecurityTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      * @return array{admin:Admin,owner:User,barang:Barang,photoPath:string}
      */
     private function createFoundItemFixture(array $overrides = []): array
     {
         $suffix = $this->uniqueSuffix($overrides['status_laporan'] ?? WorkflowStatus::REPORT_REJECTED, $overrides['status_barang'] ?? WorkflowStatus::FOUND_AVAILABLE);
-        $admin = $this->createAdmin('delete-found-admin-' . $suffix);
-        $owner = $this->createUser('delete-found-user-' . $suffix);
-        $kategori = Kategori::query()->create(['nama_kategori' => 'Kategori Temuan ' . $suffix]);
-        $photoPath = 'barang-temuan/2026/06/barang-temuan-' . $suffix . '.webp';
+        $admin = $this->createAdmin('delete-found-admin-'.$suffix);
+        $owner = $this->createUser('delete-found-user-'.$suffix);
+        $kategori = Kategori::query()->create(['nama_kategori' => 'Kategori Temuan '.$suffix]);
+        $photoPath = 'barang-temuan/2026/06/barang-temuan-'.$suffix.'.webp';
 
         $barang = Barang::query()->create(array_merge([
             'admin_id' => $admin->id,
             'region_id' => $admin->region_id,
             'user_id' => $owner->id,
             'kategori_id' => $kategori->id,
-            'nama_barang' => 'Barang Temuan ' . $suffix,
+            'nama_barang' => 'Barang Temuan '.$suffix,
             'deskripsi' => 'Barang temuan untuk uji keamanan hapus.',
             'lokasi_ditemukan' => 'Ruang Keamanan',
             'tanggal_ditemukan' => now()->toDateString(),
@@ -278,7 +278,7 @@ class FoundItemDeletionSecurityTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createLostReport(Admin $admin, User $user, array $overrides = []): LaporanBarangHilang
     {
@@ -298,7 +298,7 @@ class FoundItemDeletionSecurityTest extends TestCase
     }
 
     /**
-     * @param array{admin:Admin,owner:User,barang:Barang,photoPath:string} $fixture
+     * @param  array{admin:Admin,owner:User,barang:Barang,photoPath:string}  $fixture
      */
     private function assertWorkflowDeletionIsRejected(array $fixture): void
     {
@@ -314,7 +314,7 @@ class FoundItemDeletionSecurityTest extends TestCase
 
     private function uniqueSuffix(string $reportStatus, string $itemStatus): string
     {
-        $suffix = strtolower($reportStatus . '-' . $itemStatus . '-' . str()->random(6));
+        $suffix = strtolower($reportStatus.'-'.$itemStatus.'-'.str()->random(6));
 
         return preg_replace('/[^a-z0-9]+/', '-', $suffix) ?: 'item';
     }
@@ -322,10 +322,10 @@ class FoundItemDeletionSecurityTest extends TestCase
     private function createUser(string $username): User
     {
         $user = User::query()->create([
-            'name' => 'User ' . $username,
-            'nama' => 'User ' . $username,
+            'name' => 'User '.$username,
+            'nama' => 'User '.$username,
             'username' => $username,
-            'email' => $username . '@example.com',
+            'email' => $username.'@example.com',
             'nomor_telepon' => '081111111111',
             'password' => Hash::make('password123'),
         ]);
@@ -337,7 +337,7 @@ class FoundItemDeletionSecurityTest extends TestCase
     private function createAdmin(string $username): Admin
     {
         $region = Wilayah::query()->create([
-            'nama_wilayah' => 'Wilayah ' . $username,
+            'nama_wilayah' => 'Wilayah '.$username,
             'lat' => -6.32,
             'lng' => 108.32,
         ]);
@@ -348,17 +348,17 @@ class FoundItemDeletionSecurityTest extends TestCase
     private function createAdminForRegion(Wilayah $region, string $username): Admin
     {
         $superAdmin = SuperAdmin::query()->create([
-            'nama' => 'Super ' . $username,
-            'email' => 'super-' . $username . '@example.com',
-            'username' => 'super-' . $username,
+            'nama' => 'Super '.$username,
+            'email' => 'super-'.$username.'@example.com',
+            'username' => 'super-'.$username,
             'password' => Hash::make('password123'),
         ]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',

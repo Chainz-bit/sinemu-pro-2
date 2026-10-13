@@ -60,8 +60,27 @@ class ClaimHistoryTest extends TestCase
 
         $this->createClaim($admin, $user, 'Laptop Lenovo', WorkflowStatus::CLAIM_UNDER_REVIEW);
         $this->createClaim($admin, $user, 'Tablet Xiaomi', WorkflowStatus::CLAIM_APPROVED);
+        $this->createClaim($admin, $user, 'Tablet Samsung', WorkflowStatus::CLAIM_COMPLETED);
         $this->createClaim($admin, $user, 'Tablet Redmi', WorkflowStatus::CLAIM_REJECTED);
 
+        // Test filter terverifikasi (disetujui belum diserahterimakan)
+        $responseVerified = $this->actingAs($user)->get(route('user.claim-history', [
+            'search' => 'Tablet',
+            'status' => 'terverifikasi',
+            'type' => 'temuan',
+        ]));
+        $responseVerified->assertOk();
+        $claimsVerified = $responseVerified->viewData('claims');
+        $this->assertInstanceOf(LengthAwarePaginator::class, $claimsVerified);
+        $this->assertSame(1, $claimsVerified->total());
+        $verifiedItems = collect($claimsVerified->items());
+        $this->assertSame('Tablet Xiaomi', $verifiedItems->first()->item_name);
+        $this->assertSame('Terverifikasi', $verifiedItems->first()->status_text);
+        $this->assertSame('terverifikasi', $verifiedItems->first()->status_key);
+        $this->assertSame(route('user.claims.show', $verifiedItems->first()->id), $verifiedItems->first()->detail_url);
+        $this->assertSame('Instruksi Pengambilan', $verifiedItems->first()->action_label);
+
+        // Test filter selesai (sudah diserahterimakan)
         $response = $this->actingAs($user)->get(route('user.claim-history', [
             'search' => 'Tablet',
             'status' => 'selesai',
@@ -79,9 +98,9 @@ class ClaimHistoryTest extends TestCase
         $this->assertSame(1, $claims->total());
 
         $items = collect($claims->items());
-        $this->assertSame('Tablet Xiaomi', $items->first()->item_name);
+        $this->assertSame('Tablet Samsung', $items->first()->item_name);
         $this->assertSame('Selesai', $items->first()->status_text);
-        $this->assertSame('disetujui', $items->first()->status_key);
+        $this->assertSame('selesai', $items->first()->status_key);
     }
 
     private function createClaim(Admin $admin, User $user, string $itemName, string $verificationStatus): Klaim

@@ -11,8 +11,7 @@ class MatchingService
     public function __construct(
         private readonly MatchingCandidateQueryService $candidateQueryService,
         private readonly MatchingScoreService $scoreService
-    ) {
-    }
+    ) {}
 
     public function findCandidatesForLostReport(LaporanBarangHilang $laporan, int $limit = 8): Collection
     {

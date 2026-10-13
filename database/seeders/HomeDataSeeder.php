@@ -92,7 +92,7 @@ class HomeDataSeeder extends Seeder
             'Gadget',
         ];
 
-        if (!Schema::hasTable('kategoris')) {
+        if (! Schema::hasTable('kategoris')) {
             return;
         }
 
@@ -164,7 +164,7 @@ class HomeDataSeeder extends Seeder
         if (Schema::hasTable('barangs') && $admin) {
             foreach ($foundItems as $item) {
                 $kategoriId = $kategoriMap[$item['kategori']] ?? null;
-                if (!$kategoriId) {
+                if (! $kategoriId) {
                     continue;
                 }
 

@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Api;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 
@@ -31,17 +30,14 @@ class RegisterRequest extends ApiFormRequest
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone' => ['required', 'string', 'regex:/^(08[0-9]{8,13}|\+628[0-9]{8,13})$/'],
             'alamat' => ['nullable', 'string', 'max:1000'],
-        ];
-
-        if (Schema::hasColumn('users', 'username')) {
-            $rules['username'] = [
+            'username' => [
                 'required',
                 'string',
                 'max:255',
                 'regex:/^[A-Za-z0-9._-]+$/',
                 Rule::unique('users', 'username'),
-            ];
-        }
+            ],
+        ];
 
         return $rules;
     }

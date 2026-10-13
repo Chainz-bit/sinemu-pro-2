@@ -56,7 +56,7 @@ class RegionalReportScopeTest extends TestCase
         $region = $this->createRegion('Wilayah Tanpa Pengelola Laporan Hilang');
 
         foreach ([Admin::STATUS_PENDING, Admin::STATUS_REJECTED, Admin::STATUS_INACTIVE] as $status) {
-            $this->createAdmin(region: $region, status: $status, username: 'admin-' . $status);
+            $this->createAdmin(region: $region, status: $status, username: 'admin-'.$status);
         }
 
         $softDeletedAdmin = $this->createAdmin(region: $region, status: Admin::STATUS_ACTIVE, username: 'admin-soft-deleted');
@@ -311,7 +311,7 @@ class RegionalReportScopeTest extends TestCase
         $region = $this->createRegion('Wilayah Tanpa Pengelola Barang Temuan');
 
         foreach ([Admin::STATUS_PENDING, Admin::STATUS_REJECTED, Admin::STATUS_INACTIVE] as $status) {
-            $this->createAdmin(region: $region, status: $status, username: 'found-admin-' . $status);
+            $this->createAdmin(region: $region, status: $status, username: 'found-admin-'.$status);
         }
 
         $softDeletedAdmin = $this->createAdmin(region: $region, status: Admin::STATUS_ACTIVE, username: 'found-admin-soft-deleted');
@@ -506,9 +506,9 @@ class RegionalReportScopeTest extends TestCase
         $user = User::query()->create([
             'name' => 'User Wilayah',
             'nama' => 'User Wilayah',
-            'username' => 'user-wilayah-' . str()->random(6),
-            'email' => str()->random(8) . '@example.com',
-            'nomor_telepon' => '0812' . random_int(10000000, 99999999),
+            'username' => 'user-wilayah-'.str()->random(6),
+            'email' => str()->random(8).'@example.com',
+            'nomor_telepon' => '0812'.random_int(10000000, 99999999),
             'password' => 'password123',
         ]);
 
@@ -530,13 +530,13 @@ class RegionalReportScopeTest extends TestCase
                 'password' => Hash::make('password123'),
             ]
         );
-        $region ??= $this->createRegion('Wilayah Admin ' . $username);
+        $region ??= $this->createRegion('Wilayah Admin '.$username);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin Wilayah ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin Wilayah '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Instansi Wilayah',
@@ -561,8 +561,8 @@ class RegionalReportScopeTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => null,
-            'nama' => 'Admin Tanpa Wilayah ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin Tanpa Wilayah '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Instansi Tanpa Wilayah',

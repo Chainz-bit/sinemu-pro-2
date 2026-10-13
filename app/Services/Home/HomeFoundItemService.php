@@ -10,8 +10,7 @@ class HomeFoundItemService
 {
     public function __construct(
         private readonly HomeMediaAssetService $mediaAssetService
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{0:array<int,array<string,mixed>>,1:int}
@@ -74,6 +73,7 @@ class HomeFoundItemService
             return [$foundItems, $foundTotalCount];
         }, [[], 0]);
     }
+
     private function normalizeLocationLabel(string $location): string
     {
         $location = trim(preg_replace('/\s+/', ' ', $location) ?? '');
@@ -85,22 +85,26 @@ class HomeFoundItemService
 
         if (Str::startsWith($lower, 'kec ')) {
             $district = trim(substr($location, 4));
-            return 'Kecamatan ' . ucwords(Str::lower($district));
+
+            return 'Kecamatan '.ucwords(Str::lower($district));
         }
 
         if (Str::startsWith($lower, 'kecamatan ')) {
             $district = trim(substr($location, 10));
-            return 'Kecamatan ' . ucwords(Str::lower($district));
+
+            return 'Kecamatan '.ucwords(Str::lower($district));
         }
 
         if (Str::startsWith($lower, 'kel ')) {
             $ward = trim(substr($location, 4));
-            return 'Kelurahan ' . ucwords(Str::lower($ward));
+
+            return 'Kelurahan '.ucwords(Str::lower($ward));
         }
 
         if (Str::startsWith($lower, 'kelurahan ')) {
             $ward = trim(substr($location, 10));
-            return 'Kelurahan ' . ucwords(Str::lower($ward));
+
+            return 'Kelurahan '.ucwords(Str::lower($ward));
         }
 
         return ucwords(Str::lower($location));

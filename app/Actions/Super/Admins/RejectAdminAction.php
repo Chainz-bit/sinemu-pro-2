@@ -3,6 +3,7 @@
 namespace App\Actions\Super\Admins;
 
 use App\Models\Admin;
+use App\Support\RoleLabels;
 
 class RejectAdminAction
 {
@@ -11,19 +12,19 @@ class RejectAdminAction
      */
     public function execute(Admin $admin, ?string $reason = null, ?int $superAdminId = null): array
     {
-        $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
+        $managerRoleLabelLower = RoleLabels::managerLower();
 
-        if ($superAdminId !== null && !$this->isOwnedBySuperAdmin($admin, $superAdminId)) {
+        if ($superAdminId !== null && ! $this->isOwnedBySuperAdmin($admin, $superAdminId)) {
             return [
                 'key' => 'error',
-                'message' => ucfirst($managerRoleLabelLower) . ' ini tidak berada dalam cakupan akun super admin Anda.',
+                'message' => ucfirst($managerRoleLabelLower).' ini tidak berada dalam cakupan akun super admin Anda.',
             ];
         }
 
-        if (!in_array($admin->status_verifikasi, [null, 'pending'], true)) {
+        if (! in_array($admin->status_verifikasi, [null, 'pending'], true)) {
             return [
                 'key' => 'error',
-                'message' => 'Hanya akun ' . $managerRoleLabelLower . ' yang masih menunggu verifikasi yang dapat ditolak.',
+                'message' => 'Hanya akun '.$managerRoleLabelLower.' yang masih menunggu verifikasi yang dapat ditolak.',
             ];
         }
 
@@ -36,7 +37,7 @@ class RejectAdminAction
 
         return [
             'key' => 'status',
-            'message' => 'Pendaftaran ' . $managerRoleLabelLower . ' ditolak.',
+            'message' => 'Pendaftaran '.$managerRoleLabelLower.' ditolak.',
         ];
     }
 

@@ -4,17 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Barang;
+use App\Support\ManagerPortal;
+use App\Support\RoleLabels;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class BarangWilayahController extends Controller
 {
     public function index(Request $request): View
     {
-        $admin = \App\Support\ManagerPortal::user();
-        abort_if(!$admin || empty($admin->region_id), 403, ucfirst(\App\Support\RoleLabels::managerLower()) . ' belum memiliki wilayah akses.');
+        $admin = ManagerPortal::user();
+        abort_if(! $admin || empty($admin->region_id), 403, ucfirst(RoleLabels::managerLower()).' belum memiliki wilayah akses.');
 
         $search = trim((string) $request->query('search', ''));
 
@@ -38,7 +39,7 @@ class BarangWilayahController extends Controller
 
     public function edit(Barang $barang): View
     {
-        $admin = \App\Support\ManagerPortal::user();
+        $admin = ManagerPortal::user();
 
         return view('manager::pages.barang-wilayah.edit', compact('admin', 'barang'));
     }
@@ -55,7 +56,7 @@ class BarangWilayahController extends Controller
         $barang->update($validated);
 
         return redirect()
-            ->route(\App\Support\ManagerPortal::routeName('barang-wilayah.index'))
+            ->route(ManagerPortal::routeName('barang-wilayah.index'))
             ->with('status', 'Data barang wilayah berhasil diperbarui.');
     }
 
@@ -64,7 +65,7 @@ class BarangWilayahController extends Controller
         $barang->delete();
 
         return redirect()
-            ->route(\App\Support\ManagerPortal::routeName('barang-wilayah.index'))
+            ->route(ManagerPortal::routeName('barang-wilayah.index'))
             ->with('status', 'Data barang wilayah berhasil dihapus.');
     }
 }

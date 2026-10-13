@@ -3,6 +3,7 @@
 namespace App\Actions\Super\Admins;
 
 use App\Models\Admin;
+use App\Support\RoleLabels;
 
 class DeactivateAdminAction
 {
@@ -11,19 +12,19 @@ class DeactivateAdminAction
      */
     public function execute(Admin $admin, ?int $superAdminId = null): array
     {
-        $managerRoleLabelLower = \App\Support\RoleLabels::managerLower();
+        $managerRoleLabelLower = RoleLabels::managerLower();
 
-        if ($superAdminId !== null && !$this->isOwnedBySuperAdmin($admin, $superAdminId)) {
+        if ($superAdminId !== null && ! $this->isOwnedBySuperAdmin($admin, $superAdminId)) {
             return [
                 'key' => 'error',
-                'message' => ucfirst($managerRoleLabelLower) . ' ini tidak berada dalam cakupan akun super admin Anda.',
+                'message' => ucfirst($managerRoleLabelLower).' ini tidak berada dalam cakupan akun super admin Anda.',
             ];
         }
 
         if ($admin->status_verifikasi !== 'active') {
             return [
                 'key' => 'error',
-                'message' => 'Hanya akun ' . $managerRoleLabelLower . ' aktif yang dapat dinonaktifkan.',
+                'message' => 'Hanya akun '.$managerRoleLabelLower.' aktif yang dapat dinonaktifkan.',
             ];
         }
 
@@ -35,7 +36,7 @@ class DeactivateAdminAction
 
         return [
             'key' => 'status',
-            'message' => 'Akun ' . $managerRoleLabelLower . ' berhasil dinonaktifkan.',
+            'message' => 'Akun '.$managerRoleLabelLower.' berhasil dinonaktifkan.',
         ];
     }
 

@@ -4,24 +4,25 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreInputItemRequest;
+use App\Models\Admin;
 use App\Models\Kategori;
 use App\Services\Admin\InputItems\InputItemService;
+use App\Support\ManagerPortal;
+use App\Support\RoleLabels;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class InputItemController extends Controller
 {
     private const MISSING_REGION_MESSAGE = 'Pengelola harus memiliki wilayah aktif sebelum membuat data barang.';
 
-    public function __construct(private readonly InputItemService $inputItemService)
-    {
-    }
+    public function __construct(private readonly InputItemService $inputItemService) {}
 
     public function index(): View
     {
-        /** @var \App\Models\Admin $admin */
-        $admin = \App\Support\ManagerPortal::user();
+        /** @var Admin $admin */
+        $admin = ManagerPortal::user();
         $kategoriOptions = Kategori::query()
             ->forForm()
             ->get(['id', 'nama_kategori']);
@@ -31,10 +32,10 @@ class InputItemController extends Controller
 
     public function store(StoreInputItemRequest $request): RedirectResponse
     {
-        /** @var \App\Models\Admin|null $admin */
-        $admin = \App\Support\ManagerPortal::user();
-        if (!$admin) {
-            return back()->with('error', 'Sesi ' . \App\Support\RoleLabels::managerLower() . ' tidak ditemukan. Silakan masuk kembali.');
+        /** @var Admin|null $admin */
+        $admin = ManagerPortal::user();
+        if (! $admin) {
+            return back()->with('error', 'Sesi '.RoleLabels::managerLower().' tidak ditemukan. Silakan masuk kembali.');
         }
 
         if (empty($admin->region_id)) {
@@ -44,25 +45,40 @@ class InputItemController extends Controller
         }
 
         $validated = $request->validated();
-        $jenisLaporan = (string) $validated['jenis_laporan'];
-        $photo = $request->file('foto_barang');
         $adminId = (int) $admin->id;
-        $regionId = (int) $admin->region_id;
+        $jenisLaporan = (string) $validated['jenis_laporan'];
+        $lockKey = 'input_item_'.$adminId.'_'.md5(
+            trim((string) ($validated['nama_barang'] ?? '')).'_'.
+            $jenisLaporan.'_'.
+            trim((string) ($validated['kategori_id'] ?? ''))
+        );
+        $lock = Cache::lock($lockKey, 10);
 
-        if ($jenisLaporan === 'hilang') {
-            $stored = $this->inputItemService->storeLostItem($adminId, $regionId, $validated, $photo);
-
-            if (!$stored) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'Nama/akun pelapor tidak ditemukan. Gunakan nama akun pengguna yang sudah terdaftar.');
-            }
-
-            return back()->with('status', 'Laporan barang hilang berhasil ditambahkan.');
+        if (! $lock->get()) {
+            return back()->with('warning', 'Data sedang diproses, harap tunggu sebentar.');
         }
 
-        $this->inputItemService->storeFoundItem($adminId, $regionId, $validated, $photo);
+        try {
+            $photo = $request->file('foto_barang');
+            $regionId = (int) $admin->region_id;
 
-        return back()->with('status', 'Laporan barang temuan berhasil ditambahkan.');
+            if ($jenisLaporan === 'hilang') {
+                $stored = $this->inputItemService->storeLostItem($adminId, $regionId, $validated, $photo);
+
+                if (! $stored) {
+                    return back()
+                        ->withInput()
+                        ->with('error', 'Nama/akun pelapor tidak ditemukan. Gunakan nama akun pengguna yang sudah terdaftar.');
+                }
+
+                return back()->with('status', 'Laporan barang hilang berhasil ditambahkan.');
+            }
+
+            $this->inputItemService->storeFoundItem($adminId, $regionId, $validated, $photo);
+
+            return back()->with('status', 'Laporan barang temuan berhasil ditambahkan.');
+        } finally {
+            $lock->release();
+        }
     }
 }

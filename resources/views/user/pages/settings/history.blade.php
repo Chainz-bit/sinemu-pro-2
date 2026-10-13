@@ -84,11 +84,7 @@
                             <p>{{ $history->message }}</p>
                             <small>
                                 {{ $history->created_at?->translatedFormat('d M Y, H:i') }} WIB
-                                @if($isUnread)
-                                    <span class="settings-log-status-badge is-unread">Belum Dibaca</span>
-                                @else
-                                    <span class="settings-log-status-badge is-read">Sudah Dibaca</span>
-                                @endif
+                                <x-status-badge :status="$isUnread ? 'unread' : 'read'" type="log" size="sm" />
                             </small>
                         </div>
 

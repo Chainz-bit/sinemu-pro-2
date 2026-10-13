@@ -10,6 +10,7 @@ class SuperAdmin extends Authenticatable
     use HasFactory;
 
     protected $fillable = ['nama', 'email', 'username', 'password', 'profil'];
+
     protected $hidden = ['password'];
 
     public function admins()

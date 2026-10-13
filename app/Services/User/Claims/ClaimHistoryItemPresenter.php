@@ -4,6 +4,7 @@ namespace App\Services\User\Claims;
 
 use App\Models\Klaim;
 use App\Support\ClaimStatusPresenter;
+use App\Support\RoleLabels;
 use Illuminate\Support\Str;
 
 class ClaimHistoryItemPresenter
@@ -15,10 +16,10 @@ class ClaimHistoryItemPresenter
         return (object) [
             'id' => (int) $claim->id,
             'item_name' => (string) ($claim->barang?->nama_barang ?? $claim->laporanHilang?->nama_barang ?? 'Klaim Barang'),
-            'item_type' => !is_null($claim->barang_id) ? 'Barang Temuan' : 'Laporan Hilang',
+            'item_type' => ! is_null($claim->barang_id) ? 'Barang Temuan' : 'Laporan Hilang',
             'item_image' => $this->resolveItemImageUrl(
                 (string) ($claim->barang?->foto_barang ?? $claim->laporanHilang?->foto_barang ?? ''),
-                !is_null($claim->barang_id) ? 'barang-temuan' : 'barang-hilang'
+                ! is_null($claim->barang_id) ? 'barang-temuan' : 'barang-hilang'
             ),
             'submitted_at' => $claim->created_at,
             'status_text' => $statusText,
@@ -26,7 +27,8 @@ class ClaimHistoryItemPresenter
             'status_key' => $statusKey,
             'status_detail' => $this->resolveStatusDetail($claim, $statusKey),
             'pickup_location' => $this->resolvePickupLocation($claim, $statusKey),
-            'detail_url' => $this->resolveDetailUrl($claim),
+            'detail_url' => $this->resolveDetailUrl($claim, $statusKey),
+            'action_label' => $this->resolveActionLabel($statusKey),
         ];
     }
 
@@ -43,7 +45,7 @@ class ClaimHistoryItemPresenter
 
         return match ($key) {
             'ditolak' => ['Tidak Disetujui', 'status-ditolak', 'tidak_disetujui'],
-            'disetujui' => ['Selesai', 'status-selesai', 'disetujui'],
+            'disetujui' => ['Terverifikasi', 'status-diproses', 'terverifikasi'],
             'selesai' => ['Selesai', 'status-selesai', 'selesai'],
             default => ['Menunggu Tinjauan', 'status-dalam_peninjauan', 'menunggu_tinjauan'],
         };
@@ -76,13 +78,13 @@ class ClaimHistoryItemPresenter
             return $kecamatan;
         }
 
-        return trim((string) ($claim->admin?->instansi ?? 'Hubungi ' . \App\Support\RoleLabels::manager()));
+        return trim((string) ($claim->admin?->instansi ?? 'Hubungi '.RoleLabels::manager()));
     }
 
     private function resolveStatusDetail(Klaim $claim, string $statusKey): string
     {
         if ($statusKey === 'menunggu_tinjauan') {
-            return 'Klaim sedang diperiksa ' . \App\Support\RoleLabels::managerLower() . '. Pastikan bukti kepemilikan sudah lengkap.';
+            return 'Klaim sedang diperiksa '.RoleLabels::managerLower().'. Pastikan bukti kepemilikan sudah lengkap.';
         }
         if ($statusKey === 'tidak_disetujui') {
             return 'Klaim ditolak. Periksa notifikasi dan lengkapi bukti untuk pengajuan berikutnya.';
@@ -91,36 +93,54 @@ class ClaimHistoryItemPresenter
             return 'Barang sudah diserahkan dan proses klaim dinyatakan selesai.';
         }
 
+        $instruction = 'Silakan temui pengelola di lokasi layanan untuk mengambil barang Anda.';
+
         $pieces = array_values(array_filter([
             trim((string) ($claim->barang?->penanggung_jawab_pengambilan ?? '')) !== ''
-                ? ('Petugas: ' . trim((string) $claim->barang?->penanggung_jawab_pengambilan))
+                ? ('Petugas: '.trim((string) $claim->barang?->penanggung_jawab_pengambilan))
                 : null,
             trim((string) ($claim->barang?->kontak_pengambilan ?? '')) !== ''
-                ? ('Kontak: ' . trim((string) $claim->barang?->kontak_pengambilan))
+                ? ('Kontak: '.trim((string) $claim->barang?->kontak_pengambilan))
                 : null,
             trim((string) ($claim->barang?->jam_layanan_pengambilan ?? '')) !== ''
-                ? ('Jam: ' . trim((string) $claim->barang?->jam_layanan_pengambilan))
+                ? ('Jam: '.trim((string) $claim->barang?->jam_layanan_pengambilan))
                 : null,
         ]));
 
         if ($pieces === []) {
-            return 'Klaim disetujui. Lihat detail barang untuk informasi pengambilan.';
+            return $instruction;
         }
 
-        return 'Klaim disetujui. ' . implode(' | ', $pieces);
+        return $instruction.' ('.implode(' | ', $pieces).')';
     }
 
-    private function resolveDetailUrl(Klaim $claim): string
+    private function resolveDetailUrl(Klaim $claim, string $statusKey = ''): string
     {
-        if (!is_null($claim->barang_id)) {
+        if ($statusKey === 'terverifikasi'
+            || in_array((string) $claim->status_verifikasi, ['approved', 'completed'], true)
+            || (string) $claim->status_klaim === 'disetujui'
+        ) {
+            return route('user.claims.show', $claim->id);
+        }
+
+        if (! is_null($claim->barang_id)) {
             return route('home.found-detail', $claim->barang_id);
         }
 
-        if (!is_null($claim->laporan_hilang_id)) {
+        if (! is_null($claim->laporan_hilang_id)) {
             return route('home.lost-detail', $claim->laporan_hilang_id);
         }
 
         return route('home');
+    }
+
+    private function resolveActionLabel(string $statusKey): string
+    {
+        return match ($statusKey) {
+            'terverifikasi' => 'Instruksi Pengambilan',
+            'selesai' => 'Lihat Tiket',
+            default => 'Lihat Detail',
+        };
     }
 
     private function resolveItemImageUrl(string $fotoPath, string $defaultFolder): string
@@ -149,6 +169,6 @@ class ClaimHistoryItemPresenter
             return route('media.image', ['folder' => $defaultFolder, 'path' => $cleanPath]);
         }
 
-        return asset('storage/' . $cleanPath);
+        return asset('storage/'.$cleanPath);
     }
 }

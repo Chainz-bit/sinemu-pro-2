@@ -13,8 +13,7 @@ class LoginController extends Controller
 {
     public function __construct(
         private readonly DatabaseHealthService $databaseHealthService
-    ) {
-    }
+    ) {}
 
     public function create(): View|RedirectResponse
     {
@@ -37,7 +36,7 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (!$this->isDatabaseResponsive()) {
+        if (! $this->isDatabaseResponsive()) {
             return back()
                 ->withInput($request->only('login'))
                 ->withErrors(['login' => 'Layanan autentikasi sedang tidak responsif. Coba lagi beberapa saat.']);

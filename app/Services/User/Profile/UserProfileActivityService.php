@@ -8,7 +8,6 @@ use App\Support\ClaimStatusPresenter;
 use App\Support\ReportStatusPresenter;
 use App\Support\WorkflowStatus;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 class UserProfileActivityService
 {
@@ -16,16 +15,14 @@ class UserProfileActivityService
     {
         $lostReportActivities = LaporanBarangHilang::query()
             ->where('user_id', $userId)
-            ->when(Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan'), function ($query) {
-                $query->where('sumber_laporan', 'lapor_hilang');
-            })
-            ->select(array_values(array_filter([
+            ->where('sumber_laporan', 'lapor_hilang')
+            ->select([
                 'id',
                 'nama_barang',
-                Schema::hasColumn('laporan_barang_hilangs', 'status_laporan') ? 'status_laporan' : null,
+                'status_laporan',
                 'created_at',
                 'updated_at',
-            ])))
+            ])
             ->latest('updated_at')
             ->limit(8)
             ->get()
@@ -42,7 +39,7 @@ class UserProfileActivityService
 
                 return (object) [
                     'activity_at' => strtotime((string) ($report->updated_at ?? $report->created_at)),
-                    'title' => 'Anda mengirim laporan barang hilang ' . $report->nama_barang,
+                    'title' => 'Anda mengirim laporan barang hilang '.$report->nama_barang,
                     'timestamp' => $report->updated_at ?? $report->created_at,
                     'status_class' => $statusClass,
                     'status_label' => $statusLabel,
@@ -55,15 +52,15 @@ class UserProfileActivityService
             ->with(['barang:id,nama_barang', 'laporanHilang:id,nama_barang'])
             ->latest('updated_at')
             ->limit(8)
-            ->get(array_values(array_filter([
+            ->get([
                 'id',
                 'barang_id',
                 'laporan_hilang_id',
                 'status_klaim',
-                Schema::hasColumn('klaims', 'status_verifikasi') ? 'status_verifikasi' : null,
+                'status_verifikasi',
                 'created_at',
                 'updated_at',
-            ])))
+            ])
             ->toBase()
             ->map(function (Klaim $claim) {
                 $namaBarang = $claim->barang?->nama_barang
@@ -77,12 +74,12 @@ class UserProfileActivityService
                 );
                 [$statusClass, $statusLabel] = match ($claimKey) {
                     'ditolak' => ['ditolak', 'Tidak Disetujui'],
-                    'disetujui' => ['selesai', 'Selesai'],
+                    'disetujui' => ['diproses', 'Terverifikasi'],
                     'selesai' => ['selesai', 'Selesai'],
                     default => ['dalam_peninjauan', 'Menunggu Tinjauan'],
                 };
                 $kataKerja = match ($claimKey) {
-                    'disetujui' => 'disetujui',
+                    'disetujui' => 'terverifikasi',
                     'ditolak' => 'tidak disetujui',
                     'selesai' => 'selesai',
                     default => 'menunggu tinjauan',
@@ -90,7 +87,7 @@ class UserProfileActivityService
 
                 return (object) [
                     'activity_at' => strtotime((string) ($claim->updated_at ?? $claim->created_at)),
-                    'title' => 'Klaim barang ' . $namaBarang . ' ' . $kataKerja,
+                    'title' => 'Klaim barang '.$namaBarang.' '.$kataKerja,
                     'timestamp' => $claim->updated_at ?? $claim->created_at,
                     'status_class' => $statusClass,
                     'status_label' => $statusLabel,
@@ -116,11 +113,11 @@ class UserProfileActivityService
 
     private function resolveClaimDetailUrl(Klaim $claim): string
     {
-        if (!empty($claim->barang_id)) {
+        if (! empty($claim->barang_id)) {
             return route('home.found-detail', $claim->barang_id);
         }
 
-        if (!empty($claim->laporan_hilang_id)) {
+        if (! empty($claim->laporan_hilang_id)) {
             return route('home.lost-detail', $claim->laporan_hilang_id);
         }
 

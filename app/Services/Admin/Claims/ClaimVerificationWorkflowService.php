@@ -18,8 +18,7 @@ class ClaimVerificationWorkflowService
         private readonly RejectClaimAction $rejectClaimAction,
         private readonly CompleteClaimAction $completeClaimAction,
         private readonly ClaimStateResolver $claimStateResolver
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, array<int, string>|string>
@@ -40,12 +39,12 @@ class ClaimVerificationWorkflowService
     }
 
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      */
     public function approve(Klaim $klaim, array $validated, int $adminId): bool
     {
         $klaim = $this->freshClaim($klaim);
-        if (!$klaim || !$this->canApprove($klaim) || !$this->canApproveContext($klaim, $adminId)) {
+        if (! $klaim || ! $this->canApprove($klaim) || ! $this->canApproveContext($klaim, $adminId)) {
             return false;
         }
 
@@ -53,12 +52,12 @@ class ClaimVerificationWorkflowService
     }
 
     /**
-     * @param array<string,mixed> $validated
+     * @param  array<string,mixed>  $validated
      */
     public function reject(Klaim $klaim, array $validated, int $adminId): bool
     {
         $klaim = $this->freshClaim($klaim);
-        if (!$klaim || !$this->canReject($klaim) || !$this->canRejectContext($klaim, $adminId)) {
+        if (! $klaim || ! $this->canReject($klaim) || ! $this->canRejectContext($klaim, $adminId)) {
             return false;
         }
 
@@ -69,18 +68,29 @@ class ClaimVerificationWorkflowService
         return true;
     }
 
-    public function complete(Klaim $klaim, int $adminId): bool
+    /**
+     * @param  array<string,mixed>  $handoverData
+     */
+    public function complete(Klaim $klaim, int $adminId, array $handoverData = []): bool
     {
         $klaim = $this->freshClaim($klaim);
-        if (!$klaim || !$this->canComplete($klaim) || !$this->canCompleteContext($klaim, $adminId)) {
+        if (! $klaim || ! $this->canComplete($klaim) || ! $this->canCompleteContext($klaim, $adminId)) {
             return false;
         }
 
-        DB::transaction(function () use ($klaim, $adminId): void {
-            $this->completeClaimAction->execute($klaim, $adminId);
+        DB::transaction(function () use ($klaim, $adminId, $handoverData): void {
+            $this->completeClaimAction->execute($klaim, $adminId, $handoverData);
         });
 
         return true;
+    }
+
+    /**
+     * @param  array<string,mixed>  $handoverData
+     */
+    public function completeHandover(Klaim $klaim, int $adminId, array $handoverData = []): bool
+    {
+        return $this->complete($klaim, $adminId, $handoverData);
     }
 
     public function canApprove(Klaim $klaim): bool
@@ -107,30 +117,51 @@ class ClaimVerificationWorkflowService
     {
         return $this->hasManageableContext($klaim, $adminId)
             && $this->hasPendingClaimContext($klaim)
-            && !$this->hasCompletedClaimForSameItem($klaim);
+            && ! $this->hasCompletedClaimForSameItem($klaim);
     }
 
     private function canRejectContext(Klaim $klaim, int $adminId): bool
     {
-        return $this->hasManageableContext($klaim, $adminId)
-            && $this->hasPendingClaimContext($klaim)
-            && !$this->hasCompletedClaimForSameItem($klaim);
+        if (! $this->hasManageableContext($klaim, $adminId)) {
+            return false;
+        }
+
+        if ($this->hasCompletedClaimForSameItem($klaim)) {
+            return false;
+        }
+
+        // Status verifikasi klaim yang valid untuk ditolak:
+        // Selama status verifikasi klaim belum disetujui, ditolak, atau selesai
+        $statusVerifikasi = (string) ($klaim->status_verifikasi ?? '');
+        $statusKlaim = (string) ($klaim->status_klaim ?? '');
+
+        if (in_array($statusKlaim, [WorkflowStatus::CLAIM_LEGACY_APPROVED, WorkflowStatus::CLAIM_LEGACY_REJECTED], true)
+            || in_array($statusVerifikasi, [WorkflowStatus::CLAIM_APPROVED, WorkflowStatus::CLAIM_REJECTED, WorkflowStatus::CLAIM_COMPLETED], true)) {
+            return false;
+        }
+
+        return true;
     }
 
     private function canCompleteContext(Klaim $klaim, int $adminId): bool
     {
-        if (!$this->hasManageableContext($klaim, $adminId)) {
+        if (! $this->hasManageableContext($klaim, $adminId)) {
             return false;
         }
 
+        $validBarangStatuses = [
+            WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+            WorkflowStatus::FOUND_CLAIMED,
+        ];
+
         if ($klaim->pencocokan !== null) {
-            return $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIMED
+            return in_array($klaim->barang?->status_barang, $validBarangStatuses, true)
                 && $klaim->pencocokan->status_pencocokan === WorkflowStatus::MATCH_CLAIM_APPROVED
-                && !$this->hasCompletedClaimForSameItem($klaim);
+                && ! $this->hasCompletedClaimForSameItem($klaim);
         }
 
-        return $klaim->barang?->status_barang === WorkflowStatus::FOUND_CLAIMED
-            && !$this->hasCompletedClaimForSameItem($klaim);
+        return in_array($klaim->barang?->status_barang, $validBarangStatuses, true)
+            && ! $this->hasCompletedClaimForSameItem($klaim);
     }
 
     private function hasPendingClaimContext(Klaim $klaim): bool
@@ -139,27 +170,25 @@ class ClaimVerificationWorkflowService
             return false;
         }
 
-        if ($klaim->pencocokan !== null) {
+        if ($klaim->laporanHilang !== null) {
             return $klaim->barang->status_barang === WorkflowStatus::FOUND_CLAIM_IN_PROGRESS
-                && $klaim->barang->status_laporan === WorkflowStatus::REPORT_MATCHED
-                && $klaim->laporanHilang !== null
-                && $klaim->laporanHilang->status_laporan === WorkflowStatus::REPORT_CLAIMED
-                && $klaim->pencocokan->status_pencocokan === WorkflowStatus::MATCH_CLAIM_IN_PROGRESS;
+                && in_array($klaim->barang->status_laporan, [WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_APPROVED], true)
+                && in_array($klaim->laporanHilang->status_laporan, [WorkflowStatus::REPORT_CLAIMED, WorkflowStatus::REPORT_MATCHED, WorkflowStatus::REPORT_APPROVED], true)
+                && ($klaim->pencocokan === null || in_array($klaim->pencocokan->status_pencocokan, [WorkflowStatus::MATCH_CLAIM_IN_PROGRESS, 'pending'], true));
         }
 
         return $klaim->barang->status_barang === WorkflowStatus::FOUND_CLAIM_IN_PROGRESS
-            && $klaim->barang->status_laporan === WorkflowStatus::REPORT_APPROVED
-            && $klaim->laporanHilang === null;
+            && in_array($klaim->barang->status_laporan, [WorkflowStatus::REPORT_APPROVED, WorkflowStatus::REPORT_MATCHED], true);
     }
 
     private function hasManageableContext(Klaim $klaim, int $adminId): bool
     {
         $admin = Admin::query()->find($adminId);
-        if (!$admin?->isActive() || is_null($admin->region_id)) {
+        if (! $admin?->isActive() || is_null($admin->region_id)) {
             return false;
         }
 
-        if (!is_null($klaim->admin_id) && (int) $klaim->admin_id !== (int) $admin->id) {
+        if (! is_null($klaim->admin_id) && (int) $klaim->admin_id !== (int) $admin->id) {
             return false;
         }
 
@@ -181,13 +210,17 @@ class ClaimVerificationWorkflowService
         }
 
         if ($klaim->pencocokan !== null) {
-            return $klaim->laporanHilang !== null
-                && (int) $klaim->pencocokan->barang_id === (int) $klaim->barang->id
-                && (int) $klaim->pencocokan->laporan_hilang_id === (int) $klaim->laporanHilang->id
+            if ($klaim->laporanHilang !== null) {
+                return (int) $klaim->pencocokan->barang_id === (int) $klaim->barang->id
+                    && (int) $klaim->pencocokan->laporan_hilang_id === (int) $klaim->laporanHilang->id
+                    && (is_null($klaim->pencocokan->admin_id) || (int) $klaim->pencocokan->admin_id === (int) $admin->id);
+            }
+
+            return (int) $klaim->pencocokan->barang_id === (int) $klaim->barang->id
                 && (is_null($klaim->pencocokan->admin_id) || (int) $klaim->pencocokan->admin_id === (int) $admin->id);
         }
 
-        return $klaim->laporanHilang === null;
+        return true;
     }
 
     private function hasCompletedClaimForSameItem(Klaim $klaim): bool

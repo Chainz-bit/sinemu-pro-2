@@ -15,7 +15,7 @@ class ClaimStateResolverTest extends TestCase
 {
     public function test_resolves_pending_claim_state_from_pending_status(): void
     {
-        $resolver = new ClaimStateResolver();
+        $resolver = new ClaimStateResolver;
         $klaim = new Klaim([
             'status_klaim' => 'pending',
             'status_verifikasi' => WorkflowStatus::CLAIM_UNDER_REVIEW,
@@ -31,7 +31,7 @@ class ClaimStateResolverTest extends TestCase
 
     public function test_resolves_approved_claim_state_from_approved_status(): void
     {
-        $resolver = new ClaimStateResolver();
+        $resolver = new ClaimStateResolver;
         $klaim = new Klaim([
             'status_klaim' => 'disetujui',
             'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
@@ -47,7 +47,7 @@ class ClaimStateResolverTest extends TestCase
 
     public function test_resolves_rejected_claim_state_from_rejected_status(): void
     {
-        $resolver = new ClaimStateResolver();
+        $resolver = new ClaimStateResolver;
         $klaim = new Klaim([
             'status_klaim' => 'ditolak',
             'status_verifikasi' => WorkflowStatus::CLAIM_REJECTED,
@@ -63,7 +63,7 @@ class ClaimStateResolverTest extends TestCase
 
     public function test_resolves_completed_claim_state_from_completed_verification_status(): void
     {
-        $resolver = new ClaimStateResolver();
+        $resolver = new ClaimStateResolver;
         $klaim = new Klaim([
             'status_klaim' => 'disetujui',
             'status_verifikasi' => WorkflowStatus::CLAIM_COMPLETED,

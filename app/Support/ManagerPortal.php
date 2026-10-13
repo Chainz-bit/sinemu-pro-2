@@ -25,12 +25,12 @@ class ManagerPortal
 
     public static function regionMiddleware(): string
     {
-        return (string) config('roles.admin.region_middleware', self::middleware() . '.region.barang');
+        return (string) config('roles.admin.region_middleware', self::middleware().'.region.barang');
     }
 
     public static function guestMiddleware(): string
     {
-        return 'guest:' . self::guard();
+        return 'guest:'.self::guard();
     }
 
     public static function check(): bool
@@ -60,7 +60,7 @@ class ManagerPortal
 
     public static function routeName(string $name): string
     {
-        return self::routePrefix() . '.' . ltrim($name, '.');
+        return self::routePrefix().'.'.ltrim($name, '.');
     }
 
     public static function urlPrefix(): string
@@ -88,12 +88,12 @@ class ManagerPortal
         $urlPrefix = self::urlPrefix();
         $legacyPrefix = self::legacyUrlPrefix();
 
-        return $request->is($urlPrefix) || $request->is($urlPrefix . '/*')
-            || $request->is($legacyPrefix) || $request->is($legacyPrefix . '/*');
+        return $request->is($urlPrefix) || $request->is($urlPrefix.'/*')
+            || $request->is($legacyPrefix) || $request->is($legacyPrefix.'/*');
     }
 
     public static function legacyRedirectTarget(?string $path = null): string
     {
-        return '/' . trim(self::urlPrefix() . '/' . ltrim((string) $path, '/'), '/');
+        return '/'.trim(self::urlPrefix().'/'.ltrim((string) $path, '/'), '/');
     }
 }

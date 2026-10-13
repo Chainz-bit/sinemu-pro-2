@@ -2,13 +2,9 @@
 
 namespace App\Services\Super\Admins;
 
-use Illuminate\Database\Eloquent\Builder;
-
 class AdminVerificationSummaryService
 {
-    public function __construct(private readonly AdminVerificationScopeQueryService $scopeQueryService)
-    {
-    }
+    public function __construct(private readonly AdminVerificationScopeQueryService $scopeQueryService) {}
 
     /**
      * @return array{

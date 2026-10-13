@@ -15,7 +15,7 @@ class FoundItemDeletionService
      */
     public function destroy(Barang $barang): array
     {
-        if (!$barang->hasAdminDeletableReportStatus()) {
+        if (! $barang->hasAdminDeletableReportStatus()) {
             return ['ok' => false, 'message' => 'Barang temuan yang masih aktif tidak dapat dihapus.'];
         }
 

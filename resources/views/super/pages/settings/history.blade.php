@@ -83,7 +83,7 @@
                             </p>
                             <small>
                                 {{ $stamp?->translatedFormat('d M Y, H:i') ?? '-' }} WIB
-                                <span class="status-chip {{ $statusPresenter::badgeClass($statusKey) }}">{{ $statusLabel }}</span>
+                                <x-status-badge :status="$statusKey" type="admin" />
                             </small>
                         </div>
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\WorkflowStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -60,12 +61,18 @@ class Klaim extends Model
         'catatan_verifikasi_admin',
         'alasan_penolakan',
         'diverifikasi_at',
+        'nama_penerima',
+        'nomor_identitas_penerima',
+        'catatan_serah_terima',
+        'foto_serah_terima',
+        'diserahkan_at',
     ];
 
     protected $casts = [
         'bukti_foto' => 'array',
         'hasil_checklist' => 'array',
         'diverifikasi_at' => 'datetime',
+        'diserahkan_at' => 'datetime',
     ];
 
     /**
@@ -118,27 +125,27 @@ class Klaim extends Model
             || $verificationStatus === WorkflowStatus::CLAIM_REJECTED;
     }
 
-    public function laporanHilang()
+    public function laporanHilang(): BelongsTo
     {
         return $this->belongsTo(LaporanBarangHilang::class, 'laporan_hilang_id');
     }
 
-    public function barang()
+    public function barang(): BelongsTo
     {
         return $this->belongsTo(Barang::class);
     }
 
-    public function pencocokan()
+    public function pencocokan(): BelongsTo
     {
         return $this->belongsTo(Pencocokan::class, 'pencocokan_id');
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function admin()
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class);
     }

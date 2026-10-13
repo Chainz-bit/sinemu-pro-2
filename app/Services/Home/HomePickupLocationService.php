@@ -3,6 +3,7 @@
 namespace App\Services\Home;
 
 use App\Models\Admin;
+use App\Support\RoleLabels;
 
 class HomePickupLocationService
 {
@@ -72,12 +73,12 @@ class HomePickupLocationService
                             ? $pickupAddress
                             : ($alamatLengkap !== ''
                             ? $alamatLengkap
-                            : ($regionName !== '' ? $regionName : ($kecamatan !== '' ? ('Kecamatan ' . $kecamatan) : ($instansi !== '' ? $instansi : 'Alamat belum tersedia'))));
+                            : ($regionName !== '' ? $regionName : ($kecamatan !== '' ? ('Kecamatan '.$kecamatan) : ($instansi !== '' ? $instansi : 'Alamat belum tersedia'))));
 
                         return [
                             'id' => $admin->id,
-                            'name' => $instansi !== '' ? $instansi : \App\Support\RoleLabels::manager() . ' SiNemu',
-                            'manager_label' => \App\Support\RoleLabels::manager(),
+                            'name' => $instansi !== '' ? $instansi : RoleLabels::manager().' SiNemu',
+                            'manager_label' => RoleLabels::manager(),
                             'address' => $address,
                             'kecamatan' => $kecamatan,
                             'lat' => $coordinates['lat'],

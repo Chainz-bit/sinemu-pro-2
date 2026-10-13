@@ -376,3 +376,981 @@
     gap: 8px;
     flex-wrap: wrap;
 }
+
+/* ==========================================================================
+   Halaman Tiket & Instruksi Pengambilan Klaim (User)
+   ========================================================================== */
+@media screen {
+    .admin-shell:has(.claim-ticket-page) .main-content,
+    .user-main-content:has(.claim-ticket-page),
+    body.claim-ticket-page-mode .user-main-content,
+    body.claim-ticket-page-mode .main-content {
+        height: 100vh !important;
+        min-height: 100vh !important;
+        max-height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-shell:has(.claim-ticket-page),
+    body.claim-ticket-page-mode .admin-shell {
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+}
+
+.dashboard-page-content.claim-ticket-page,
+.claim-ticket-page {
+    flex: 1 1 auto;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 3.5rem !important;
+}
+
+.claim-ticket-intro {
+    margin-bottom: 24px;
+}
+
+.claim-ticket-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 991.98px) {
+    .claim-ticket-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.claim-instruction-card {
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    margin-bottom: 2rem !important;
+}
+
+.claim-ticket-banner {
+    padding: 24px;
+    position: relative;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.claim-ticket-banner.is-ready,
+.claim-ticket-banner.is-completed,
+.claim-ticket-banner.is-rejected,
+.claim-ticket-banner.is-pending {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+.claim-ticket-banner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.claim-ticket-type-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.claim-ticket-type-label iconify-icon {
+    color: #1e3a8a;
+}
+
+.claim-chip-lg {
+    font-size: 12px !important;
+    padding: 5px 12px !important;
+    border-radius: 9999px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    line-height: 1.3 !important;
+}
+
+/* Badge semantik resmi SiNemu */
+.claim-chip-ready,
+.claim-ticket-badge-wrap .status-diproses {
+    background: #ecfdf5 !important; /* bg-emerald-50 */
+    color: #047857 !important;     /* text-emerald-700 */
+    border: 1px solid rgba(167, 243, 208, 0.7) !important; /* border-emerald-200/60 */
+}
+
+.claim-chip-completed,
+.claim-ticket-badge-wrap .status-selesai {
+    background: #f8fafc !important; /* bg-slate-50 */
+    color: #334155 !important;     /* text-slate-700 */
+    border: 1px solid #cbd5e1 !important; /* border-slate-300 */
+}
+
+.claim-chip-rejected,
+.claim-ticket-badge-wrap .status-ditolak {
+    background: #fef2f2 !important; /* bg-red-50 */
+    color: #b91c1c !important;     /* text-red-700 */
+    border: 1px solid #fecaca !important; /* border-red-200 */
+}
+
+.claim-chip-pending,
+.claim-ticket-badge-wrap .status-dalam_peninjauan {
+    background: #fffbeb !important; /* bg-amber-50 */
+    color: #b45309 !important;     /* text-amber-700 tenang */
+    border: 1px solid #fde68a !important; /* border-amber-200 */
+}
+
+.claim-ticket-code-box {
+    background: #f8fafc; /* bg-slate-50 */
+    border: 1px solid #e2e8f0; /* border-slate-200 */
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: none;
+}
+
+.claim-ticket-code-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #64748b; /* text-slate-500 */
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.claim-ticket-code-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.claim-ticket-code-val {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: #1e3a8a; /* navy khas SiNemu */
+    letter-spacing: 0.03em;
+}
+
+.btn-copy-code {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.btn-copy-code:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.claim-ticket-code-desc {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.claim-ticket-status-note {
+    margin-top: 14px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.claim-instruction-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.claim-instruction-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.claim-section-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.claim-section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* lingkaran latar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.claim-section-icon.icon-posko {
+    background: #eff6ff; /* bg-blue-50 */
+    color: #2563eb;     /* text-blue-600 */
+}
+
+.claim-section-icon.icon-rules {
+    background: #eff6ff; /* bg-blue-50 */
+    color: #1e3a8a;     /* text-blue-900 / navy */
+}
+
+.claim-section-icon.icon-contact {
+    background: #eff6ff; /* bg-blue-50 */
+    color: #0284c7;     /* text-sky-600 */
+}
+
+.claim-section-title h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a; /* text-slate-900 */
+}
+
+.claim-section-title p {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: #64748b; /* text-slate-500 */
+}
+
+.claim-posko-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc; /* bg-slate-50 */
+    padding: 14px 18px;
+    display: grid;
+    gap: 8px;
+}
+
+.claim-posko-row {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 14px;
+    align-items: baseline;
+    font-size: 13px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.claim-posko-row:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+@media (max-width: 575.98px) {
+    .claim-posko-row {
+        grid-template-columns: 1fr;
+        gap: 3px;
+    }
+}
+
+.claim-posko-label {
+    color: #64748b; /* text-slate-500 font-normal */
+    font-weight: 400;
+}
+
+.claim-posko-value {
+    color: #1e293b; /* text-slate-800 font-medium */
+    font-weight: 500;
+    word-break: break-word;
+    text-align: left;
+}
+
+.claim-posko-name {
+    color: #1e3a8a;
+    font-weight: 600;
+}
+
+.claim-posko-alert {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 4px;
+}
+
+.claim-requirements-list {
+    display: grid;
+    gap: 8px;
+}
+
+.claim-requirement-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 11px 14px;
+    transition: border-color 0.15s ease;
+}
+
+.claim-requirement-item:hover {
+    border-color: #cbd5e1;
+}
+
+.claim-req-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.claim-req-content strong {
+    display: block;
+    font-size: 13px;
+    color: #0f172a;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.claim-req-content p {
+    margin: 0;
+    font-size: 12.5px;
+    color: #475569;
+    line-height: 1.45;
+}
+
+.claim-req-content code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    color: #1e3a8a;
+    border: 1px solid #e2e8f0;
+}
+
+.claim-side-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.claim-side-header h2 {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.claim-item-summary-card,
+.claim-evidence-summary-card {
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    margin-bottom: 2rem !important;
+}
+
+.claim-item-summary-body,
+.claim-evidence-body {
+    padding: 20px;
+}
+
+.claim-item-image-wrap {
+    width: 100%;
+    height: 180px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 14px;
+}
+
+.claim-item-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.claim-item-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.claim-item-kv {
+    margin-bottom: 12px;
+}
+
+.claim-item-kv:last-child {
+    margin-bottom: 0;
+}
+
+.claim-item-kv span {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.claim-item-kv strong {
+    font-size: 13.5px;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.claim-photo-thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    display: block;
+    transition: transform 0.15s ease;
+}
+
+.claim-photo-thumb:hover {
+    transform: scale(1.05);
+}
+
+.claim-photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Contact Grid (Single Row on Desktop/Tablet, Responsive Column on Mobile) */
+.claim-contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+}
+
+@media (max-width: 680px) {
+    .claim-contact-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.btn-claim-contact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.btn-claim-contact iconify-icon {
+    flex-shrink: 0;
+}
+
+.btn-contact-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Butang WhatsApp: Latar belakang hijau emerald lembut/solid */
+.btn-contact-wa {
+    background-color: #15803d !important;
+    border: 1px solid #15803d !important;
+    color: #ffffff !important;
+}
+
+.btn-contact-wa:hover {
+    background-color: #166534 !important;
+    border-color: #166534 !important;
+    color: #ffffff !important;
+}
+
+/* Butang Telefon: Gaya garisan luar kemas berlatar putih/slate */
+.btn-contact-tel {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+.btn-contact-tel iconify-icon {
+    color: #2563eb;
+}
+
+.btn-contact-tel:hover {
+    background-color: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+/* Butang Emel: Gaya garisan luar kemas berlatar putih/slate */
+.btn-contact-email {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+.btn-contact-email iconify-icon {
+    color: #475569;
+}
+
+.btn-contact-email:hover {
+    background-color: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+/* Institutional action buttons */
+.btn-ticket-secondary {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important; /* border-slate-300 */
+    color: #334155 !important;            /* text-slate-700 */
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    padding: 6px 14px !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    transition: all 0.15s ease-in-out !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+.btn-ticket-secondary:hover {
+    background-color: #f8fafc !important; /* hover:bg-slate-50 */
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+/* Sembunyikan dokumen cetak di tampilan layar monitor */
+.official-print-ticket,
+#printable-ticket {
+    display: none !important;
+}
+
+/* ==========================================================================
+   CSS Cetak Resmi Tiket Pengambilan (A4 Portrait 1 Halaman Utuh)
+   ========================================================================== */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 10mm 14mm;
+    }
+
+    /* Netralkan pembungkus layout utama agar tidak terkunci */
+    html, body, #app, main, .main-content, .dashboard-layout, .container,
+    .admin-shell, .user-main-content, .dashboard-page-content, .claim-ticket-page,
+    body.claim-ticket-page-mode,
+    body.claim-ticket-page-mode .admin-shell,
+    body.claim-ticket-page-mode .main-content,
+    body.claim-ticket-page-mode .user-main-content {
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
+        display: block !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        font-size: 9.5pt !important;
+        line-height: 1.35 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Sembunyikan seluruh elemen halaman agar tidak ada teks bocor */
+    body * {
+        visibility: hidden !important;
+    }
+
+    /* Tampilkan HANYA kontena dokumen cetak resmi */
+    #printable-ticket,
+    #printable-ticket * {
+        visibility: visible !important;
+    }
+
+    /* Sembunyikan elemen UI website secara display none */
+    nav, aside, header.topbar, .sidebar, .sidebar-backdrop, .navbar, .topbar, .topbar-wrapper,
+    .no-print, .print-hidden, button, a.btn, .btn, .btn-copy, .btn-copy-code,
+    .btn-ticket-secondary, .btn-claim-contact, input, .search-bar, .search-form,
+    .user-dropdown, .top-actions, .notification-modal, .breadcrumb, .breadcrumbs,
+    .confirm-modal-backdrop, .claim-ticket-intro, .claim-ticket-layout {
+        display: none !important;
+    }
+
+    /* Format Flat Document Resmi Instansi */
+    .official-print-ticket,
+    #printable-ticket,
+    .printable-area {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 1px solid #334155 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .print-ticket-content-wrap {
+        padding: 16px 20px !important;
+        box-sizing: border-box !important;
+        background: #ffffff !important;
+    }
+
+    /* 1. Kop Dokumen Resmi */
+    .print-ticket-kop {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding-bottom: 8px !important;
+        border-bottom: 3px double #0f172a !important; /* Garis ganda formal khas instansi */
+        margin-bottom: 10px !important;
+        background: transparent !important;
+    }
+
+    .print-kop-brand {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    .print-kop-logo {
+        width: 44px !important;
+        height: 44px !important;
+        object-fit: contain !important;
+        border-radius: 0 !important;
+    }
+
+    .print-brand-title {
+        display: block !important;
+        font-size: 16pt !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        line-height: 1.1 !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    .print-brand-subtitle {
+        display: block !important;
+        font-size: 8pt !important;
+        color: #475569 !important;
+        font-weight: 500 !important;
+    }
+
+    .print-kop-meta {
+        text-align: right !important;
+        font-size: 8.5pt !important;
+        color: #1e293b !important;
+        line-height: 1.4 !important;
+    }
+
+    .print-meta-row strong {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }
+
+    .print-code-text {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+    }
+
+    /* 2. Judul Dokumen Resmi */
+    .print-doc-title-box {
+        text-align: center !important;
+        margin: 6px 0 8px !important;
+    }
+
+    .print-doc-title {
+        font-size: 13pt !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        line-height: 1.2 !important;
+    }
+
+    .print-doc-subtitle {
+        font-size: 8.5pt !important;
+        color: #475569 !important;
+        margin: 2px 0 0 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Status Bar Dokumen */
+    .print-status-bar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: #f8fafc !important;
+        border-top: 1px solid #cbd5e1 !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+        padding: 4px 10px !important;
+        font-size: 8.5pt !important;
+        margin-bottom: 8px !important;
+    }
+
+    .print-status-label {
+        color: #475569 !important;
+        font-weight: 600 !important;
+    }
+
+    .print-status-value {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }
+
+    /* 3. Section Grid (Rincian Barang & Pengaju) */
+    .print-section-grid {
+        display: grid !important;
+        grid-template-columns: 1.15fr 0.85fr !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .print-card {
+        border: 1px solid #94a3b8 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        background: #ffffff !important;
+    }
+
+    .print-card-header {
+        background: #f8fafc !important;
+        border-bottom: 1px solid #94a3b8 !important;
+        border-radius: 0 !important;
+        padding: 4px 8px !important;
+    }
+
+    .print-card-header h2 {
+        margin: 0 !important;
+        font-size: 8.5pt !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        letter-spacing: 0.02em !important;
+        text-transform: uppercase !important;
+    }
+
+    .print-card-body {
+        padding: 5px 8px !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .print-item-content {
+        display: flex !important;
+        gap: 8px !important;
+        align-items: flex-start !important;
+    }
+
+    .print-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 8pt !important;
+    }
+
+    .print-table tr {
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    .print-table tr:last-child {
+        border-bottom: none !important;
+    }
+
+    .print-table td {
+        padding: 2.5px 0 !important;
+        vertical-align: top !important;
+        line-height: 1.3 !important;
+    }
+
+    .print-label {
+        width: 105px !important;
+        color: #475569 !important;
+        font-weight: 500 !important;
+    }
+
+    .print-val {
+        color: #0f172a !important;
+        word-break: break-word !important;
+    }
+
+    .print-email-val {
+        word-break: break-all !important;
+        overflow-wrap: anywhere !important;
+        font-size: 8pt !important;
+        color: #0f172a !important;
+    }
+
+    .print-item-thumb {
+        width: 80px !important;
+        height: 80px !important;
+        border-radius: 0 !important;
+        overflow: hidden !important;
+        border: 1px solid #94a3b8 !important;
+        flex-shrink: 0 !important;
+        background: #f8fafc !important;
+    }
+
+    .print-item-thumb img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 0 !important;
+    }
+
+    /* 4. Informasi Posko Penyerahan */
+    .print-posko-card {
+        margin-bottom: 8px !important;
+    }
+
+    .print-posko-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 4px 14px !important;
+        font-size: 8pt !important;
+    }
+
+    .print-meta-label {
+        display: block !important;
+        color: #475569 !important;
+        font-size: 7.5pt !important;
+        font-weight: 500 !important;
+    }
+
+    .print-meta-val {
+        color: #0f172a !important;
+        font-size: 8pt !important;
+        line-height: 1.25 !important;
+    }
+
+    /* 5. Catatan Pengambilan (Formal) */
+    .print-sop-box {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-left: 3px solid #334155 !important;
+        border-radius: 0 !important;
+        padding: 5px 8px !important;
+        font-size: 7.5pt !important;
+        color: #1e293b !important;
+        line-height: 1.35 !important;
+        margin-bottom: 6px !important;
+    }
+
+    /* 6. Titimangsa & Tanda Tangan Resmi */
+    .print-titimangsa-wrap {
+        text-align: right !important;
+        margin: 6px 0 4px !important;
+    }
+
+    .print-titimangsa-text {
+        font-size: 8.5pt !important;
+        color: #0f172a !important;
+        font-weight: 500 !important;
+        padding-right: 25px !important;
+    }
+
+    .print-signatures {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 24px !important;
+        margin-top: 4px !important;
+        padding-top: 2px !important;
+    }
+
+    .print-signature-col {
+        text-align: center !important;
+    }
+
+    .print-sign-role {
+        font-size: 8pt !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+    }
+
+    .print-sign-space {
+        height: 60px !important;
+    }
+
+    .print-sign-name {
+        font-size: 8.5pt !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        border-bottom: 1px solid #000000 !important;
+        display: inline-block !important;
+        min-width: 190px !important;
+        padding-bottom: 2px !important;
+        border-radius: 0 !important;
+    }
+
+    .print-sign-note {
+        font-size: 7pt !important;
+        color: #64748b !important;
+        margin: 2px 0 0 !important;
+    }
+}
+

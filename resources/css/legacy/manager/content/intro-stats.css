@@ -17,28 +17,21 @@
 }
 
 .dashboard-hub-page .intro {
-    margin: 8px 0 18px;
-    padding: 14px 28px 26px;
-    border: 1px solid #dce7f4;
-    border-radius: 18px;
-    background:
-        radial-gradient(circle at top right, rgba(77, 139, 230, 0.18), transparent 34%),
-        linear-gradient(135deg, #f8fbff 0%, #f1f6ff 52%, #edf4ff 100%);
-    box-shadow: 0 14px 30px rgba(34, 76, 138, 0.07);
+    flex: 0 0 auto;
+    height: auto;
+    min-height: auto;
+    margin: 6px 0 16px;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 14px;
+    background: var(--surface, #ffffff);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .dashboard-hub-page .intro::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.34) 1px, transparent 1px),
-        linear-gradient(rgba(255, 255, 255, 0.34) 1px, transparent 1px);
-    background-size: 28px 28px;
-    opacity: 0.28;
-    pointer-events: none;
+    display: none;
 }
 
 .dashboard-hub-page .intro > * {
@@ -47,19 +40,23 @@
 }
 
 .dashboard-hub-page .intro h1 {
-    font-size: clamp(24px, 2.1vw, 28px);
-    line-height: 1.18;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.35;
     letter-spacing: -0.015em;
-    max-width: 32ch;
+    max-width: 100%;
     color: #173865;
+    margin: 0;
 }
 
 .dashboard-hub-page .intro p {
-    margin: 8px 0 0;
-    max-width: 68ch;
+    margin: 6px 0 0;
+    max-width: 100%;
     color: #526b8c;
-    font-size: 13px;
+    font-size: 0.875rem;
     line-height: 1.55;
+    word-break: normal;
+    overflow-wrap: break-word;
 }
 
 /* Bagian ini untuk kartu statistik ringkas di dashboard. */

@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
@@ -28,11 +27,8 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'profil' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'nomor_telepon' => ['nullable', 'string', 'max:50'],
         ];
-
-        if (Schema::hasColumn('users', 'nomor_telepon')) {
-            $rules['nomor_telepon'] = ['nullable', 'string', 'max:50'];
-        }
 
         return $rules;
     }

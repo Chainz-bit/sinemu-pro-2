@@ -8,4 +8,5 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import '../shared/page-transition.js';
 import '../shared/flash-popup.js';
 import '../shared/custom-select.js';
+import '../shared/form-submit-protection.js';
 import '../apps/user/app.js';

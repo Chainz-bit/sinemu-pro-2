@@ -8,7 +8,7 @@ use App\Services\ReportImageCleaner;
 use App\Support\WorkflowStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -25,11 +25,11 @@ class LostReportCommandService
             ->where('user_id', $userId)
             ->first();
 
-        if (!$editingReport) {
+        if (! $editingReport) {
             return null;
         }
 
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $editingReport->sumber_laporan !== 'lapor_hilang') {
+        if ($editingReport->sumber_laporan !== 'lapor_hilang') {
             return null;
         }
 
@@ -48,17 +48,17 @@ class LostReportCommandService
     {
         $reportId = isset($validated['report_id']) ? (int) $validated['report_id'] : null;
         $editingReport = null;
-        if (!is_null($reportId)) {
+        if (! is_null($reportId)) {
             $editingReport = LaporanBarangHilang::query()
                 ->where('id', $reportId)
                 ->where('user_id', (int) Auth::id())
                 ->first();
 
-            if (!$editingReport) {
+            if (! $editingReport) {
                 return ['ok' => false, 'message' => 'Laporan tidak ditemukan atau bukan milik Anda.'];
             }
 
-            if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $editingReport->sumber_laporan !== 'lapor_hilang') {
+            if ($editingReport->sumber_laporan !== 'lapor_hilang') {
                 return ['ok' => false, 'message' => 'Laporan ini tidak bisa diubah dari form ini.'];
             }
 
@@ -87,47 +87,54 @@ class LostReportCommandService
             'ciri_khusus' => $validated['ciri_khusus'] ?? null,
             'kontak_pelapor' => $validated['kontak_pelapor'] ?? null,
             'bukti_kepemilikan' => $validated['bukti_kepemilikan'] ?? null,
+            'sumber_laporan' => 'lapor_hilang',
+            'status_laporan' => WorkflowStatus::REPORT_SUBMITTED,
+            'tampil_di_home' => false,
+            'verified_by_admin_id' => null,
+            'verified_at' => null,
         ];
 
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan')) {
-            $payload['sumber_laporan'] = 'lapor_hilang';
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'status_laporan')) {
-            $payload['status_laporan'] = WorkflowStatus::REPORT_SUBMITTED;
-            $payload['tampil_di_home'] = false;
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'verified_by_admin_id')) {
-            $payload['verified_by_admin_id'] = null;
-        }
-        if (Schema::hasColumn('laporan_barang_hilangs', 'verified_at')) {
-            $payload['verified_at'] = null;
+        if (! $editingReport) {
+            $recentDuplicate = LaporanBarangHilang::query()
+                ->where('user_id', (int) Auth::id())
+                ->where('nama_barang', $payload['nama_barang'])
+                ->where('tanggal_hilang', $payload['tanggal_hilang'])
+                ->where('created_at', '>=', now()->subSeconds(15))
+                ->first();
+
+            if ($recentDuplicate) {
+                return ['ok' => false, 'message' => 'Laporan serupa baru saja dikirim. Harap tunggu sebentar.'];
+            }
         }
 
         $photo = $request->file('foto_barang');
         $newPhotoPath = null;
         if ($photo) {
-            $newPhotoPath = $photo->store('barang-hilang/' . now()->format('Y/m'), 'public');
+            $newPhotoPath = $photo->store('barang-hilang/'.now()->format('Y/m'), 'public');
             $payload['foto_barang'] = $newPhotoPath;
         }
 
         try {
-            if ($editingReport) {
-                $oldPhotoPath = $editingReport->foto_barang;
-                if (!$photo) {
-                    unset($payload['foto_barang']);
+            return DB::transaction(function () use ($editingReport, $payload, $photo) {
+                if ($editingReport) {
+                    $oldPhotoPath = $editingReport->foto_barang;
+                    if (! $photo) {
+                        unset($payload['foto_barang']);
+                    }
+
+                    $editingReport->update($payload);
+
+                    if ($photo && ! empty($oldPhotoPath)) {
+                        ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
+                    }
+
+                    return ['ok' => true, 'message' => 'Laporan barang hilang berhasil diperbarui.'];
                 }
 
-                $editingReport->update($payload);
+                LaporanBarangHilang::create($payload);
 
-                if ($photo && !empty($oldPhotoPath)) {
-                    ReportImageCleaner::purgeIfOrphaned($oldPhotoPath);
-                }
-
-                return ['ok' => true, 'message' => 'Laporan barang hilang berhasil diperbarui.'];
-            }
-
-            LaporanBarangHilang::create($payload);
-            return ['ok' => true, 'message' => 'Laporan barang hilang berhasil dikirim.'];
+                return ['ok' => true, 'message' => 'Laporan barang hilang berhasil dikirim.'];
+            });
         } catch (Throwable $exception) {
             if ($newPhotoPath) {
                 Storage::disk('public')->delete($newPhotoPath);
@@ -146,7 +153,7 @@ class LostReportCommandService
             abort(403);
         }
 
-        if (Schema::hasColumn('laporan_barang_hilangs', 'sumber_laporan') && $item->sumber_laporan !== 'lapor_hilang') {
+        if ($item->sumber_laporan !== 'lapor_hilang') {
             return ['ok' => false, 'message' => 'Laporan ini tidak bisa dihapus.'];
         }
 
@@ -157,10 +164,12 @@ class LostReportCommandService
             return ['ok' => false, 'message' => 'Laporan yang sudah diproses tidak bisa dihapus.'];
         }
 
-        $photoPath = $item->foto_barang;
-        $item->delete();
-        ReportImageCleaner::purgeIfOrphaned($photoPath);
+        return DB::transaction(function () use ($item) {
+            $photoPath = $item->foto_barang;
+            $item->delete();
+            ReportImageCleaner::purgeIfOrphaned($photoPath);
 
-        return ['ok' => true, 'message' => 'Laporan berhasil dihapus.'];
+            return ['ok' => true, 'message' => 'Laporan berhasil dihapus.'];
+        });
     }
 }

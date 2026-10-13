@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Admin;
 use App\Models\Klaim;
 use App\Support\ManagerPortal;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -23,10 +24,13 @@ class ClaimEvidenceController extends Controller
         abort_unless(array_key_exists($index, $paths) && is_string($paths[$index]), 404);
 
         [$disk, $path] = $this->resolveStoragePath($paths[$index]);
-        abort_unless(Storage::disk($disk)->exists($path), 404);
 
-        $absolutePath = Storage::disk($disk)->path($path);
-        $mimeType = mime_content_type($absolutePath) ?: Storage::disk($disk)->mimeType($path) ?: 'application/octet-stream';
+        /** @var FilesystemAdapter $diskStorage */
+        $diskStorage = Storage::disk($disk);
+        abort_unless($diskStorage->exists($path), 404);
+
+        $absolutePath = $diskStorage->path($path);
+        $mimeType = mime_content_type($absolutePath) ?: ($diskStorage->mimeType($path) ?: 'application/octet-stream');
         abort_unless(in_array($mimeType, self::ALLOWED_MIME_TYPES, true), 404);
 
         return response()->file($absolutePath, [
@@ -43,26 +47,15 @@ class ClaimEvidenceController extends Controller
         }
 
         if (Auth::guard('web')->check()) {
-            abort_unless((int) $klaim->user_id === (int) Auth::guard('web')->id(), 403);
+            $this->authorizeForUser(Auth::guard('web')->user(), 'view', $klaim);
+
             return;
         }
 
         if (Auth::guard(ManagerPortal::guard())->check()) {
             $admin = Auth::guard(ManagerPortal::guard())->user();
             abort_unless($admin instanceof Admin && $admin->isActive(), 403);
-
-            $adminRegionId = (int) ($admin->region_id ?? 0);
-            abort_unless($adminRegionId > 0, 403);
-
-            $klaim->loadMissing(['barang:id,region_id', 'laporanHilang:id,region_id']);
-            $hasRegionalScope = (int) ($klaim->barang?->region_id ?? 0) === $adminRegionId
-                || (int) ($klaim->laporanHilang?->region_id ?? 0) === $adminRegionId;
-            abort_unless($hasRegionalScope, 403);
-
-            if (!is_null($klaim->admin_id)) {
-                abort_unless((int) $klaim->admin_id === (int) $admin->id, 403);
-                return;
-            }
+            $this->authorizeForUser($admin, 'view', $klaim);
 
             return;
         }

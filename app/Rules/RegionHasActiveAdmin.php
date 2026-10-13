@@ -12,7 +12,7 @@ class RegionHasActiveAdmin implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return;
         }
 
@@ -21,7 +21,7 @@ class RegionHasActiveAdmin implements ValidationRule
             ->where('status_verifikasi', Admin::STATUS_ACTIVE)
             ->exists();
 
-        if (!$hasActiveAdmin) {
+        if (! $hasActiveAdmin) {
             $fail(self::MESSAGE);
         }
     }

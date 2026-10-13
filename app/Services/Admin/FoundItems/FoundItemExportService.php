@@ -20,7 +20,7 @@ class FoundItemExportService
             'photoDataUri' => $this->resolvePhotoDataUri((string) ($barang->foto_barang ?? '')),
         ])->setPaper('a4');
 
-        return $pdf->download('laporan-barang-temuan-' . $barang->id . '.pdf');
+        return $pdf->download('laporan-barang-temuan-'.$barang->id.'.pdf');
     }
 
     private function resolveStatusLabel(string $status): string
@@ -36,13 +36,13 @@ class FoundItemExportService
 
     private function resolvePhotoDataUri(string $photoPath): ?string
     {
-        if ($photoPath === '' || !Storage::disk('public')->exists($photoPath)) {
+        if ($photoPath === '' || ! Storage::disk('public')->exists($photoPath)) {
             return null;
         }
 
         $absolutePath = Storage::disk('public')->path($photoPath);
         $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
 
-        return 'data:' . $mimeType . ';base64,' . base64_encode((string) file_get_contents($absolutePath));
+        return 'data:'.$mimeType.';base64,'.base64_encode((string) file_get_contents($absolutePath));
     }
 }

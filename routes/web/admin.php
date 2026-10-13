@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\Auth\LoginController;
-use App\Http\Controllers\Admin\BarangWilayahController;
 use App\Http\Controllers\Admin\Auth\RegisteredUserController as AdminRegisteredUserController;
+use App\Http\Controllers\Admin\BarangWilayahController;
 use App\Http\Controllers\Admin\ClaimVerificationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FoundItemController;
@@ -15,7 +15,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Support\ManagerPortal;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '.')->group(function () {
+Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix().'.')->group(function () {
     Route::get('logout', [LoginController::class, 'redirectAfterLogoutGet'])->name('logout.get');
 
     Route::middleware(ManagerPortal::guestMiddleware())->group(function () {
@@ -65,6 +65,9 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
         Route::post('verifikasi-klaim/{klaim}/approve', [ClaimVerificationController::class, 'approve'])->name('claim-verifications.approve');
         Route::post('verifikasi-klaim/{klaim}/reject', [ClaimVerificationController::class, 'reject'])->name('claim-verifications.reject');
         Route::post('verifikasi-klaim/{klaim}/complete', [ClaimVerificationController::class, 'complete'])->name('claim-verifications.complete');
+        Route::post('verifikasi-klaim/{klaim}/handover', [ClaimVerificationController::class, 'completeHandover'])->name('claim-verifications.handover');
+        Route::post('verifikasi-klaim/{klaim}/run-ai-match', [ClaimVerificationController::class, 'runAiMatch'])->name('claim-verifications.run-ai-match');
+        Route::post('verifikasi-klaim/{klaim}/run-ai-analysis', [ClaimVerificationController::class, 'runAiAnalysis'])->name('claim-verifications.run-ai-analysis');
 
         Route::get('input-barang', [InputItemController::class, 'index'])->name('input-items');
         Route::post('input-barang', [InputItemController::class, 'store'])->name('input-items.store');
@@ -84,7 +87,7 @@ Route::prefix(ManagerPortal::urlPrefix())->name(ManagerPortal::routePrefix() . '
         Route::get('pengaturan/log-aktivitas', [SettingsController::class, 'logs'])->name('settings.logs');
 
         Route::get('notifications', function () {
-            return redirect()->route(\App\Support\ManagerPortal::dashboardRoute());
+            return redirect()->route(ManagerPortal::dashboardRoute());
         })->name('notifications.index');
         Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
         Route::post('notifications/{notification}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
@@ -99,6 +102,6 @@ Route::prefix(ManagerPortal::legacyUrlPrefix())->group(function () {
     Route::get('{path?}', function (?string $path = null) {
         $query = request()->getQueryString();
 
-        return redirect(ManagerPortal::legacyRedirectTarget($path) . ($query ? '?' . $query : ''));
+        return redirect(ManagerPortal::legacyRedirectTarget($path).($query ? '?'.$query : ''));
     })->where('path', '.*');
 });

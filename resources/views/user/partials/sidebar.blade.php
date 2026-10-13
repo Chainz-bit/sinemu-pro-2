@@ -15,9 +15,11 @@
             $normalizedPath = substr($normalizedPath, 7);
         }
 
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedPath)) {
-            $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($normalizedPath);
-            $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($normalizedPath) ?: 'image/jpeg';
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $storage */
+        $storage = \Illuminate\Support\Facades\Storage::disk('public');
+        if ($storage->exists($normalizedPath)) {
+            $absolutePath = $storage->path($normalizedPath);
+            $mimeType = mime_content_type($absolutePath) ?: ($storage->mimeType($normalizedPath) ?: 'image/jpeg');
             $binary = @file_get_contents($absolutePath);
             if ($binary !== false) {
                 $sidebarProfileAvatar = 'data:' . $mimeType . ';base64,' . base64_encode($binary);
@@ -51,7 +53,7 @@
     {{-- BAGIAN: Profil + aksi akun user --}}
     <div class="profile-menu-wrap">
         <button type="button" class="admin-card profile-menu-trigger" aria-expanded="false" aria-controls="profile-menu">
-            <img src="{{ $sidebarProfileAvatar }}" alt="Pengguna" onerror="this.onerror=null;this.src='{{ asset('img/profil.jpg') }}';">
+            <img src="{{ $sidebarProfileAvatar }}" alt="Pengguna" data-fallback="{{ asset('img/profil.jpg') }}" onerror="this.onerror=null;this.src=this.dataset.fallback;">
             <div class="profile-meta">
                 <strong>{{ $user?->nama ?? $user?->name ?? 'Pengguna' }}</strong>
                 <small>Pengguna SiNemu</small>

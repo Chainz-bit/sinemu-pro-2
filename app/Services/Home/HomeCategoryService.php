@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class HomeCategoryService
 {
     /**
-     * @param array<int,array<string,mixed>> $foundItems
+     * @param  array<int,array<string,mixed>>  $foundItems
      * @return array{0:array<int,string>,1:Collection<int,mixed>}
      */
     public function build(array $foundItems, bool $hasCategoryTable, callable $safeDatabaseCall): array
@@ -36,6 +36,7 @@ class HomeCategoryService
             ->unique(fn ($label) => Str::lower($label))
             ->sortBy(function ($label) {
                 $lower = Str::lower($label);
+
                 return $lower === 'lainnya' ? 'zzzzzz' : $lower;
             })
             ->values()

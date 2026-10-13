@@ -12,9 +12,7 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function __construct(private readonly UserProfileEditService $profileService)
-    {
-    }
+    public function __construct(private readonly UserProfileEditService $profileService) {}
 
     /**
      * Display the user's profile form.

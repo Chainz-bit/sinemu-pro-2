@@ -159,7 +159,7 @@ class LostItemDeletionSecurityTest extends TestCase
     }
 
     /**
-     * @param array{admin:Admin,user:User,laporan:LaporanBarangHilang,photoPath:string} $fixture
+     * @param  array{admin:Admin,user:User,laporan:LaporanBarangHilang,photoPath:string}  $fixture
      */
     private function assertRelationDeletionIsRejected(array $fixture): void
     {
@@ -178,14 +178,14 @@ class LostItemDeletionSecurityTest extends TestCase
      */
     private function createLostReportFixture(string $status): array
     {
-        $admin = $this->createAdmin('delete-admin-' . $status);
-        $user = $this->createUser('delete-user-' . $status);
-        $photoPath = 'barang-hilang/2026/06/laporan-' . $status . '.webp';
+        $admin = $this->createAdmin('delete-admin-'.$status);
+        $user = $this->createUser('delete-user-'.$status);
+        $photoPath = 'barang-hilang/2026/06/laporan-'.$status.'.webp';
 
         $laporan = LaporanBarangHilang::query()->create([
             'user_id' => $user->id,
             'region_id' => $admin->region_id,
-            'nama_barang' => 'Dompet ' . ucfirst($status),
+            'nama_barang' => 'Dompet '.ucfirst($status),
             'lokasi_hilang' => 'Kantin Kampus',
             'tanggal_hilang' => now()->toDateString(),
             'keterangan' => 'Laporan untuk uji keamanan hapus.',
@@ -224,10 +224,10 @@ class LostItemDeletionSecurityTest extends TestCase
     private function createUser(string $username): User
     {
         $user = User::query()->create([
-            'name' => 'User ' . $username,
-            'nama' => 'User ' . $username,
+            'name' => 'User '.$username,
+            'nama' => 'User '.$username,
             'username' => $username,
-            'email' => $username . '@example.com',
+            'email' => $username.'@example.com',
             'nomor_telepon' => '081111111111',
             'password' => Hash::make('password123'),
         ]);
@@ -239,13 +239,13 @@ class LostItemDeletionSecurityTest extends TestCase
     private function createAdmin(string $username): Admin
     {
         $superAdmin = SuperAdmin::query()->create([
-            'nama' => 'Super ' . $username,
-            'email' => 'super-' . $username . '@example.com',
-            'username' => 'super-' . $username,
+            'nama' => 'Super '.$username,
+            'email' => 'super-'.$username.'@example.com',
+            'username' => 'super-'.$username,
             'password' => Hash::make('password123'),
         ]);
         $region = Wilayah::query()->create([
-            'nama_wilayah' => 'Wilayah ' . $username,
+            'nama_wilayah' => 'Wilayah '.$username,
             'lat' => -6.32,
             'lng' => 108.32,
         ]);
@@ -253,8 +253,8 @@ class LostItemDeletionSecurityTest extends TestCase
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
-            'nama' => 'Admin ' . $username,
-            'email' => $username . '@example.com',
+            'nama' => 'Admin '.$username,
+            'email' => $username.'@example.com',
             'username' => $username,
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',

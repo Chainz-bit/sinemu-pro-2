@@ -17,9 +17,9 @@ class ReportImageCleaner
 
         $pathVariants = array_values(array_unique([
             $normalized,
-            'storage/' . $normalized,
-            '/' . $normalized,
-            '/storage/' . $normalized,
+            'storage/'.$normalized,
+            '/'.$normalized,
+            '/storage/'.$normalized,
         ]));
 
         $stillUsedByFound = Barang::query()
@@ -57,7 +57,7 @@ class ReportImageCleaner
             $path = substr($path, strlen('storage/'));
         }
 
-        if (!preg_match('#^(barang-hilang|barang-temuan|verifikasi-klaim)/#', $path)) {
+        if (! preg_match('#^(barang-hilang|barang-temuan|verifikasi-klaim)/#', $path)) {
             return null;
         }
 

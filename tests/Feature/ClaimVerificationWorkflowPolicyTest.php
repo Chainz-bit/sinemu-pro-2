@@ -30,7 +30,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
             'status_klaim' => WorkflowStatus::CLAIM_LEGACY_PENDING,
             'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
         ], [
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ], [
             'status_pencocokan' => WorkflowStatus::MATCH_CLAIM_APPROVED,
         ]);
@@ -208,7 +208,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
         ]);
         $this->assertDatabaseHas('barangs', [
             'id' => $approveFixture['barang']->id,
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ]);
         $this->assertSame(1, UserNotification::query()->where('type', 'klaim_disetujui')->count());
 
@@ -253,7 +253,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
         ]);
         $this->assertDatabaseHas('barangs', [
             'id' => $approveFixture['barang']->id,
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ]);
         $this->assertSame(1, UserNotification::query()->where('type', 'klaim_disetujui')->count());
 
@@ -293,6 +293,48 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
         $this->assertSame(1, UserNotification::query()->where('type', 'klaim_selesai')->count());
     }
 
+    public function test_two_stage_workflow_approval_then_handover_completion(): void
+    {
+        $fixture = $this->createClaimFixture();
+
+        // Tahap 1: Persetujuan Klaim (submitted -> approved)
+        $approved = $this->workflow()->approve($fixture['claim'], $this->approvalPayload(), $fixture['admin']->id);
+        $this->assertTrue($approved);
+
+        // Status klaim disetujui, tapi barang masih dalam_proses_klaim (belum selesai)
+        $this->assertDatabaseHas('klaims', [
+            'id' => $fixture['claim']->id,
+            'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
+            'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $fixture['barang']->id,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
+        ]);
+
+        // Tahap 2: Serah Terima Barang (approved -> completed)
+        $handoverData = [
+            'nama_penerima' => 'Budi Santoso',
+            'nomor_identitas_penerima' => '3201123456789001',
+            'catatan_serah_terima' => 'Barang diserahkan dalam keadaan lengkap.',
+        ];
+        $completed = $this->workflow()->completeHandover($fixture['claim'], $fixture['admin']->id, $handoverData);
+        $this->assertTrue($completed);
+
+        $this->assertDatabaseHas('klaims', [
+            'id' => $fixture['claim']->id,
+            'status_verifikasi' => WorkflowStatus::CLAIM_COMPLETED,
+            'nama_penerima' => 'Budi Santoso',
+            'nomor_identitas_penerima' => '3201123456789001',
+            'catatan_serah_terima' => 'Barang diserahkan dalam keadaan lengkap.',
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $fixture['barang']->id,
+            'status_barang' => WorkflowStatus::FOUND_RETURNED,
+            'status_laporan' => WorkflowStatus::REPORT_COMPLETED,
+        ]);
+    }
+
     /**
      * @return array<string,array{string,?string}>
      */
@@ -323,16 +365,16 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $claimOverrides
-     * @param array<string,mixed> $barangOverrides
-     * @param array<string,mixed> $matchOverrides
+     * @param  array<string,mixed>  $claimOverrides
+     * @param  array<string,mixed>  $barangOverrides
+     * @param  array<string,mixed>  $matchOverrides
      * @return array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}
      */
     private function createClaimFixture(array $claimOverrides = [], array $barangOverrides = [], array $matchOverrides = []): array
     {
         $admin = $this->createAdmin();
-        $user = $this->createUser('claim-policy-user-' . str()->uuid());
-        $finder = $this->createUser('claim-policy-finder-' . str()->uuid());
+        $user = $this->createUser('claim-policy-user-'.str()->uuid());
+        $finder = $this->createUser('claim-policy-finder-'.str()->uuid());
         $kategori = Kategori::query()->create(['nama_kategori' => 'Elektronik']);
 
         $lostReport = LaporanBarangHilang::query()->create([
@@ -385,7 +427,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     }
 
     /**
-     * @param array<string,mixed> $claimOverrides
+     * @param  array<string,mixed>  $claimOverrides
      * @return array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}
      */
     private function createApprovedClaimFixture(array $claimOverrides = []): array
@@ -394,14 +436,14 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
             'status_klaim' => WorkflowStatus::CLAIM_LEGACY_APPROVED,
             'status_verifikasi' => WorkflowStatus::CLAIM_APPROVED,
         ], $claimOverrides), [
-            'status_barang' => WorkflowStatus::FOUND_CLAIMED,
+            'status_barang' => WorkflowStatus::FOUND_CLAIM_IN_PROGRESS,
         ], [
             'status_pencocokan' => WorkflowStatus::MATCH_CLAIM_APPROVED,
         ]);
     }
 
     /**
-     * @param array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim} $fixture
+     * @param  array{admin:Admin,user:User,finder:User,lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}  $fixture
      */
     private function createCompletedClaimForSameItem(array $fixture): Klaim
     {
@@ -418,7 +460,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     }
 
     /**
-     * @param array{lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim} $fixture
+     * @param  array{lostReport:LaporanBarangHilang,barang:Barang,match:Pencocokan,claim:Klaim}  $fixture
      * @return array<string,string|null>
      */
     private function snapshot(array $fixture): array
@@ -475,18 +517,18 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
     {
         $superAdmin = SuperAdmin::query()->create([
             'nama' => 'Super Workflow',
-            'email' => 'super-workflow-' . str()->uuid() . '@example.test',
-            'username' => 'super-workflow-' . str()->uuid(),
+            'email' => 'super-workflow-'.str()->uuid().'@example.test',
+            'username' => 'super-workflow-'.str()->uuid(),
             'password' => Hash::make('password123'),
         ]);
-        $region = Wilayah::query()->create(['nama_wilayah' => 'Wilayah Workflow ' . str()->uuid()]);
+        $region = Wilayah::query()->create(['nama_wilayah' => 'Wilayah Workflow '.str()->uuid()]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin->id,
             'region_id' => $region->id,
             'nama' => 'Admin Workflow',
-            'email' => 'admin-workflow-' . str()->uuid() . '@example.test',
-            'username' => 'admin-workflow-' . str()->uuid(),
+            'email' => 'admin-workflow-'.str()->uuid().'@example.test',
+            'username' => 'admin-workflow-'.str()->uuid(),
             'password' => Hash::make('password123'),
             'instansi' => 'Kampus SINEMU',
             'kecamatan' => 'Sindang',
@@ -501,7 +543,7 @@ class ClaimVerificationWorkflowPolicyTest extends TestCase
             'name' => 'User Workflow',
             'nama' => 'User Workflow',
             'username' => $username,
-            'email' => $username . '@example.test',
+            'email' => $username.'@example.test',
             'nomor_telepon' => '08123456789',
             'password' => Hash::make('password123'),
         ]);

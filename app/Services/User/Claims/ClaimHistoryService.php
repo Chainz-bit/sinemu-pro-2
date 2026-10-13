@@ -4,15 +4,13 @@ namespace App\Services\User\Claims;
 
 use App\Models\Klaim;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Schema;
 
 class ClaimHistoryService
 {
     public function __construct(
         private readonly ClaimHistoryQueryService $queryService,
         private readonly ClaimHistoryItemPresenter $itemPresenter
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{claims:LengthAwarePaginator,search:string,statusFilter:string,typeFilter:string}
@@ -22,7 +20,7 @@ class ClaimHistoryService
         $search = trim((string) ($query['search'] ?? ''));
         $status = trim((string) ($query['status'] ?? 'semua'));
         $type = trim((string) ($query['type'] ?? 'semua'));
-        $hasStatusVerifikasi = Schema::hasColumn('klaims', 'status_verifikasi');
+        $hasStatusVerifikasi = true;
 
         $claimsQuery = $this->queryService->build($userId, $search, $status, $type, $hasStatusVerifikasi);
 

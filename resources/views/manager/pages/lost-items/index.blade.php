@@ -58,16 +58,16 @@
                         <th>Pelapor</th>
                         <th>Tanggal Hilang</th>
                         <th>Lokasi Hilang</th>
-                        <th>Status</th>
+                        <th class="min-w-[160px]">Status</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($items as $index => $item)
                         <tr>
-                            <td>
+                            <td class="align-middle">
                                 <div class="item-cell">
-                                    <div class="item-avatar avatar-sand">
+                                    <div class="item-avatar avatar-sand w-10 h-10 rounded-lg shrink-0">
                                         <span class="item-avatar-fallback">{{ strtoupper(substr($item->nama_barang, 0, 1)) }}</span>
                                         @php
                                             $fotoUrlDefault = asset('img/login-image.png');
@@ -97,7 +97,7 @@
 
                                             if (!empty($localFotoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($localFotoPath)) {
                                                 $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($localFotoPath);
-                                                $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($localFotoPath) ?: 'image/jpeg';
+                                                $mimeType = mime_content_type($absolutePath) ?: 'image/jpeg';
                                                 $binary = @file_get_contents($absolutePath);
                                                 if ($binary !== false) {
                                                     $fotoSrc = 'data:' . $mimeType . ';base64,' . base64_encode($binary);
@@ -136,18 +136,16 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ $item->user?->nama ?? $item->user?->name ?? 'Pengguna' }}</td>
-                            <td>{{ \Illuminate\Support\Carbon::parse($item->tanggal_hilang)->format('d M Y') }}</td>
-                            <td>{{ $item->lokasi_hilang }}</td>
-                            <td>
+                            <td class="align-middle">{{ $item->user?->nama ?? $item->user?->name ?? 'Pengguna' }}</td>
+                            <td class="align-middle">{{ \Illuminate\Support\Carbon::parse($item->tanggal_hilang)->format('d M Y') }}</td>
+                            <td class="align-middle">{{ $item->lokasi_hilang }}</td>
+                            <td class="align-middle min-w-[160px]">
                                 @php
                                     $reportStatus = \App\Support\ReportStatusPresenter::key($item->status_laporan ?? null);
-                                    $statusLabel = \App\Support\ReportStatusPresenter::label($reportStatus);
-                                    $statusClass = \App\Support\ReportStatusPresenter::cssClass($reportStatus);
                                 @endphp
-                                <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
+                                <x-status-badge :status="$reportStatus" type="report" />
                             </td>
-                            <td class="menu-cell">
+                            <td class="menu-cell align-middle">
                                 <button type="button" class="row-menu-trigger" data-menu-target="menu-{{ $index }}" aria-label="Aksi">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3zm0 5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3z" fill="currentColor"/></svg>
                                 </button>

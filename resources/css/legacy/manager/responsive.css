@@ -86,7 +86,7 @@
     }
 
     .found-detail-header h1 {
-        font-size: 28px;
+        font-size: 1.35rem;
     }
 
     .found-detail-side {
@@ -107,21 +107,24 @@
     }
 
     .dashboard-hub-page .intro {
-        margin: 10px 0 0;
-        padding: 18px 16px;
-        border-radius: 14px;
+        flex: 0 0 auto;
+        height: auto;
+        min-height: auto;
+        margin: 6px 0 0;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
     }
 
     .dashboard-hub-page .intro h1 {
         max-width: none;
-        font-size: 22px;
-        line-height: 1.2;
+        font-size: 1.125rem;
+        line-height: 1.3;
         letter-spacing: -0.01em;
     }
 
     .dashboard-hub-page .intro p {
-        margin-top: 8px;
-        font-size: 12.5px;
+        margin-top: 6px;
+        font-size: 0.8125rem;
         line-height: 1.5;
         max-width: 100%;
     }
@@ -316,7 +319,7 @@
     }
 
     .found-detail-header h1 {
-        font-size: 26px;
+        font-size: 1.25rem;
     }
 
     .found-detail-actions {
@@ -330,7 +333,7 @@
     }
 
     .found-detail-body h2 {
-        font-size: 26px;
+        font-size: 1.15rem;
     }
 
     .found-detail-image {

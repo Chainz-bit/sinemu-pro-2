@@ -284,17 +284,17 @@ class AdminVerificationTest extends TestCase
     private function createAdmin(?SuperAdmin $superAdmin, string $name, ?string $status): Admin
     {
         $region = Wilayah::query()->firstOrCreate([
-            'nama_wilayah' => 'Wilayah ' . (str_contains($name, 'Sindang') ? 'Sindang' : 'Lohbener'),
+            'nama_wilayah' => 'Wilayah '.(str_contains($name, 'Sindang') ? 'Sindang' : 'Lohbener'),
         ]);
 
         return Admin::query()->create([
             'super_admin_id' => $superAdmin?->id,
             'region_id' => $region->id,
             'nama' => $name,
-            'email' => str($name)->slug('-') . '@example.com',
+            'email' => str($name)->slug('-').'@example.com',
             'username' => (string) str($name)->slug('-'),
             'password' => Hash::make('password123'),
-            'instansi' => 'Instansi ' . $name,
+            'instansi' => 'Instansi '.$name,
             'kecamatan' => str_contains($name, 'Sindang') ? 'Sindang' : 'Lohbener',
             'alamat_lengkap' => 'Jl. Verifikasi No. 1',
             'status_verifikasi' => $status,

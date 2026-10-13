@@ -47,7 +47,7 @@ class LegacyScopeAuditService
      */
     private function auditBarangs(int $sampleLimit): array
     {
-        if (!Schema::hasTable('barangs')) {
+        if (! Schema::hasTable('barangs')) {
             return ['exists' => false];
         }
 
@@ -83,7 +83,7 @@ class LegacyScopeAuditService
      */
     private function auditLostReports(int $sampleLimit): array
     {
-        if (!Schema::hasTable('laporan_barang_hilangs')) {
+        if (! Schema::hasTable('laporan_barang_hilangs')) {
             return ['exists' => false];
         }
 
@@ -113,7 +113,7 @@ class LegacyScopeAuditService
      */
     private function auditClaims(int $sampleLimit): array
     {
-        if (!Schema::hasTable('klaims')) {
+        if (! Schema::hasTable('klaims')) {
             return ['exists' => false];
         }
 
@@ -146,7 +146,7 @@ class LegacyScopeAuditService
      */
     private function auditMatches(int $sampleLimit): array
     {
-        if (!Schema::hasTable('pencocokans')) {
+        if (! Schema::hasTable('pencocokans')) {
             return ['exists' => false];
         }
 
@@ -174,7 +174,7 @@ class LegacyScopeAuditService
      */
     private function auditAdmins(int $sampleLimit): array
     {
-        if (!Schema::hasTable('admins')) {
+        if (! Schema::hasTable('admins')) {
             return ['exists' => false];
         }
 
@@ -260,7 +260,7 @@ class LegacyScopeAuditService
 
     private function tableCount(string $table): int
     {
-        if (!Schema::hasTable($table)) {
+        if (! Schema::hasTable($table)) {
             return 0;
         }
 
@@ -273,7 +273,7 @@ class LegacyScopeAuditService
     }
 
     /**
-     * @param array<int,string> $wanted
+     * @param  array<int,string>  $wanted
      * @return array<int,string>
      */
     private function scopeColumns(string $table, array $wanted): array
@@ -284,7 +284,7 @@ class LegacyScopeAuditService
     }
 
     /**
-     * @param array<int,string> $columns
+     * @param  array<int,string>  $columns
      * @return array<int,array<string,mixed>>
      */
     private function statusBreakdown(Builder $query, array $columns): array
@@ -308,7 +308,7 @@ class LegacyScopeAuditService
     }
 
     /**
-     * @param array<int,string> $columns
+     * @param  array<int,string>  $columns
      * @return array<int,array<string,mixed>>
      */
     private function samples(Builder $query, array $columns, int $limit): array

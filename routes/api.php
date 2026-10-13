@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\KlaimController;
 use App\Http\Controllers\Api\LaporanController;
 use App\Http\Controllers\Api\LaporanHilangController;
@@ -58,8 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Chatbot API (public, rate-limited)
 Route::prefix('chatbot')->middleware('throttle:30,1')->group(function () {
-    Route::post('/send', [\App\Http\Controllers\Api\ChatbotController::class, 'send']);
-    Route::get('/history', [\App\Http\Controllers\Api\ChatbotController::class, 'history']);
-    Route::post('/new', [\App\Http\Controllers\Api\ChatbotController::class, 'newConversation']);
+    Route::post('/send', [ChatbotController::class, 'send']);
+    Route::get('/history', [ChatbotController::class, 'history']);
+    Route::post('/new', [ChatbotController::class, 'newConversation']);
 });
-

@@ -15,6 +15,10 @@ class AdminNotificationService
         ?string $actionUrl = null,
         array $meta = []
     ): void {
+        if ($adminId <= 0) {
+            return;
+        }
+
         AdminNotification::query()->create([
             'admin_id' => $adminId,
             'type' => $type,
