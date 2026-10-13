@@ -43,9 +43,11 @@ body {
 }
 
 .sidebar-brand img {
-    width: 120px;
+    width: 130px;
     max-width: 100%;
     height: auto;
+    object-fit: contain;
+    display: block;
 }
 
 .sidebar-brand {

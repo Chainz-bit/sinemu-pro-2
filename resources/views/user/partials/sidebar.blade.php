@@ -47,7 +47,9 @@
     id="admin-sidebar"
     :active-menu="($activeMenu ?? '')"
     :brand-url="route('home')"
-    brand-alt="Kembali ke halaman utama"
+    :brand-image="asset('img/logo.png')"
+    brand-alt="Kembali ke Halaman Utama"
+    :home-url="route('home')"
     :nav-items="$userSidebarItems"
 >
     {{-- BAGIAN: Profil + aksi akun user --}}

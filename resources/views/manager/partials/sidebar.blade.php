@@ -50,9 +50,10 @@
 <x-dashboard.sidebar
     id="admin-sidebar"
     :active-menu="($activeMenu ?? '')"
-    :brand-url="manager_route('dashboard')"
-    :brand-image="null"
-    :home-url="null"
+    :brand-url="route('home')"
+    :brand-image="asset('img/logo.png')"
+    brand-alt="Kembali ke Halaman Utama"
+    :home-url="route('home')"
     home-label="Kembali ke Landing Page"
     home-icon="mdi:home-outline"
     :nav-items="$managerSidebarItems"
