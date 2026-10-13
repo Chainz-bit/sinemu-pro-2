@@ -45,9 +45,9 @@ class DashboardQueryService
         $lostHasHomeFlag = true;
         $foundHasHomeFlag = true;
 
-        $lostReports = $this->buildLostReports($lostHasHomeFlag);
-        $foundReports = $this->buildFoundReports($foundHasHomeFlag);
-        $claimReports = $this->buildClaimReports($foundHasHomeFlag, $lostHasHomeFlag);
+        $lostReports = $this->buildLostReports($lostHasHomeFlag)->toBase();
+        $foundReports = $this->buildFoundReports($foundHasHomeFlag)->toBase();
+        $claimReports = $this->buildClaimReports($foundHasHomeFlag, $lostHasHomeFlag)->toBase();
 
         return $lostReports
             ->merge($foundReports)

@@ -56,6 +56,7 @@ class DashboardLostFeedService
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get()
+            ->toBase()
             ->map(fn (LaporanBarangHilang $report): object => $this->presentReport($report, $hasLostStatusColumn));
     }
 
