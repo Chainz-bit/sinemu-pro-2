@@ -16,20 +16,46 @@ class HomeController extends Controller
 {
     public function __construct(private readonly HomePageViewService $homePageService) {}
 
-    public function index(): View|RedirectResponse
+    public function index(): View
     {
         $databaseResponsive = $this->homePageService->isDatabaseResponsive();
-        if ($databaseResponsive && Auth::guard('super_admin')->check()) {
-            return redirect()->route('super.dashboard');
-        }
 
-        if ($databaseResponsive && ManagerPortal::check()) {
-            return redirect()->route(ManagerPortal::dashboardRoute());
+        $authenticatedUser = null;
+        $authGuard = null;
+        $dashboardUrl = route('home');
+        $logoutUrl = route('logout');
+        $userSubtitle = 'Pengguna';
+
+        if ($databaseResponsive) {
+            if (Auth::guard('super_admin')->check()) {
+                $authenticatedUser = Auth::guard('super_admin')->user();
+                $authGuard = 'super_admin';
+                $dashboardUrl = route('super.dashboard');
+                $logoutUrl = route('super.logout');
+                $userSubtitle = 'Super Admin';
+            } elseif (ManagerPortal::check()) {
+                $authenticatedUser = ManagerPortal::user();
+                $authGuard = 'admin';
+                $dashboardUrl = manager_route('dashboard');
+                $logoutUrl = manager_route('logout');
+                $userSubtitle = $authenticatedUser?->instansi ?: 'Pengelola Barang';
+            } elseif (Auth::guard('web')->check()) {
+                $authenticatedUser = Auth::guard('web')->user();
+                $authGuard = 'web';
+                $dashboardUrl = route('user.dashboard');
+                $logoutUrl = route('logout');
+                $userSubtitle = $authenticatedUser?->location ?: 'Pengguna SiNemu';
+            }
         }
 
         $viewData = $this->homePageService->buildHomeViewData(
-            currentUser: $databaseResponsive ? Auth::guard('web')->user() : null,
-            includeClaimableReports: false
+            currentUser: $authGuard === 'web' ? $authenticatedUser : null,
+            includeClaimableReports: false,
+            authenticatedUser: $authenticatedUser,
+            authGuard: $authGuard,
+            dashboardUrl: $dashboardUrl,
+            logoutUrl: $logoutUrl,
+            userSubtitle: $userSubtitle
         );
 
         return view('home.pages.index', $viewData);

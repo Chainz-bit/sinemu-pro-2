@@ -25,13 +25,13 @@
             </button>
 
             <div class="collapse navbar-collapse order-4 order-lg-2" id="mainNav">
-                @auth('web')
+                @if(!empty($authenticatedUser))
                     <div class="dropdown profile-dropdown nav-profile order-1 order-lg-2">
                         <button class="user-chip profile-chip profile-toggle d-none d-lg-inline-flex" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="profile-text">
                                 <div class="fw-semibold small">{{ $userName ?? 'Pengguna' }}</div>
-                                <div class="text-muted xsmall">{{ $userLocation ?? 'Lokasi Anda' }}</div>
+                                <div class="text-muted xsmall">{{ $userSubtitle ?? $userLocation ?? 'Pengguna SiNemu' }}</div>
                             </div>
                             <span class="avatar avatar-img">
                                 <img src="{{ $userAvatar ?? asset('img/profil.jpg') }}"
@@ -42,7 +42,7 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end profile-menu">
                             <li>
-                                <a class="dropdown-item" href="{{ route('user.dashboard') }}">
+                                <a class="dropdown-item" href="{{ $dashboardUrl ?? route('home') }}">
                                     Dashboard
                                 </a>
                             </li>
@@ -50,7 +50,7 @@
                                 <hr class="dropdown-divider">
                             </li>
                             <li>
-                                <form method="POST" action="{{ route('logout') }}">
+                                <form method="POST" action="{{ $logoutUrl ?? route('logout') }}">
                                     @csrf
                                     <button type="submit" class="dropdown-item text-danger">
                                         Keluar
@@ -64,7 +64,7 @@
                             aria-controls="mobileProfileSubmenu">
                             <div class="profile-text">
                                 <div class="fw-semibold small">{{ $userName ?? 'Pengguna' }}</div>
-                                <div class="text-muted xsmall">{{ $userLocation ?? 'Lokasi Anda' }}</div>
+                                <div class="text-muted xsmall">{{ $userSubtitle ?? $userLocation ?? 'Pengguna SiNemu' }}</div>
                             </div>
                             <span class="avatar avatar-img">
                                 <img src="{{ $userAvatar ?? asset('img/profil.jpg') }}"
@@ -74,10 +74,10 @@
                             </span>
                         </button>
                         <div id="mobileProfileSubmenu" class="collapse profile-submenu-mobile d-lg-none">
-                            <a class="profile-submenu-item" href="{{ route('user.dashboard') }}">
+                            <a class="profile-submenu-item" href="{{ $dashboardUrl ?? route('home') }}">
                                 Dashboard
                             </a>
-                            <form method="POST" action="{{ route('logout') }}">
+                            <form method="POST" action="{{ $logoutUrl ?? route('logout') }}">
                                 @csrf
                                 <button type="submit" class="profile-submenu-item text-danger">
                                     Keluar
@@ -92,7 +92,7 @@
                             Masuk
                         </button>
                     </div>
-                @endauth
+                @endif
 
                 <ul class="navbar-nav mx-auto mb-0 mb-lg-0 gap-lg-4 nav-centered order-2 order-lg-1">
                     <li class="nav-item"><a class="nav-link" href="#hero">Pencarian</a></li>
@@ -177,13 +177,16 @@
                     cepat, dan klaim dengan aman.</p>
                 <div class="hero-modern-actions">
                     <a href="#hilang-temuan" class="btn btn-sinemu btn-sinemu-primary">Cari Barang Sekarang</a>
-                    @auth('web')
-                        <a href="{{ route('user.lost-reports.create') }}" class="btn btn-sinemu btn-sinemu-outline">Lapor
-                            Kehilangan</a>
+                    @if(!empty($authenticatedUser))
+                        @if(($authGuard ?? 'web') === 'web')
+                            <a href="{{ route('user.lost-reports.create') }}" class="btn btn-sinemu btn-sinemu-outline">Lapor Kehilangan</a>
+                        @else
+                            <a href="{{ $dashboardUrl ?? route('home') }}" class="btn btn-sinemu btn-sinemu-outline">Buka Dashboard</a>
+                        @endif
                     @else
                         <button type="button" class="btn btn-sinemu btn-sinemu-outline" data-bs-toggle="modal"
                             data-bs-target="#loginPortalModal">Lapor Kehilangan</button>
-                    @endauth
+                    @endif
                 </div>
             </div>
 
@@ -355,17 +358,23 @@
                                 <p class="item-meta"><i class="fa-regular fa-clock"></i>
                                     {{ $item['date_label'] ?? $item['date'] }}</p>
                                 <a href="{{ $item['detail_url'] }}" class="item-detail-link">Lihat Detail</a>
-                                @auth('web')
-                                    @if($isClaimable)
-                                        <a class="btn item-action-btn"
-                                            href="{{ route('user.claims.create', ['barang_id' => $item['id']]) }}">
-                                            {{ $claimButtonLabel }}
-                                        </a>
+                                @if(!empty($authenticatedUser))
+                                    @if(($authGuard ?? 'web') === 'web')
+                                        @if($isClaimable)
+                                            <a class="btn item-action-btn"
+                                                href="{{ route('user.claims.create', ['barang_id' => $item['id']]) }}">
+                                                {{ $claimButtonLabel }}
+                                            </a>
+                                        @else
+                                            <button class="btn item-action-btn item-action-btn-disabled" type="button" disabled
+                                                aria-disabled="true">
+                                                {{ $claimButtonLabel }}
+                                            </button>
+                                        @endif
                                     @else
-                                        <button class="btn item-action-btn item-action-btn-disabled" type="button" disabled
-                                            aria-disabled="true">
-                                            {{ $claimButtonLabel }}
-                                        </button>
+                                        <a class="btn item-action-btn" href="{{ $dashboardUrl ?? route('home') }}">
+                                            Kelola di Dashboard
+                                        </a>
                                     @endif
                                 @else
                                     @if($isClaimable)
@@ -377,7 +386,7 @@
                                             {{ $claimButtonLabel }}
                                         </button>
                                     @endif
-                                @endauth
+                                @endif
                             </div>
                         </article>
                     @empty

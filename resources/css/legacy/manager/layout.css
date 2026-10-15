@@ -37,15 +37,15 @@ body {
 .sidebar-brand-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
     padding: 4px 8px 18px;
 }
 
 .sidebar-brand img {
-    width: 120px;
+    width: 130px;
     max-width: 100%;
     height: auto;
+    object-fit: contain;
+    display: block;
 }
 
 .sidebar-brand {

@@ -56,6 +56,7 @@ class DashboardClaimFeedService
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get()
+            ->toBase()
             ->map(fn (Klaim $claim): object => $this->presentClaim($claim));
     }
 

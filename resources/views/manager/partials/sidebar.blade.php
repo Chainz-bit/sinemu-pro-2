@@ -50,11 +50,10 @@
 <x-dashboard.sidebar
     id="admin-sidebar"
     :active-menu="($activeMenu ?? '')"
-    :brand-url="manager_route('dashboard')"
-    :brand-image="null"
+    :brand-url="route('home')"
+    :brand-image="asset('img/logo.png') . '?v=2'"
+    brand-alt="SiNemu"
     :home-url="null"
-    home-label="Kembali ke Landing Page"
-    home-icon="mdi:home-outline"
     :nav-items="$managerSidebarItems"
 >
     {{-- BAGIAN: Menu profil pengelola barang --}}

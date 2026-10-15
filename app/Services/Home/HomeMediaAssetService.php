@@ -132,7 +132,7 @@ class HomeMediaAssetService
         }
 
         [$folder, $subPath] = array_pad(explode('/', $normalized, 2), 2, '');
-        if (in_array($folder, ['profil-admin', 'profil-user', 'barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
+        if (in_array($folder, ['profil-admin', 'profil-super', 'profil-user', 'barang-hilang', 'barang-temuan', 'verifikasi-klaim'], true) && $subPath !== '') {
             if (Storage::disk('public')->exists($normalized)) {
                 $dataUri = $this->buildImageDataUri($normalized);
                 if ($dataUri !== null) {

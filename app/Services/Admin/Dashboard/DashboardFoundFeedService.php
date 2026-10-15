@@ -52,6 +52,7 @@ class DashboardFoundFeedService
 
         return $query->limit(10)
             ->get()
+            ->toBase()
             ->map(fn (Barang $report): object => $this->presentReport($report));
     }
 

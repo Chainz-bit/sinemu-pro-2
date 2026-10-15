@@ -195,7 +195,8 @@ class AdminProfilePageService
             });
 
         return $inputActivities
-            ->merge($claimActivities)
+            ->toBase()
+            ->merge($claimActivities->toBase())
             ->sortByDesc('activity_at')
             ->take(8)
             ->values();
