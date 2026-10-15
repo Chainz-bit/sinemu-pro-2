@@ -38,17 +38,26 @@ class HomePageViewService
     /**
      * @return array<string,mixed>
      */
-    public function buildHomeViewData(mixed $currentUser, bool $includeClaimableReports): array
-    {
+    public function buildHomeViewData(
+        mixed $currentUser,
+        bool $includeClaimableReports,
+        mixed $authenticatedUser = null,
+        ?string $authGuard = null,
+        ?string $dashboardUrl = null,
+        ?string $logoutUrl = null,
+        ?string $userSubtitle = null
+    ): array {
         [$lostItems, $lostTotalCount] = $this->getLostItems();
         [$foundItems, $foundTotalCount] = $this->getFoundItems();
         [$categories, $kategoriOptions] = $this->getCategories($foundItems);
         [$regions, $mapRegions] = $this->getRegions($lostItems, $foundItems);
         $pickupLocations = $this->getPickupLocations();
         $wilayahOptions = $this->getWilayahOptions();
-        $userName = $this->resolveUserDisplayName($currentUser);
-        $userAvatar = $this->mediaAssetService->resolveUserAvatarUrl((string) ($currentUser?->profil ?? ''));
-        $userLocation = $currentUser?->location ?? 'Lokasi Anda';
+
+        $activeUser = $authenticatedUser ?? $currentUser;
+        $userName = $this->resolveUserDisplayName($activeUser);
+        $userAvatar = $this->mediaAssetService->resolveUserAvatarUrl((string) ($activeUser?->profil ?? ''));
+        $userLocation = $currentUser?->location ?? $userSubtitle ?? 'Lokasi Anda';
         $claimableLostReports = $includeClaimableReports
             ? $this->getClaimableLostReports((int) ($currentUser?->id ?? 0))
             : collect();
@@ -67,7 +76,12 @@ class HomePageViewService
             'userName',
             'userAvatar',
             'userLocation',
-            'claimableLostReports'
+            'userSubtitle',
+            'claimableLostReports',
+            'authenticatedUser',
+            'authGuard',
+            'dashboardUrl',
+            'logoutUrl'
         );
     }
 
